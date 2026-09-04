@@ -43,3 +43,13 @@ Light mode only. Photo-first cards. TouRose rose accent.
 
 - Events: OpenAgenda CDN when available, else map tile
 - Places: Wikipedia/Wikimedia thumb when found, else OSM tile, else kind stock photo
+
+## Logo (system 2C)
+
+| Asset | Path | When |
+| --- | --- | --- |
+| Full | `web/public/brand/tourose-logo-full.png` | Header, splash |
+| Mark (pin) | `web/public/brand/tourose-logo-mark.png` | Favicon, app icon, compact |
+| Wordmark | `web/public/brand/tourose-logo-wordmark.png` | Text alone when pin already shown |
+
+Source of truth: `assets/brand/logo/`

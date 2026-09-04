@@ -13,19 +13,33 @@
 }
 
 .brand {
-  font-weight: 700;
-  font-size: 1.35rem;
-  letter-spacing: -0.03em;
+  display: inline-flex;
+  align-items: center;
   color: var(--ink);
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
   align-self: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  line-height: 0;
 }
 
-.brand span {
-  color: var(--accent);
+.brand-logo {
+  display: block;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.brand-logo--full {
+  height: 40px;
+  width: auto;
+  max-width: min(200px, 52vw);
+}
+
+.brand-logo--mark {
+  display: none;
+  height: 40px;
+  width: 40px;
 }
 
 .cat-strip {
@@ -78,6 +92,7 @@
   height: 36px;
   object-fit: contain;
   display: block;
+  background: transparent;
 }
 
 .cat-label {
@@ -118,10 +133,22 @@
 }
 
 .avatar {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
-  background: linear-gradient(145deg, #d8d8d8, #f0f0f0);
+  background: #fff;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.avatar img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
 }
 
 .scrim {
@@ -178,6 +205,17 @@
   margin: 0;
   color: var(--muted);
   font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.foot-mark {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 @media (max-width: 900px) {
@@ -194,7 +232,11 @@
   .brand {
     grid-area: brand;
     margin-bottom: 4px;
-    font-size: 1.25rem;
+  }
+
+  .brand-logo--full {
+    height: 40px;
+    max-width: min(190px, 58vw);
   }
 
   .menu-btn {
@@ -207,8 +249,13 @@
   }
 
   .avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .avatar img {
+    width: 22px;
+    height: 22px;
   }
 
   .cat-strip {
@@ -272,5 +319,10 @@
 @media (max-width: 480px) {
   .cat-item {
     min-width: 68px;
+  }
+
+  .brand-logo--full {
+    height: 40px;
+    max-width: min(180px, 56vw);
   }
 }
