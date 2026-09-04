@@ -124,29 +124,36 @@ export class PlaceMediaResolver {
     return Date.now() < this.cooldownUntil;
   }
 
+  cooldownRemainingMs(): number {
+    return Math.max(0, this.cooldownUntil - Date.now());
+  }
+
   async warmCatalog(): Promise<void> {
     if (this.catalogReady) {
       return;
     }
+    // Keep this light — a large Commons warm-up burns the rate limit
+    // before place photos can resolve.
     const queries = [
-      'aire de jeux Toulouse',
-      'jardin Toulouse',
-      'square Toulouse',
       'musée Toulouse',
-      'théâtre Toulouse',
-      'église Toulouse',
-      'hôtel Toulouse',
       'basilique Toulouse',
-      'pont Toulouse',
-      'capitole Toulouse',
+      'théâtre Toulouse',
+      'jardin Toulouse',
     ];
     const titles = new Set<string>();
     for (const query of queries) {
-      const pages = await this.searchCommonsTitles(query, 40);
-      for (const title of pages) {
-        titles.add(title);
+      if (this.isCoolingDown()) {
+        break;
       }
-      await this.throttle(120);
+      try {
+        const pages = await this.searchCommonsTitles(query, 20);
+        for (const title of pages) {
+          titles.add(title);
+        }
+      } catch {
+        break;
+      }
+      await this.throttle(900);
     }
     this.commonsCatalog = [...titles];
     this.catalogReady = true;
@@ -158,10 +165,25 @@ export class PlaceMediaResolver {
       return this.cache.get(cacheKey) ?? null;
     }
 
-    await this.warmCatalog();
+    // Prefer Wikidata / Wikipedia first (fewer calls, better matches).
+    // Commons catalog warm-up is optional and skipped while rate-limited.
+    if (!this.catalogReady && !this.isCoolingDown()) {
+      void this.warmCatalog();
+    }
+
+    const preferWikipediaRest =
+      kind === 'museum' ||
+      kind === 'heritage' ||
+      kind === 'theatre' ||
+      kind === 'gallery';
 
     const resolved =
-      (await this.fromCatalog(placeName, kind)) ??
+      (this.catalogReady
+        ? await this.fromCatalog(placeName, kind)
+        : null) ??
+      (preferWikipediaRest
+        ? await this.fromWikipediaRest(placeName)
+        : null) ??
       (await this.fromWikidata(placeName)) ??
       (await this.fromWikipedia(placeName)) ??
       (await this.fromCommonsSearch(placeName, kind));
@@ -437,41 +459,62 @@ export class PlaceMediaResolver {
   }
 
   private async commonsFileUrl(fileName: string): Promise<string | null> {
-    await this.throttle(80);
-    const title = fileName.startsWith('File:')
-      ? fileName
-      : `File:${fileName}`;
-    const params = new URLSearchParams({
-      action: 'query',
-      titles: title,
-      prop: 'imageinfo',
-      iiprop: 'url|mime',
-      iiurlwidth: '640',
-      format: 'json',
-      origin: '*',
-    });
-    const payload = await this.fetchJson<{
-      query?: {
-        pages?: Record<
-          string,
-          {
-            imageinfo?: Array<{
-              thumburl?: string;
-              url?: string;
-              mime?: string;
-            }>;
-          }
-        >;
-      };
-    }>(`https://commons.wikimedia.org/w/api.php?${params.toString()}`);
-    const info = Object.values(payload.query?.pages ?? {})[0]?.imageinfo?.[0];
-    if (!info) {
+    const clean = fileName.replace(/^File:/i, '').trim();
+    if (!clean) {
       return null;
     }
-    if (info.mime && !info.mime.startsWith('image/')) {
-      return null;
+    // Special:FilePath avoids an extra Action API call (main 429 source).
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(clean)}?width=640`;
+  }
+
+  private async fromWikipediaRest(
+    placeName: string,
+  ): Promise<ResolvedMedia | null> {
+    const candidates = [
+      placeName,
+      `${placeName} (Toulouse)`,
+      `${placeName} de Toulouse`,
+    ];
+    for (const title of candidates) {
+      if (this.isCoolingDown()) {
+        return null;
+      }
+      await this.throttle(250);
+      const url = `https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+        title.replace(/ /g, '_'),
+      )}`;
+      try {
+        const payload = await this.fetchJson<{
+          title?: string;
+          thumbnail?: { source?: string };
+          originalimage?: { source?: string };
+          description?: string;
+          extract?: string;
+        }>(url);
+        const image =
+          payload.thumbnail?.source || payload.originalimage?.source || null;
+        if (!image || !payload.title) {
+          continue;
+        }
+        const blob = `${payload.title} ${payload.description ?? ''} ${payload.extract ?? ''}`.toLowerCase();
+        if (
+          !blob.includes('toulouse') &&
+          this.matchScore(placeName, payload.title) < 0.8
+        ) {
+          continue;
+        }
+        if (this.matchScore(placeName, payload.title) < 0.5) {
+          continue;
+        }
+        return {
+          imageUrl: this.stripUtm(image),
+          imageSource: 'wikipedia',
+        };
+      } catch {
+        continue;
+      }
     }
-    return info.thumburl || info.url || null;
+    return null;
   }
 
   private isToulouseEntity(hit: WikiSearchHit, placeName: string): boolean {

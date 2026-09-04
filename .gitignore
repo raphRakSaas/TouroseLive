@@ -16,6 +16,10 @@ coverage/
 .env.local
 *.pem
 
+# Local caches
+.cache/
+api/.cache/
+
 # OS / IDE
 .DS_Store
 .idea/

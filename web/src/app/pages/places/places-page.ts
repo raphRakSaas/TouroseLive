@@ -33,8 +33,21 @@ export class PlacesPage implements OnInit, OnDestroy {
   protected readonly loadError = signal<string | null>(null);
   protected readonly visibleCount = signal(24);
 
+  protected readonly orderedPlaces = computed(() => {
+    const places = [...(this.catalog()?.data ?? [])];
+    places.sort((left, right) => {
+      const leftPhoto = left.imageUrl ? 0 : 1;
+      const rightPhoto = right.imageUrl ? 0 : 1;
+      if (leftPhoto !== rightPhoto) {
+        return leftPhoto - rightPhoto;
+      }
+      return left.name.localeCompare(right.name, 'fr');
+    });
+    return places;
+  });
+
   protected readonly visiblePlaces = computed(() =>
-    (this.catalog()?.data ?? []).slice(0, this.visibleCount()),
+    this.orderedPlaces().slice(0, this.visibleCount()),
   );
 
   ngOnInit(): void {

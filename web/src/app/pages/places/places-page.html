@@ -34,16 +34,24 @@
       @for (place of visiblePlaces(); track place.placeId) {
         <li>
           <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
-            <div class="listing-media">
-              <div class="media-fallback" aria-hidden="true">
-                {{ place.name.charAt(0) }}
-              </div>
+            <div
+              class="listing-media"
+              [class.listing-media--quiet]="!place.imageUrl"
+            >
+              <div
+                class="media-fallback"
+                [class.media-fallback--quiet]="!place.imageUrl"
+                aria-hidden="true"
+              ></div>
               @if (place.imageUrl) {
                 <img
                   [src]="place.imageUrl"
                   [alt]="place.name"
                   [attr.loading]="$index < 6 ? 'eager' : 'lazy'"
                   decoding="async"
+                  width="400"
+                  height="400"
+                  class="is-loaded"
                 />
               }
               <span class="badge">{{ kindLabel(place.kind) }}</span>

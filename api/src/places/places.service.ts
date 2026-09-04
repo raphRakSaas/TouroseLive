@@ -1,5 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { promises as fs } from 'fs';
+import * as path from 'path';
 import { PlaceMediaResolver } from '../common/place-media';
 import {
   CatalogResponse,
@@ -17,6 +19,12 @@ const USER_AGENT =
 const POLL_MS = 12 * 60 * 60_000;
 const STALE_AFTER_MS = 48 * 60 * 60_000;
 const MEDIA_CONCURRENCY = 1;
+const PHOTO_CACHE_PATH = path.join(process.cwd(), '.cache', 'place-photos.json');
+
+type PhotoCacheEntry = {
+  imageUrl: string;
+  imageSource: PlaceDto['imageSource'];
+};
 
 type RawRecord = Record<string, unknown>;
 
@@ -121,7 +129,8 @@ export class PlacesService implements OnModuleInit {
           .filter((place): place is PlaceDto => place !== null),
       ].sort((left, right) => left.name.localeCompare(right.name, 'fr'));
 
-      // Keep previously resolved photos, then fill missing ones in background.
+      // Keep previously resolved photos (memory + disk), then fill missing ones.
+      const diskPhotos = await this.loadPhotoCache();
       const previousById = new Map(
         this.places.map((place) => [place.placeId, place] as const),
       );
@@ -132,6 +141,14 @@ export class PlacesService implements OnModuleInit {
             ...place,
             imageUrl: previous.imageUrl,
             imageSource: previous.imageSource,
+          };
+        }
+        const disk = diskPhotos.get(place.placeId);
+        if (disk?.imageUrl) {
+          return {
+            ...place,
+            imageUrl: disk.imageUrl,
+            imageSource: disk.imageSource,
           };
         }
         return place;
@@ -181,18 +198,20 @@ export class PlacesService implements OnModuleInit {
     let cursor = 0;
     let resolvedCount = 0;
 
-    const publish = (): void => {
+    const publish = async (): Promise<void> => {
       this.places = working.map((place) => ({ ...place }));
       this.fetchedAt = new Date();
+      await this.savePhotoCache(working);
     };
 
     const worker = async (): Promise<void> => {
       while (cursor < pending.length) {
-        if (this.mediaResolver.isCoolingDown()) {
+        const waitMs = this.mediaResolver.cooldownRemainingMs();
+        if (waitMs > 0) {
           this.logger.warn(
-            'Pausing place photo enrichment — Wikimedia rate limit cooldown',
+            `Waiting ${Math.ceil(waitMs / 1000)}s for Wikimedia rate-limit cooldown`,
           );
-          break;
+          await new Promise((resolve) => setTimeout(resolve, waitMs + 250));
         }
         const current = pending[cursor];
         cursor += 1;
@@ -211,17 +230,21 @@ export class PlacesService implements OnModuleInit {
           this.logger.debug(`Media resolve failed for ${place.name}: ${message}`);
           working[index] = { ...place, imageUrl: null, imageSource: null };
           if (/429|rate limit/i.test(message)) {
-            this.logger.warn(
-              'Stopping place photo enrichment after Wikimedia 429',
+            const pauseMs = Math.max(
+              8_000,
+              this.mediaResolver.cooldownRemainingMs(),
             );
-            break;
+            this.logger.warn(
+              `Rate-limited on ${place.name}; pausing ${Math.ceil(pauseMs / 1000)}s then continuing`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, pauseMs));
           }
         }
 
         resolvedCount += 1;
         // Publish early so the home grid can show photos without waiting for all.
         if (resolvedCount <= 24 || resolvedCount % 8 === 0) {
-          publish();
+          await publish();
         }
       }
     };
@@ -229,11 +252,44 @@ export class PlacesService implements OnModuleInit {
     await Promise.all(
       Array.from({ length: MEDIA_CONCURRENCY }, () => worker()),
     );
-    publish();
+    await publish();
     const withPhoto = working.filter((place) => place.imageUrl).length;
     this.logger.log(
       `Places photos ready (${working.length}, photos=${withPhoto})`,
     );
+  }
+
+  private async loadPhotoCache(): Promise<Map<string, PhotoCacheEntry>> {
+    try {
+      const raw = await fs.readFile(PHOTO_CACHE_PATH, 'utf8');
+      const parsed = JSON.parse(raw) as Record<string, PhotoCacheEntry>;
+      return new Map(Object.entries(parsed));
+    } catch {
+      return new Map();
+    }
+  }
+
+  private async savePhotoCache(places: PlaceDto[]): Promise<void> {
+    const entries: Record<string, PhotoCacheEntry> = {};
+    for (const place of places) {
+      if (place.imageUrl) {
+        entries[place.placeId] = {
+          imageUrl: place.imageUrl,
+          imageSource: place.imageSource,
+        };
+      }
+    }
+    try {
+      await fs.mkdir(path.dirname(PHOTO_CACHE_PATH), { recursive: true });
+      await fs.writeFile(
+        PHOTO_CACHE_PATH,
+        JSON.stringify(entries, null, 0),
+        'utf8',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.debug(`Could not save place photo cache: ${message}`);
+    }
   }
 
   private mediaPriority(kind: PlaceKind): number {
