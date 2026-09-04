@@ -7,7 +7,6 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
   AirIndex,
@@ -28,7 +27,7 @@ import { WeatherApi } from '../../core/weather-api';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, DatePipe, DecimalPipe, FormsModule],
+  imports: [RouterLink, DatePipe, DecimalPipe],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
@@ -63,9 +62,26 @@ export class HomePage implements OnInit {
   protected readonly searchQuery = signal('');
   protected readonly searchOpen = signal(false);
 
-  protected readonly searchHits = computed(() =>
-    this.searchCatalog.search(this.searchQuery()),
-  );
+  protected readonly searchHits = computed(() => {
+    // Depend explicitly on catalog updates + query.
+    this.searchCatalog.catalogRevision();
+    return this.searchCatalog.search(this.searchQuery());
+  });
+
+  protected readonly searchStatus = computed(() => {
+    this.searchCatalog.catalogRevision();
+    if (this.searchCatalog.loading() && !this.searchCatalog.ready()) {
+      return 'loading' as const;
+    }
+    const counts = this.searchCatalog.counts();
+    if (
+      counts.events + counts.places + counts.stations === 0 &&
+      this.searchCatalog.ready()
+    ) {
+      return 'empty-catalog' as const;
+    }
+    return 'ready' as const;
+  });
 
   protected readonly highlightStation = computed(() => {
     const stations = this.veloCatalog()?.data ?? [];
@@ -98,7 +114,10 @@ export class HomePage implements OnInit {
   ngOnInit(): void {
     this.searchCatalog.ensureLoaded();
     this.veloApi.listStations().subscribe({
-      next: (payload) => this.veloCatalog.set(payload),
+      next: (payload) => {
+        this.veloCatalog.set(payload);
+        this.searchCatalog.hydrate({ stations: payload.data });
+      },
       error: () => this.veloCatalog.set(null),
     });
     this.tisseoApi.listAlerts().subscribe({
@@ -122,11 +141,17 @@ export class HomePage implements OnInit {
       error: () => this.airCatalog.set(null),
     });
     this.eventsApi.listEvents().subscribe({
-      next: (payload) => this.eventsCatalog.set(payload),
+      next: (payload) => {
+        this.eventsCatalog.set(payload);
+        this.searchCatalog.hydrate({ events: payload.data });
+      },
       error: () => this.eventsCatalog.set(null),
     });
     this.placesApi.listPlaces('all').subscribe({
-      next: (payload) => this.placesCatalog.set(payload),
+      next: (payload) => {
+        this.placesCatalog.set(payload);
+        this.searchCatalog.hydrate({ places: payload.data });
+      },
       error: () => this.placesCatalog.set(null),
     });
   }

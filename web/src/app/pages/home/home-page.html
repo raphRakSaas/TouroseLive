@@ -1,12 +1,13 @@
 <section class="page">
-  <form class="search" role="search" (submit)="$event.preventDefault()">
+  <div class="search" role="search">
     <label class="sr-only" for="home-search">Rechercher</label>
     <input
       id="home-search"
+      name="homeSearch"
       type="search"
       placeholder="Rechercher un événement, un lieu, une station Vélô…"
-      [ngModel]="searchQuery()"
-      (ngModelChange)="onSearchInput($event)"
+      [value]="searchQuery()"
+      (input)="onSearchInput($any($event.target).value)"
       autocomplete="off"
     />
     <span class="search-btn" aria-hidden="true">
@@ -29,9 +30,17 @@
         }
       </ul>
     } @else if (searchOpen() && searchQuery().trim().length >= 2) {
-      <div class="search-results empty-results">Aucun résultat</div>
+      <div class="search-results empty-results">
+        @if (searchStatus() === 'loading') {
+          Chargement de l’index de recherche…
+        } @else if (searchStatus() === 'empty-catalog') {
+          Impossible de charger les données de recherche. Vérifie que l’API tourne.
+        } @else {
+          Aucun résultat pour « {{ searchQuery() }} »
+        }
+      </div>
     }
-  </form>
+  </div>
 
   <div class="pulse" aria-label="Aperçu du jour">
     <a class="pulse-item" routerLink="/carte">
