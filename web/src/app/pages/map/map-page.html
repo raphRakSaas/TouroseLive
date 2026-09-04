@@ -1,72 +1,348 @@
-<section class="page">
-  <header class="page-header">
-    <h1>Carte</h1>
-    <p class="lede">Vélô, parkings et événements autour de Toulouse.</p>
+<section class="page map-page">
+  <header class="map-intro">
+    <div>
+      <h1>Carte</h1>
+      <p class="lede">
+        Une couche à la fois — la carte reste lisible, le détail s’ouvre en dessous.
+      </p>
+    </div>
   </header>
 
   @if (loadError()) {
     <p class="banner">{{ loadError() }}</p>
   }
 
-  <div class="toolbar">
-    <p class="meta">
-      @if (veloCatalog(); as velo) {
-        {{ velo.data.length }} stations
+  <div class="map-controls">
+    <div class="controls-search" role="search">
+      <label class="sr-only" for="map-search">Rechercher sur la carte</label>
+      <input
+        id="map-search"
+        type="search"
+        name="mapSearch"
+        placeholder="Station, parking, événement, lieu…"
+        [value]="searchQuery()"
+        (input)="onSearchInput($any($event.target).value)"
+        autocomplete="off"
+      />
+      @if (searchQuery()) {
+        <button type="button" class="clear-search" (click)="clearSearch()" aria-label="Effacer la recherche">
+          ×
+        </button>
       }
-      @if (parkingCatalog(); as parking) {
-        · {{ parking.data.length }} parkings
+      @if (searchHits().length) {
+        <ul class="search-results" role="listbox">
+          @for (hit of searchHits(); track hit.id) {
+            <li>
+              <button type="button" (click)="selectHit(hit)">
+                <span class="hit-type" [attr.data-type]="hit.type">{{ typeLabel(hit.type) }}</span>
+                <strong>{{ hit.label }}</strong>
+                <span class="hit-sub">{{ hit.sub }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else if (searchQuery().trim().length >= 2) {
+        <div class="search-results empty-results">
+          Aucun résultat — essaie un autre nom ou change de couche.
+        </div>
       }
-      @if (mappedEvents().length) {
-        · {{ mappedEvents().length }} événements géolocalisés
+    </div>
+
+    <div class="layer-row" role="group" aria-label="Couches de la carte">
+      <button type="button" [class.active]="mapLayer() === 'events'" (click)="setLayer('events')">
+        <span class="dot events" aria-hidden="true"></span>
+        Événements
+        <span class="count">{{ mappedEvents().length }}</span>
+      </button>
+      <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">
+        <span class="dot velo" aria-hidden="true"></span>
+        Vélô
+        @if (veloCatalog(); as velo) {
+          <span class="count">{{ velo.data.length }}</span>
+        }
+      </button>
+      <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">
+        <span class="dot parking" aria-hidden="true"></span>
+        Parkings
+        @if (parkingCatalog(); as parking) {
+          <span class="count">{{ parking.data.length }}</span>
+        }
+      </button>
+      <button type="button" [class.active]="mapLayer() === 'places'" (click)="setLayer('places')">
+        <span class="dot places" aria-hidden="true"></span>
+        Lieux
+        <span class="count">{{ mappedPlaces().length }}</span>
+      </button>
+    </div>
+
+    @if (mapLayer() === 'velo') {
+      <div class="quick-row" role="group" aria-label="Filtres Vélô">
+        <button type="button" [class.active]="veloQuickFilter() === 'all'" (click)="setVeloQuick('all')">Tous</button>
+        <button type="button" [class.active]="veloQuickFilter() === 'low-bikes'" (click)="setVeloQuick('low-bikes')">Peu de vélos</button>
+        <button type="button" [class.active]="veloQuickFilter() === 'free-docks'" (click)="setVeloQuick('free-docks')">Places libres</button>
+      </div>
+    }
+    @if (mapLayer() === 'parking') {
+      <div class="quick-row" role="group" aria-label="Filtres parkings">
+        <button type="button" [class.active]="parkingQuickFilter() === 'all'" (click)="setParkingQuick('all')">Tous</button>
+        <button type="button" [class.active]="parkingQuickFilter() === 'free'" (click)="setParkingQuick('free')">Gratuits</button>
+      </div>
+    }
+    @if (mapLayer() === 'events') {
+      <div class="quick-row" role="group" aria-label="Filtres événements">
+        <button type="button" [class.active]="eventQuickFilter() === 'all'" (click)="setEventQuick('all')">Tous</button>
+        <button type="button" [class.active]="eventQuickFilter() === 'week'" (click)="setEventQuick('week')">7 jours</button>
+        <button type="button" [class.active]="eventQuickFilter() === 'photo'" (click)="setEventQuick('photo')">Avec photo</button>
+      </div>
+    }
+    @if (mapLayer() === 'places') {
+      <div class="quick-row place-kinds" role="group" aria-label="Types de lieux">
+        @for (kind of placeKinds; track kind.id) {
+          <button
+            type="button"
+            [class.active]="placeKindFilter() === kind.id"
+            (click)="setPlaceKind(kind.id)"
+          >
+            {{ kind.label }}
+          </button>
+        }
+      </div>
+    }
+
+    <p class="controls-meta" aria-live="polite">
+      <span>{{ markerCount() }} point{{ markerCount() > 1 ? 's' : '' }}</span>
+      @if (mapLayer() === 'velo') {
+        <span>· {{ pulse().bikes }} vélos dispo</span>
+        <span>· {{ pulse().emptyStations }} stations vides</span>
+      }
+      @if (mapLayer() === 'parking') {
+        <span>· {{ pulse().freeParkings }} gratuits</span>
+      }
+      @if (mapLayer() === 'events') {
+        <span>· agenda à venir</span>
+      }
+      @if (mapLayer() === 'places') {
+        <span>· culture &amp; patrimoine</span>
       }
     </p>
-    <div class="chip-row" role="group" aria-label="Couches">
-      <button type="button" [class.active]="mapLayer() === 'all'" (click)="setLayer('all')">Tous</button>
-      <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">Vélô</button>
-      <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">Parkings</button>
-      <button type="button" [class.active]="mapLayer() === 'events'" (click)="setLayer('events')">Événements</button>
-    </div>
   </div>
 
-  <div #mapHost class="map" aria-label="Carte Toulouse"></div>
-  <p class="meta legend">Vert Vélô · Noir parking · Rose événement</p>
+  <div class="map-stage">
+    <div #mapHost class="map" role="application" aria-label="Carte interactive de Toulouse"></div>
 
-  <div class="rail-head">
-    <h2>Événements à proximité</h2>
-    <div class="rail-nav">
-      <button type="button" aria-label="Précédent" (click)="scrollRail(-1)">‹</button>
-      <button type="button" aria-label="Suivant" (click)="scrollRail(1)">›</button>
-    </div>
+    <button
+      type="button"
+      class="locate-btn"
+      (click)="locateMe()"
+      [disabled]="locating()"
+    >
+      <span class="locate-icon" aria-hidden="true">◎</span>
+      <span>{{ locating() ? 'Localisation…' : 'Me localiser' }}</span>
+    </button>
+
+    @if (locateError()) {
+      <p class="locate-banner">{{ locateError() }}</p>
+    }
   </div>
 
-  @if (railEvents().length === 0) {
-    <p class="empty">Pas encore d’événements géolocalisés.</p>
-  } @else {
-    <div #railHost class="rail" tabindex="0">
-      @for (event of railEvents(); track event.eventId) {
-        <article
-          class="pill"
-          [class.selected]="selectedEventId() === event.eventId"
-        >
-          <button type="button" class="pill-hit" (click)="selectEvent(event)">
-            <div class="pill-media">
-              @if (event.imageUrl) {
-                <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
-              } @else {
-                <div class="media-fallback">{{ event.title.charAt(0) }}</div>
-              }
+  @if (selection(); as selected) {
+    <aside class="detail-dock" aria-label="Détail sélectionné">
+      <button type="button" class="panel-close" (click)="clearSelection()" aria-label="Fermer">×</button>
+
+      @if (selected.type === 'velo') {
+        <div class="detail-grid">
+          <div class="detail-copy">
+            <p class="panel-kicker">
+              <span class="dot velo" aria-hidden="true"></span> Station Vélô
+            </p>
+            <h2>{{ selected.station.name }}</h2>
+            @if (selected.station.address) {
+              <p class="panel-loc">{{ selected.station.address }}</p>
+            }
+            <div class="stat-grid">
+              <div>
+                <span>Vélos</span>
+                <strong>{{ selected.station.bikesAvailable }}</strong>
+              </div>
+              <div>
+                <span>Places</span>
+                <strong>{{ selected.station.docksAvailable }}</strong>
+              </div>
+              <div>
+                <span>Élec.</span>
+                <strong>{{ selected.station.electricalBikes }}</strong>
+              </div>
+              <div>
+                <span>Mécas</span>
+                <strong>{{ selected.station.mechanicalBikes }}</strong>
+              </div>
             </div>
-            <div class="pill-body">
-              <h3>{{ event.title }}</h3>
-              <p>{{ event.venueName || event.city || 'Toulouse' }}</p>
-              @if (event.startsOn) {
-                <p class="when">{{ event.startsOn | date: 'd MMM' }} · {{ event.schedule }}</p>
-              }
+            <div class="panel-actions">
+              <a class="cta" [routerLink]="['/velo', selected.station.stationId]">Fiche station</a>
+              <a
+                class="cta secondary"
+                [href]="mapsUrl(selected.station.latitude, selected.station.longitude)"
+                target="_blank"
+                rel="noreferrer"
+              >Itinéraire</a>
             </div>
-          </button>
-          <a class="pill-link" [routerLink]="['/evenements', event.eventId]">Voir</a>
-        </article>
+          </div>
+        </div>
       }
-    </div>
+
+      @if (selected.type === 'parking') {
+        <div class="detail-grid">
+          <div class="detail-copy">
+            <p class="panel-kicker">
+              <span class="dot parking" aria-hidden="true"></span> Parking
+            </p>
+            <h2>{{ selected.lot.name }}</h2>
+            <p class="panel-loc">
+              {{ selected.lot.address || selected.lot.city || 'Toulouse' }}
+            </p>
+            <div class="stat-grid">
+              <div>
+                <span>Capacité</span>
+                <strong>{{ selected.lot.capacity ?? '—' }}</strong>
+              </div>
+              <div>
+                <span>Tarif</span>
+                <strong>{{ selected.lot.isFree ? 'Gratuit' : (selected.lot.hourlyRate != null ? selected.lot.hourlyRate + ' €/h' : 'Payant') }}</strong>
+              </div>
+            </div>
+            @if (selected.lot.operator) {
+              <p class="panel-note">{{ selected.lot.operator }}</p>
+            }
+            <div class="panel-actions">
+              <a class="cta" [routerLink]="['/parkings', selected.lot.parkingId]">Fiche parking</a>
+              <a
+                class="cta secondary"
+                [href]="mapsUrl(selected.lot.latitude, selected.lot.longitude)"
+                target="_blank"
+                rel="noreferrer"
+              >Itinéraire</a>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (selected.type === 'event') {
+        <div class="detail-grid" [class.has-media]="!!selected.event.imageUrl">
+          @if (selected.event.imageUrl) {
+            <div class="panel-media">
+              <img [src]="selected.event.imageUrl" [alt]="selected.event.title" loading="lazy" class="is-loaded" />
+            </div>
+          }
+          <div class="detail-copy">
+            <p class="panel-kicker">
+              <span class="dot events" aria-hidden="true"></span> Événement
+            </p>
+            <h2>{{ selected.event.title }}</h2>
+            <p class="panel-loc">
+              {{ selected.event.venueName || selected.event.city || 'Toulouse' }}
+            </p>
+            @if (selected.event.startsOn) {
+              <p class="panel-when">
+                {{ selected.event.startsOn | date: 'EEEE d MMMM' }}
+                @if (selected.event.schedule) {
+                  · {{ selected.event.schedule }}
+                }
+              </p>
+            }
+            @if (selected.event.summary) {
+              <p class="panel-note">{{ selected.event.summary }}</p>
+            }
+            <div class="panel-actions">
+              <a class="cta" [routerLink]="['/evenements', selected.event.eventId]">Voir l’événement</a>
+              @if (selected.event.latitude !== null && selected.event.longitude !== null) {
+                <a
+                  class="cta secondary"
+                  [href]="mapsUrl(selected.event.latitude, selected.event.longitude)"
+                  target="_blank"
+                  rel="noreferrer"
+                >Itinéraire</a>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (selected.type === 'place') {
+        <div class="detail-grid" [class.has-media]="!!selected.place.imageUrl">
+          @if (selected.place.imageUrl) {
+            <div class="panel-media">
+              <img [src]="selected.place.imageUrl" [alt]="selected.place.name" loading="lazy" class="is-loaded" />
+            </div>
+          }
+          <div class="detail-copy">
+            <p class="panel-kicker">
+              <span class="dot places" aria-hidden="true"></span>
+              {{ placeKindLabel(selected.place.kind) }}
+            </p>
+            <h2>{{ selected.place.name }}</h2>
+            <p class="panel-loc">
+              {{ selected.place.address || selected.place.city || 'Toulouse' }}
+              @if (selected.place.district) {
+                · {{ selected.place.district }}
+              }
+            </p>
+            @if (selected.place.protection) {
+              <p class="panel-when">{{ selected.place.protection }}</p>
+            }
+            @if (selected.place.description) {
+              <p class="panel-note">{{ selected.place.description }}</p>
+            }
+            <div class="panel-actions">
+              <a class="cta" [routerLink]="['/lieux', selected.place.placeId]">Fiche lieu</a>
+              @if (selected.place.latitude !== null && selected.place.longitude !== null) {
+                <a
+                  class="cta secondary"
+                  [href]="mapsUrl(selected.place.latitude, selected.place.longitude)"
+                  target="_blank"
+                  rel="noreferrer"
+                >Itinéraire</a>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </aside>
   }
+
+  <section class="explore" aria-labelledby="explore-title">
+    <div class="rail-head">
+      <div>
+        <h2 id="explore-title">{{ railTitle() }}</h2>
+        <p class="rail-sub">Touche une carte pour zoomer — le détail s’affiche sous la carte.</p>
+      </div>
+      <div class="rail-nav">
+        <button type="button" aria-label="Précédent" (click)="scrollRail(-1)">‹</button>
+        <button type="button" aria-label="Suivant" (click)="scrollRail(1)">›</button>
+      </div>
+    </div>
+
+    @if (railItems().length === 0) {
+      <p class="empty">Rien à afficher pour cette couche — change de filtre ou réessaie plus tard.</p>
+    } @else {
+      <div #railHost class="rail" tabindex="0">
+        @for (item of railItems(); track item.id) {
+          <article class="pill" [class.selected]="isSelected(item.payload)">
+            <button type="button" class="pill-hit" (click)="selectFromRail(item.payload)">
+              <div class="pill-media" [class.pill-media--tone]="!item.imageUrl">
+                @if (item.imageUrl) {
+                  <img [src]="item.imageUrl" [alt]="item.title" loading="lazy" class="is-loaded" />
+                } @else {
+                  <div class="media-fallback" [style.background]="item.tone + '22'" aria-hidden="true"></div>
+                }
+              </div>
+              <div class="pill-body">
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.meta }}</p>
+              </div>
+            </button>
+          </article>
+        }
+      </div>
+    }
+  </section>
 </section>
