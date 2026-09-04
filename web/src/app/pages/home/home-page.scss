@@ -1,0 +1,110 @@
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.hero h1 {
+  font-size: 1.75rem;
+  margin: 4px 0 8px;
+}
+
+.eyebrow,
+.meta,
+.source {
+  color: #5c5c5c;
+  font-size: 0.875rem;
+}
+
+.banner {
+  background: #f4e6ea;
+  color: #7a2438;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.filters button {
+  border: 1px solid #e4e4e0;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.filters button.active {
+  background: #e8527a;
+  border-color: #e8527a;
+  color: #fff;
+}
+
+.nav-links {
+  margin: 12px 0 0;
+}
+
+.nav-links a {
+  color: #e8527a;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.lists {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.map {
+  min-height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ecece8;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #e4e4e0;
+  border-radius: 12px;
+}
+
+.list a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid #eee;
+}
+
+.list a:hover {
+  background: #fcedf2;
+}
+
+.source {
+  margin-top: 20px;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

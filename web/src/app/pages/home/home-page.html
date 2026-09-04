@@ -1,0 +1,63 @@
+<section class="page">
+  <header class="hero">
+    <p class="eyebrow">Données publiques · Toulouse Métropole</p>
+    <h1>Ma vue quotidienne</h1>
+    <p class="meta">
+      @if (veloCatalog(); as velo) {
+        Vélô · {{ velo.data.length }} stations · maj. {{ velo.fetchedAt | date: 'HH:mm:ss' }}
+      }
+      @if (parkingCatalog(); as parking) {
+        · Parkings · {{ parking.data.length }} parcs · {{ parking.status }}
+      }
+    </p>
+    <div class="filters" role="group" aria-label="Couches carte">
+      <button type="button" [class.active]="mapLayer() === 'all'" (click)="setLayer('all')">Tous</button>
+      <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">Vélôs</button>
+      <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">Parkings</button>
+    </div>
+    <p class="nav-links">
+      <a routerLink="/meteo">Météo du quartier →</a>
+    </p>
+  </header>
+
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
+
+  <div class="layout">
+    <div #mapHost class="map" aria-label="Carte Vélô et parkings"></div>
+    <div class="lists">
+      @if (mapLayer() !== 'parking') {
+        <ul class="list">
+          @for (station of visibleStations(); track station.stationId) {
+            <li>
+              <a [routerLink]="['/velo', station.stationId]">
+                <strong>{{ station.name }}</strong>
+                <span>{{ station.bikesAvailable }} vélos · {{ station.docksAvailable }} places</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+      @if (mapLayer() !== 'velo') {
+        <ul class="list">
+          @for (lot of visibleLots(); track lot.parkingId) {
+            <li>
+              <a [routerLink]="['/parkings', lot.parkingId]">
+                <strong>{{ lot.name }}</strong>
+                <span>
+                  {{ lot.kind === 'relais' ? 'Parc relais' : 'Parking' }} ·
+                  {{ lot.capacity ?? '—' }} places · dispo inconnue
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+
+  <p class="source">
+    Sources : JCDecaux / VélôToulouse (ODbL) · Toulouse Métropole Open Data (Licence Ouverte)
+  </p>
+</section>

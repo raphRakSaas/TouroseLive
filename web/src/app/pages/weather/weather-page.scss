@@ -1,0 +1,108 @@
+.back {
+  display: inline-block;
+  margin: 16px;
+  color: #5c5c5c;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 16px 48px;
+}
+
+.eyebrow,
+.meta,
+.source {
+  color: #5c5c5c;
+  font-size: 0.875rem;
+}
+
+.district {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0;
+  font-size: 0.875rem;
+}
+
+.district select {
+  max-width: 320px;
+  padding: 10px 12px;
+  border: 1px solid #e4e4e0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.banner {
+  background: #f4e6ea;
+  color: #7a2438;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.current {
+  margin: 20px 0;
+}
+
+.place {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #e8527a;
+}
+
+.temp {
+  margin: 4px 0;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.label {
+  font-size: 1.125rem;
+}
+
+h2 {
+  margin: 28px 0 12px;
+  font-size: 1rem;
+}
+
+.hours,
+.days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e4e4e0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.hours li,
+.days li {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+}
+
+.hours li:last-child,
+.days li:last-child {
+  border-bottom: 0;
+}
+
+.rain {
+  color: #5c5c5c;
+  font-size: 0.85rem;
+}
+
+.source {
+  margin-top: 24px;
+}
+
+@media (max-width: 600px) {
+  .days li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

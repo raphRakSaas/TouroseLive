@@ -1,0 +1,8 @@
+{
+  "name": "tourose",
+  "private": true,
+  "scripts": {
+    "dev:api": "npm run start:dev --prefix api",
+    "dev:web": "npm start --prefix web"
+  }
+}

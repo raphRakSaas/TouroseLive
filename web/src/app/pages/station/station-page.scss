@@ -1,0 +1,54 @@
+.back {
+  display: inline-block;
+  margin: 16px;
+  color: #5c5c5c;
+}
+
+.card {
+  max-width: 640px;
+  margin: 0 16px 48px;
+}
+
+.card h1 {
+  margin: 4px 0 8px;
+}
+
+.code {
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #e8527a;
+}
+
+.meta,
+.source {
+  color: #5c5c5c;
+  font-size: 0.875rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+dd {
+  font-size: 2rem;
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+small {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #5c5c5c;
+}
+
+.banner {
+  margin: 16px;
+  background: #f4e6ea;
+  color: #7a2438;
+  padding: 12px 14px;
+  border-radius: 8px;
+}

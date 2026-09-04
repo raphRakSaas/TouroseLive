@@ -1,0 +1,37 @@
+<a routerLink="/" class="back">← tableau de bord</a>
+
+@if (loadError()) {
+  <p class="banner">{{ loadError() }}</p>
+}
+
+@if (catalog()?.data; as lot) {
+  <article class="card">
+    <p class="code">{{ lot.kind === 'relais' ? 'PARC RELAIS' : 'PARKING' }} · {{ lot.parkingId }}</p>
+    <h1>{{ lot.name }}</h1>
+    <p>{{ lot.address }}</p>
+    <p class="meta">
+      maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }} ·
+      {{ lot.operator || 'gestionnaire inconnu' }}
+    </p>
+    <p class="occupancy">Disponibilité inconnue — l’open data ne publie pas l’occupation live.</p>
+    <dl>
+      <div>
+        <dt>Capacité</dt>
+        <dd>{{ lot.capacity ?? '—' }} <small>places catalogue</small></dd>
+      </div>
+      <div>
+        <dt>Tarif 1 h</dt>
+        <dd>
+          @if (lot.isFree) {
+            Gratuit
+          } @else {
+            {{ euro(lot.hourlyRate) }}
+          }
+          <small>24 h : {{ lot.isFree ? 'gratuit' : euro(lot.dailyRate) }}</small>
+        </dd>
+      </div>
+    </dl>
+    <a class="maps" [href]="mapsUrl(lot)" target="_blank" rel="noreferrer">Y aller</a>
+    <p class="source">Source : Toulouse Métropole Open Data · Licence Ouverte</p>
+  </article>
+}

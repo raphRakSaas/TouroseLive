@@ -1,0 +1,28 @@
+<a routerLink="/" class="back">← tableau de bord</a>
+
+@if (loadError()) {
+  <p class="banner">{{ loadError() }}</p>
+}
+
+@if (catalog()?.data; as station) {
+  <article class="card">
+    <p class="code">VÉLÔ · {{ station.stationId }}</p>
+    <h1>{{ station.name }}</h1>
+    <p>{{ station.address }}</p>
+    <p class="meta">
+      maj. {{ catalog()?.fetchedAt | date: 'HH:mm:ss' }} ·
+      {{ station.isRenting ? 'En service' : 'Hors service' }}
+    </p>
+    <dl>
+      <div>
+        <dt>Vélos disponibles</dt>
+        <dd>{{ station.bikesAvailable }} <small>dont {{ station.electricalBikes }} électriques</small></dd>
+      </div>
+      <div>
+        <dt>Places libres</dt>
+        <dd>{{ station.docksAvailable }} <small>sur {{ station.capacity ?? '—' }} bornes</small></dd>
+      </div>
+    </dl>
+    <p class="source">Source : JCDecaux / VélôToulouse · licence ODbL</p>
+  </article>
+}

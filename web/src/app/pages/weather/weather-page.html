@@ -1,0 +1,73 @@
+<a routerLink="/" class="back">← tableau de bord</a>
+
+<section class="page">
+  <header>
+    <p class="eyebrow">Météo · Open-Meteo</p>
+    <h1>Météo du quartier</h1>
+    <p class="meta">
+      ATMO métropole arrive ensuite (T-08). Ici : température locale seulement.
+    </p>
+  </header>
+
+  <label class="district">
+    Quartier
+    <select
+      [value]="selectedDistrictId()"
+      (change)="onDistrictChange($any($event.target).value)"
+    >
+      @for (district of districts(); track district.districtId) {
+        <option [value]="district.districtId">{{ district.name }}</option>
+      }
+    </select>
+  </label>
+
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
+
+  @if (catalog()?.data; as forecast) {
+    <article class="current">
+      <p class="place">{{ forecast.district.name }}</p>
+      <p class="temp">{{ forecast.current.temperature | number: '1.0-0' }}°</p>
+      <p class="label">{{ forecast.current.weatherLabel }}</p>
+      <p class="meta">
+        Ressenti {{ forecast.current.apparentTemperature | number: '1.0-0' }}° ·
+        maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }} ·
+        {{ catalog()?.status }}
+      </p>
+    </article>
+
+    <section>
+      <h2>Prochaines heures</h2>
+      <ul class="hours">
+        @for (hour of forecast.hourly.slice(0, 12); track hour.time) {
+          <li>
+            <span>{{ hour.time | date: 'HH:mm' }}</span>
+            <strong>{{ hour.temperature | number: '1.0-0' }}°</strong>
+            <span class="rain">
+              {{ hour.precipitationProbability ?? '—' }}% pluie
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section>
+      <h2>5 prochains jours</h2>
+      <ul class="days">
+        @for (day of forecast.daily; track day.date) {
+          <li>
+            <span>{{ day.date | date: 'EEE d MMM' }}</span>
+            <span>{{ day.weatherLabel }}</span>
+            <strong>
+              {{ day.temperatureMin | number: '1.0-0' }}° /
+              {{ day.temperatureMax | number: '1.0-0' }}°
+            </strong>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <p class="source">Source : Open-Meteo · licence Open-Meteo / CC BY 4.0</p>
+  }
+</section>
