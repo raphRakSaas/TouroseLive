@@ -1,6 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { PlaceMediaResolver } from '../common/place-media';
 import {
   CatalogResponse,
   CultureEventDto,
@@ -23,8 +22,10 @@ const POLL_MS = 60 * 60_000;
 const STALE_AFTER_MS = 12 * 60 * 60_000;
 const PAGE_SIZE = 100;
 const MAX_PAGES = 5;
-const MAX_AGENDAS = 25;
-const MAX_EVENTS_PER_AGENDA = 80;
+const MAX_AGENDAS = 20;
+const MAX_EVENTS_PER_AGENDA = 40;
+const FETCH_TIMEOUT_MS = 20_000;
+const OPENAGENDA_CONCURRENCY = 2;
 
 @Injectable()
 export class EventsService implements OnModuleInit {
@@ -36,10 +37,10 @@ export class EventsService implements OnModuleInit {
   private openAgendaConfigured = false;
   private sourceLabel =
     'Toulouse Métropole Open Data / agenda-des-manifestations-culturelles-so-toulouse';
-  private readonly mediaResolver = new PlaceMediaResolver();
 
   async onModuleInit(): Promise<void> {
-    await this.refreshEvents();
+    // Don't block Nest listen() — OpenAgenda / ODS can take minutes.
+    void this.refreshEvents();
   }
 
   @Interval(POLL_MS)
@@ -72,37 +73,30 @@ export class EventsService implements OnModuleInit {
   private async refreshEvents(): Promise<void> {
     const apiKey = process.env.OPENAGENDA_PUBLIC_KEY?.trim() ?? '';
     this.openAgendaConfigured = apiKey.length > 0;
+    this.logger.log(
+      `Events refresh started (openagenda=${this.openAgendaConfigured ? 'on' : 'off'})`,
+    );
 
     try {
+      // 1) Publish ODS quickly so /v1/events is never empty while OA loads.
       const odsEvents = await this.fetchOdsEvents();
+      this.publishCatalog(odsEvents, []);
+      this.logger.log(`ODS events ready (${odsEvents.length})`);
+
       let openAgendaEvents: CultureEventDto[] = [];
       if (this.openAgendaConfigured) {
         openAgendaEvents = await this.fetchOpenAgendaEvents(apiKey);
+        this.publishCatalog(odsEvents, openAgendaEvents);
+        this.logger.log(
+          `Events refresh ok (ods=${odsEvents.length}, openagenda=${openAgendaEvents.length}, merged=${this.events.length})`,
+        );
       } else {
         this.logger.warn(
-          'OPENAGENDA_PUBLIC_KEY manquante — agenda limité à ODS So Toulouse (souvent peu d’événements futurs). Clé gratuite : https://openagenda.com/settings/apiKey',
+          'OPENAGENDA_PUBLIC_KEY manquante — agenda limité à ODS So Toulouse. Clé gratuite : https://openagenda.com/settings/apiKey',
         );
       }
 
-      const merged = this.mergeEvents([...openAgendaEvents, ...odsEvents]);
-      this.events = merged;
-      this.sourceLabel = this.openAgendaConfigured
-        ? `OpenAgenda réseau Toulouse Métropole + ODS So Toulouse (${this.events.length} événements)`
-        : `ODS So Toulouse seulement (${this.events.length}). Ajoute OPENAGENDA_PUBLIC_KEY (gratuite) pour plus d’événements.`;
-      this.fetchedAt = new Date();
-      this.expiresAt = new Date(Date.now() + POLL_MS);
-      this.snapshotStatus = 'ok';
-      this.logger.log(
-        `Events refresh ok (ods=${odsEvents.length}, openagenda=${openAgendaEvents.length}, merged=${this.events.length})`,
-      );
-
-      void this.enrichEventImages(merged).then((enriched) => {
-        this.events = enriched;
-        this.fetchedAt = new Date();
-        this.logger.log(
-          `Events photos ready (photos=${enriched.filter((event) => event.imageUrl).length}/${enriched.length})`,
-        );
-      });
+      // OpenAgenda already ships images; skip Wikimedia enrichment (rate limits).
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Events refresh failed: ${message}`);
@@ -115,6 +109,19 @@ export class EventsService implements OnModuleInit {
         this.snapshotStatus = 'unavailable';
       }
     }
+  }
+
+  private publishCatalog(
+    odsEvents: CultureEventDto[],
+    openAgendaEvents: CultureEventDto[],
+  ): void {
+    this.events = this.mergeEvents([...openAgendaEvents, ...odsEvents]);
+    this.sourceLabel = this.openAgendaConfigured
+      ? `OpenAgenda réseau Toulouse Métropole + ODS So Toulouse (${this.events.length} événements)`
+      : `ODS So Toulouse seulement (${this.events.length}). Ajoute OPENAGENDA_PUBLIC_KEY (gratuite) pour plus d’événements.`;
+    this.fetchedAt = new Date();
+    this.expiresAt = new Date(Date.now() + POLL_MS);
+    this.snapshotStatus = 'ok';
   }
 
   private mergeEvents(events: CultureEventDto[]): CultureEventDto[] {
@@ -157,19 +164,32 @@ export class EventsService implements OnModuleInit {
     apiKey: string,
   ): Promise<CultureEventDto[]> {
     const agendas = await this.listToulouseAgendas(apiKey);
+    this.logger.log(`OpenAgenda agendas listed (${agendas.length})`);
+    const selected = agendas.slice(0, MAX_AGENDAS);
     const events: CultureEventDto[] = [];
-    for (const agenda of agendas.slice(0, MAX_AGENDAS)) {
-      try {
-        const agendaEvents = await this.listAgendaUpcomingEvents(
-          apiKey,
-          agenda.uid,
-        );
-        events.push(...agendaEvents);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        this.logger.warn(`OpenAgenda agenda ${agenda.uid} failed: ${message}`);
+    let cursor = 0;
+
+    const worker = async (): Promise<void> => {
+      while (cursor < selected.length) {
+        const index = cursor;
+        cursor += 1;
+        const agenda = selected[index];
+        try {
+          const agendaEvents = await this.listAgendaUpcomingEvents(
+            apiKey,
+            agenda.uid,
+          );
+          events.push(...agendaEvents);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.logger.warn(`OpenAgenda agenda ${agenda.uid} failed: ${message}`);
+        }
       }
-    }
+    };
+
+    await Promise.all(
+      Array.from({ length: OPENAGENDA_CONCURRENCY }, () => worker()),
+    );
     return events;
   }
 
@@ -177,12 +197,12 @@ export class EventsService implements OnModuleInit {
     apiKey: string,
   ): Promise<OpenAgendaAgenda[]> {
     const params = new URLSearchParams({
+      key: apiKey,
       network: TOULOUSE_NETWORK_ID,
       size: String(MAX_AGENDAS),
     });
     const payload = await this.fetchJson<OpenAgendaAgendasResponse>(
       `${OPENAGENDA_API}/agendas?${params.toString()}`,
-      { key: apiKey },
     );
     return payload.agendas ?? [];
   }
@@ -192,19 +212,28 @@ export class EventsService implements OnModuleInit {
     agendaUid: number,
   ): Promise<CultureEventDto[]> {
     const params = new URLSearchParams({
+      key: apiKey,
       size: String(Math.min(MAX_EVENTS_PER_AGENDA, 100)),
       monolingual: 'fr',
-      'relative[]': 'upcoming',
-      detailed: '1',
+      // Keep list payload light — detailed longDescription is fetched on demand later if needed.
+      sort: 'timings.asc',
     });
-    // URLSearchParams doesn't support duplicate keys well for relative[]=current
-    const query = `${params.toString()}&relative[]=current&sort=timings.asc`;
+    const query = `${params.toString()}&relative[]=upcoming&relative[]=current`;
     const payload = await this.fetchJson<OpenAgendaEventsResponse>(
       `${OPENAGENDA_API}/agendas/${agendaUid}/events?${query}`,
-      { key: apiKey },
     );
     return (payload.events ?? [])
-      .map((event) => this.mapOpenAgendaEvent(event))
+      .map((event) => {
+        try {
+          return this.mapOpenAgendaEvent(event);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.logger.debug(
+            `OpenAgenda event map failed (${event.uid}): ${message}`,
+          );
+          return null;
+        }
+      })
       .filter((event): event is CultureEventDto => event !== null)
       .slice(0, MAX_EVENTS_PER_AGENDA);
   }
@@ -262,7 +291,7 @@ export class EventsService implements OnModuleInit {
       status: event.status != null ? String(event.status) : null,
       attendanceMode:
         event.attendanceMode != null ? String(event.attendanceMode) : null,
-      age: this.localizedText(event.age) || null,
+      age: this.ageText(event.age),
       conditions: this.localizedText(event.conditions) || null,
       accessibility: this.accessibilityText(event.accessibility),
       provider: 'openagenda',
@@ -328,16 +357,50 @@ export class EventsService implements OnModuleInit {
     };
   }
 
-  private keywordList(
-    value: { fr?: string[] } | string[] | undefined,
-  ): string[] {
+  private keywordList(value: unknown): string[] {
     if (!value) {
       return [];
     }
+    const toText = (item: unknown): string => {
+      if (typeof item === 'string') {
+        return item.trim();
+      }
+      return this.localizedText(item);
+    };
     if (Array.isArray(value)) {
-      return value.map((item) => item.trim()).filter(Boolean);
+      return value.map(toText).filter(Boolean);
     }
-    return (value.fr ?? []).map((item) => item.trim()).filter(Boolean);
+    if (typeof value === 'object') {
+      const french = (value as { fr?: unknown }).fr;
+      if (Array.isArray(french)) {
+        return french.map(toText).filter(Boolean);
+      }
+    }
+    return [];
+  }
+
+  private ageText(value: unknown): string | null {
+    if (value == null) {
+      return null;
+    }
+    if (typeof value === 'string') {
+      return value.trim() || null;
+    }
+    if (typeof value === 'object') {
+      const record = value as { min?: number | null; max?: number | null };
+      const minimum = record.min;
+      const maximum = record.max;
+      if (minimum != null && maximum != null) {
+        return `${minimum}–${maximum} ans`;
+      }
+      if (minimum != null) {
+        return `À partir de ${minimum} ans`;
+      }
+      if (maximum != null) {
+        return `Jusqu’à ${maximum} ans`;
+      }
+    }
+    return null;
   }
 
   private accessibilityText(value: unknown): string | null {
@@ -348,45 +411,20 @@ export class EventsService implements OnModuleInit {
       return value.trim() || null;
     }
     if (typeof value === 'object') {
-      return this.localizedText(value as Record<string, string>) || null;
+      const flags = value as Record<string, unknown>;
+      const labels: Record<string, string> = {
+        ii: 'Handicap intellectuel',
+        hi: 'Handicap auditif',
+        vi: 'Handicap visuel',
+        pi: 'Handicap psychique',
+        mi: 'Mobilité réduite',
+      };
+      const enabled = Object.entries(labels)
+        .filter(([code]) => Boolean(flags[code]))
+        .map(([, label]) => label);
+      return enabled.length > 0 ? enabled.join(' · ') : null;
     }
     return null;
-  }
-
-  private async enrichEventImages(
-    events: CultureEventDto[],
-  ): Promise<CultureEventDto[]> {
-    const enriched: CultureEventDto[] = new Array(events.length);
-    let cursor = 0;
-    const concurrency = 4;
-
-    const worker = async (): Promise<void> => {
-      while (cursor < events.length) {
-        const index = cursor;
-        cursor += 1;
-        const event = events[index];
-        if (event.imageUrl) {
-          enriched[index] = event;
-          continue;
-        }
-        const query = event.venueName || event.title;
-        try {
-          const media = await this.mediaResolver.resolve(query, 'heritage');
-          enriched[index] = media
-            ? {
-                ...event,
-                imageUrl: media.imageUrl,
-                imageSource: media.imageSource,
-              }
-            : event;
-        } catch {
-          enriched[index] = event;
-        }
-      }
-    };
-
-    await Promise.all(Array.from({ length: concurrency }, () => worker()));
-    return enriched;
   }
 
   private openAgendaImageUrl(event: OpenAgendaEvent): string | null {
@@ -398,16 +436,32 @@ export class EventsService implements OnModuleInit {
     return `${base}${image.filename}`;
   }
 
-  private localizedText(
-    value: string | Record<string, string> | undefined,
-  ): string {
-    if (!value) {
+  private localizedText(value: unknown): string {
+    if (value == null) {
       return '';
     }
     if (typeof value === 'string') {
       return value.trim();
     }
-    return (value.fr || value.en || Object.values(value)[0] || '').trim();
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    if (typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      // Prefer language maps; ignore age-like {min,max} objects.
+      if ('fr' in record || 'en' in record) {
+        const preferred = record['fr'] ?? record['en'];
+        if (typeof preferred === 'string') {
+          return preferred.trim();
+        }
+      }
+      for (const candidate of Object.values(record)) {
+        if (typeof candidate === 'string' && candidate.trim()) {
+          return candidate.trim();
+        }
+      }
+    }
+    return '';
   }
 
   private isUpcomingOrOngoing(event: CultureEventDto, today: string): boolean {
@@ -427,20 +481,41 @@ export class EventsService implements OnModuleInit {
     return Number.isFinite(parsed) ? parsed : null;
   }
 
-  private async fetchJson<T>(
-    url: string,
-    headers: Record<string, string> = {},
-  ): Promise<T> {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': USER_AGENT,
-        Accept: 'application/json',
-        ...headers,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`${url} → HTTP ${response.status}`);
+  private async fetchJson<T>(url: string): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const safeUrl = this.redactUrl(url);
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': USER_AGENT,
+          Accept: 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`${safeUrl} → HTTP ${response.status}`);
+      }
+      return (await response.json()) as T;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`${safeUrl} → timeout after ${FETCH_TIMEOUT_MS}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    return (await response.json()) as T;
+  }
+
+  private redactUrl(url: string): string {
+    try {
+      const parsed = new URL(url);
+      if (parsed.searchParams.has('key')) {
+        parsed.searchParams.set('key', '[redacted]');
+      }
+      return parsed.toString();
+    } catch {
+      return url.replace(/key=[^&]+/gi, 'key=[redacted]');
+    }
   }
 }

@@ -30,7 +30,8 @@ export class PlacesService implements OnModuleInit {
   private readonly mediaResolver = new PlaceMediaResolver();
 
   async onModuleInit(): Promise<void> {
-    await this.refreshPlaces();
+    // Don't block Nest listen() while Wikimedia enrichment runs.
+    void this.refreshPlaces();
   }
 
   @Interval(POLL_MS)

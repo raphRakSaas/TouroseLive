@@ -25,7 +25,7 @@ export class VeloService implements OnModuleInit {
   private snapshotStatus: SnapshotStatus = 'unavailable';
 
   async onModuleInit(): Promise<void> {
-    await this.refreshStations();
+    void this.refreshStations();
   }
 
   @Interval(POLL_MS)

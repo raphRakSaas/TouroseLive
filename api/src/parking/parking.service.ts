@@ -26,7 +26,7 @@ export class ParkingService implements OnModuleInit {
   private snapshotStatus: SnapshotStatus = 'unavailable';
 
   async onModuleInit(): Promise<void> {
-    await this.refreshLots();
+    void this.refreshLots();
   }
 
   @Interval(POLL_MS)

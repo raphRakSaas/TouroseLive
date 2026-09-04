@@ -24,7 +24,7 @@ export class TisseoService implements OnModuleInit {
   private snapshotStatus: SnapshotStatus = 'unavailable';
 
   async onModuleInit(): Promise<void> {
-    await this.refreshAlerts();
+    void this.refreshAlerts();
   }
 
   @Interval(POLL_MS)

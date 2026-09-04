@@ -34,7 +34,7 @@ export class AirService implements OnModuleInit {
   private snapshotStatus: SnapshotStatus = 'unavailable';
 
   async onModuleInit(): Promise<void> {
-    await this.refreshIndex();
+    void this.refreshIndex();
   }
 
   @Interval(POLL_MS)
