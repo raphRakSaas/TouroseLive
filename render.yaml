@@ -1,0 +1,18 @@
+# https://docs.render.com/blueprint-spec
+services:
+  - type: web
+    name: tourose-api
+    runtime: node
+    rootDir: api
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: WEB_ORIGIN
+        value: https://tourose.netlify.app
+      - key: OPENAGENDA_PUBLIC_KEY
+        sync: false

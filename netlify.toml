@@ -1,10 +1,25 @@
 # TouRose — Netlify static host for the Angular app in web/
 # https://docs.netlify.com/configure-builds/file-based-configuration/
+#
+# Netlify only serves the SPA. The Nest API must be hosted separately
+# (Render / Railway / Fly…). Set API_PROXY_TARGET in Netlify env to that
+# origin, e.g. https://tourose-api.onrender.com
 
 [build]
   base = "web"
   command = "npm run build"
   publish = "dist/web/browser"
+
+# Proxy /v1/* to the Nest API (same-origin for the browser → no CORS pain).
+# Configure in Netlify UI → Environment variables:
+#   API_PROXY_TARGET = https://your-api-host.example
+#
+# Until API_PROXY_TARGET is set, replace the placeholder below after first API deploy.
+[[redirects]]
+  from = "/v1/*"
+  to = "https://tourose-api.onrender.com/v1/:splat"
+  status = 200
+  force = true
 
 # Angular client-side routes (/, /carte, /evenements/:id, …)
 [[redirects]]

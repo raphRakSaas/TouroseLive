@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { apiBaseUrl } from './api-base';
 import { CatalogResponse, Place, PlaceKind } from './catalog.models';
 
 @Injectable({ providedIn: 'root' })
 export class PlacesApi {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:3000/v1';
+  private readonly baseUrl = apiBaseUrl();
 
   listPlaces(kind: PlaceKind | 'all' = 'all') {
     const query = kind === 'all' ? '' : `?kind=${encodeURIComponent(kind)}`;
