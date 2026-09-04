@@ -1,24 +1,26 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogResponse, Place, PlaceKind } from '../../core/catalog.models';
 import { PlacesApi } from '../../core/places-api';
 
 @Component({
   selector: 'app-places-page',
-  imports: [RouterLink, DatePipe],
+  imports: [DatePipe],
   templateUrl: './places-page.html',
   styleUrl: './places-page.scss',
 })
-export class PlacesPage implements OnInit {
+export class PlacesPage implements OnInit, OnDestroy {
   private readonly placesApi = inject(PlacesApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private photoPollHandle: number | null = null;
+  private photoPollCount = 0;
 
   protected readonly kinds: Array<{ id: PlaceKind | 'all'; label: string }> = [
     { id: 'all', label: 'Tous' },
     { id: 'museum', label: 'Musées' },
-    { id: 'heritage', label: 'Patrimoine MH' },
+    { id: 'heritage', label: 'Patrimoine' },
     { id: 'gallery', label: 'Galeries' },
     { id: 'theatre', label: 'Théâtres' },
     { id: 'playground', label: 'Aires de jeux' },
@@ -40,6 +42,17 @@ export class PlacesPage implements OnInit {
     const kind = this.parseKind(kindParam);
     this.selectedKind.set(kind);
     this.loadPlaces(kind);
+    this.photoPollHandle = window.setInterval(() => {
+      this.photoPollCount += 1;
+      this.loadPlaces(this.selectedKind(), true);
+      if (this.photoPollCount >= 12) {
+        this.clearPhotoPoll();
+      }
+    }, 12_000);
+  }
+
+  ngOnDestroy(): void {
+    this.clearPhotoPoll();
   }
 
   protected setKind(kind: PlaceKind | 'all'): void {
@@ -76,11 +89,30 @@ export class PlacesPage implements OnInit {
     return (match?.id as PlaceKind | 'all') ?? 'all';
   }
 
-  private loadPlaces(kind: PlaceKind | 'all'): void {
-    this.loadError.set(null);
+  private loadPlaces(kind: PlaceKind | 'all', quiet = false): void {
+    if (!quiet) {
+      this.loadError.set(null);
+    }
     this.placesApi.listPlaces(kind).subscribe({
-      next: (payload) => this.catalog.set(payload),
-      error: () => this.loadError.set('Lieux temporairement indisponibles.'),
+      next: (payload) => {
+        this.catalog.set(payload);
+        const withPhoto = payload.data.filter((place) => place.imageUrl).length;
+        if (withPhoto > payload.data.length * 0.55) {
+          this.clearPhotoPoll();
+        }
+      },
+      error: () => {
+        if (!quiet) {
+          this.loadError.set('Lieux temporairement indisponibles.');
+        }
+      },
     });
+  }
+
+  private clearPhotoPoll(): void {
+    if (this.photoPollHandle !== null) {
+      window.clearInterval(this.photoPollHandle);
+      this.photoPollHandle = null;
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   AirIndex,
   CatalogResponse,
@@ -12,7 +12,7 @@ import { WeatherApi } from '../../core/weather-api';
 
 @Component({
   selector: 'app-weather-page',
-  imports: [RouterLink, DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe],
   templateUrl: './weather-page.html',
   styleUrl: './weather-page.scss',
 })

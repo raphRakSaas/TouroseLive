@@ -1,11 +1,8 @@
 <section class="page">
-  <a routerLink="/" class="back">← tableau de bord</a>
-
-  <header>
-    <p class="eyebrow">Agenda culturel · Open Data</p>
-    <h1>Événements à venir</h1>
-    <p class="meta">
-      Fusion ODS So Toulouse + OpenAgenda (réseau Toulouse Métropole) — gratuit.
+  <header class="page-header">
+    <h1>Événements</h1>
+    <p class="lede">
+      Agenda culturel Toulouse — OpenAgenda et open data métropole.
     </p>
   </header>
 
@@ -15,59 +12,65 @@
 
   @if (catalog(); as payload) {
     <p class="meta">
-      {{ payload.data.length }} événement(s) · {{ payload.status }} ·
-      maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+      {{ payload.data.length }} événement(s)
+      @if (payload.fetchedAt) {
+        · maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+      }
     </p>
-    <p class="meta">{{ payload.source }}</p>
 
     @if (payload.openAgendaConfigured === false) {
       <p class="hint">
-        OpenAgenda n’est pas configuré : l’ODS So Toulouse ne donne souvent que peu d’événements futurs.
-        Crée un compte gratuit sur
-        <a href="https://openagenda.com/settings/apiKey" target="_blank" rel="noreferrer">openagenda.com/settings/apiKey</a>,
-        mets la clé publique dans <code>api/.env</code> (<code>OPENAGENDA_PUBLIC_KEY=…</code>), puis redémarre l’API.
+        OpenAgenda n’est pas configuré. Ajoute
+        <code>OPENAGENDA_PUBLIC_KEY</code> dans <code>api/.env</code>
+        (<a href="https://openagenda.com/settings/apiKey" target="_blank" rel="noreferrer">clé gratuite</a>).
       </p>
     }
 
     @if (payload.data.length === 0) {
-      <p class="empty">Aucun événement à venir dans les sources configurées pour le moment.</p>
+      <p class="empty">Aucun événement à venir pour le moment.</p>
     } @else {
-      <ul class="feed">
+      <ul class="listing-grid">
         @for (event of payload.data; track event.eventId) {
           <li>
-            <p class="kicker">
-              {{ event.startsOn | date: 'd MMM y' }}
-              @if (event.endsOn && event.endsOn !== event.startsOn) {
-                → {{ event.endsOn | date: 'd MMM y' }}
-              }
-              · {{ event.provider === 'openagenda' ? 'OpenAgenda' : 'ODS' }}
-            </p>
-            <h2>{{ event.title }}</h2>
-            <p class="meta">
-              {{ event.venueName || 'Lieu à préciser' }}
-              @if (event.city) {
-                · {{ event.city }}
-              }
-            </p>
-            @if (event.category || event.type) {
-              <p class="meta">{{ event.type }} · {{ event.category }}</p>
-            }
-            @if (event.summary) {
-              <p class="summary">{{ event.summary }}</p>
-            }
-            <div class="actions">
-              @if (event.bookingUrl) {
-                <a [href]="event.bookingUrl" target="_blank" rel="noreferrer">Réserver / infos</a>
-              }
-              @if (mapsUrl(event); as url) {
-                <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
-              }
-            </div>
+            <article class="listing-card static">
+              <div class="listing-media">
+                @if (event.imageUrl) {
+                  <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
+                } @else {
+                  <div class="media-fallback" aria-hidden="true">
+                    {{ event.title.charAt(0) }}
+                  </div>
+                }
+                @if (event.startsOn) {
+                  <span class="badge">{{ event.startsOn | date: 'd MMM' }}</span>
+                }
+              </div>
+              <div class="listing-body">
+                <h3>{{ event.title }}</h3>
+                <p class="loc">
+                  {{ event.venueName || 'Lieu à préciser' }}
+                  @if (event.city) {
+                    · {{ event.city }}
+                  }
+                </p>
+                @if (event.type || event.category) {
+                  <p class="sub">{{ event.type }} {{ event.category }}</p>
+                }
+                <div class="card-actions">
+                  @if (event.bookingUrl) {
+                    <a [href]="event.bookingUrl" target="_blank" rel="noreferrer">Infos</a>
+                  }
+                  @if (mapsUrl(event); as url) {
+                    <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
+                  }
+                </div>
+              </div>
+            </article>
           </li>
         }
       </ul>
     }
 
-    <p class="source">Sources : OpenAgenda (licence ouverte) · Toulouse Métropole Open Data</p>
+    <p class="source">OpenAgenda · Toulouse Métropole Open Data</p>
   }
 </section>

@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogResponse, VeloStation } from '../../core/catalog.models';
@@ -6,7 +5,7 @@ import { VeloApi } from '../../core/velo-api';
 
 @Component({
   selector: 'app-station-page',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink],
   templateUrl: './station-page.html',
   styleUrl: './station-page.scss',
 })

@@ -1,13 +1,37 @@
-.summary {
-  margin: 8px 0 0;
-  color: var(--ink);
-  line-height: 1.45;
+.listing-card.static {
+  cursor: default;
 }
 
-.hint {
-  margin: 14px 0;
+.listing-card.static:hover .listing-media img {
+  transform: none;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.card-actions a {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 .source {
-  margin-top: 24px;
+  margin-top: 28px;
+}
+
+.hint {
+  margin: 12px 0 20px;
+}
+
+code {
+  font-size: 0.85em;
+  background: var(--bg-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
 }

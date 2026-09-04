@@ -1,225 +1,174 @@
-<section class="page wide">
+<section class="page">
   <header class="hero">
-    <div>
-      <p class="eyebrow">Données publiques · Toulouse Métropole</p>
-      <h1>Ma vue quotidienne</h1>
-      <p class="meta">
-        @if (veloCatalog()?.fetchedAt; as fetchedAt) {
-          maj. {{ fetchedAt | date: 'HH:mm:ss' }} · auto ~45 s
-        } @else {
-          Chargement des sources open data…
-        }
-      </p>
-    </div>
+    <h1>Tou<span>R</span>ose</h1>
+    <p class="lede">
+      Événements, lieux et mobilité à Toulouse — données publiques, photos réelles.
+    </p>
   </header>
 
-  @if (loadError()) {
-    <p class="banner">{{ loadError() }}</p>
-  }
+  <ul class="listing-grid categories">
+    @for (category of categories; track category.link) {
+      <li>
+        <a class="listing-card" [routerLink]="category.link">
+          <div class="listing-media">
+            <img [src]="category.image" [alt]="category.title" loading="lazy" />
+          </div>
+          <div class="listing-body">
+            <h3>{{ category.title }}</h3>
+            <p class="sub">{{ category.subtitle }}</p>
+          </div>
+        </a>
+      </li>
+    }
+  </ul>
 
-  <section class="snapshots" aria-label="Aperçu du jour">
-    <article class="shot">
-      <p class="shot-label">Vélô</p>
+  <div class="pulse" aria-label="Aperçu du jour">
+    <a class="pulse-item" routerLink="/carte">
+      <span class="pulse-label">Vélô</span>
       @if (highlightStation(); as station) {
-        <p class="shot-value">{{ station.bikesAvailable }}</p>
-        <p class="shot-detail">
-          vélos · {{ station.name }}
-          <small>dont {{ station.electricalBikes }} élec.</small>
-        </p>
-        <a class="shot-link" [routerLink]="['/velo', station.stationId]">Fiche station</a>
+        <strong>{{ station.bikesAvailable }}</strong>
+        <span>{{ station.name }}</span>
       } @else {
-        <p class="shot-detail">Chargement…</p>
+        <span>Chargement…</span>
       }
-    </article>
-
-    <article class="shot">
-      <p class="shot-label">Tisséo</p>
+    </a>
+    <a class="pulse-item" routerLink="/carte">
+      <span class="pulse-label">Tisséo</span>
       @if (tisseoCatalog(); as tisseo) {
         @if (tisseo.status === 'unavailable') {
-          <p class="shot-value muted">—</p>
-          <p class="shot-detail">Alertes indisponibles</p>
+          <strong>—</strong>
+          <span>Alertes indisponibles</span>
         } @else {
-          <p class="shot-value">{{ tisseo.data.length }}</p>
-          <p class="shot-detail">
+          <strong>{{ tisseo.data.length }}</strong>
+          <span>
             alerte(s)
             @if (severeAlertCount() > 0) {
               · {{ severeAlertCount() }} fortes
             }
-          </p>
+          </span>
         }
       } @else {
-        <p class="shot-detail">Chargement…</p>
+        <span>Chargement…</span>
       }
-      <a class="shot-link" href="#perturbations">Voir les perturbations</a>
-    </article>
-
-    <a class="shot shot-linkable" routerLink="/meteo">
-      <p class="shot-label">Météo & ATMO</p>
+    </a>
+    <a class="pulse-item" routerLink="/meteo">
+      <span class="pulse-label">Météo</span>
       @if (weatherCatalog()?.data; as weather) {
-        <p class="shot-value">{{ weather.current.temperature | number: '1.0-0' }}°</p>
-        <p class="shot-detail">{{ weather.current.weatherLabel }}</p>
+        <strong>{{ weather.current.temperature | number: '1.0-0' }}°</strong>
+        <span>{{ weather.current.weatherLabel }}</span>
       } @else {
-        <p class="shot-detail">Météo…</p>
+        <span>Chargement…</span>
       }
+    </a>
+    <a class="pulse-item" routerLink="/meteo">
+      <span class="pulse-label">Air</span>
       @if (airCatalog()?.data; as air) {
-        <p class="shot-air" [style.color]="air.qualityColor">
-          ATMO {{ air.qualityCode }} · {{ air.qualityLabel }}
-        </p>
-      }
-    </a>
-
-    <a class="shot shot-linkable" routerLink="/evenements">
-      <p class="shot-label">Agenda</p>
-      @if (eventsCatalog(); as events) {
-        <p class="shot-value">{{ events.data.length }}</p>
-        <p class="shot-detail">
-          @if (nextEvents()[0]; as firstEvent) {
-            prochain : {{ firstEvent.title }}
-          } @else {
-            événement(s) à venir
-          }
-        </p>
+        <strong [style.color]="air.qualityColor">{{ air.qualityCode }}</strong>
+        <span>{{ air.qualityLabel }}</span>
       } @else {
-        <p class="shot-detail">Chargement…</p>
+        <span>Chargement…</span>
       }
     </a>
-  </section>
+  </div>
 
-  <section class="panel map-panel">
-    <div class="panel-head">
-      <div>
-        <h2>Carte de la métropole</h2>
-        <p class="meta">
-          @if (veloCatalog(); as velo) {
-            {{ velo.data.length }} stations Vélô
-          }
-          @if (parkingCatalog(); as parking) {
-            · {{ parking.data.length }} parkings
-          }
-        </p>
-      </div>
-      <div class="filters" role="group" aria-label="Couches carte">
-        <button type="button" [class.active]="mapLayer() === 'all'" (click)="setLayer('all')">Tous</button>
-        <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">Vélôs</button>
-        <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">Parkings</button>
-      </div>
-    </div>
+  <div class="section-head">
+    <h2>À venir</h2>
+    <a routerLink="/evenements">Tout l’agenda</a>
+  </div>
 
-    <div class="layout">
-      <div #mapHost class="map" aria-label="Carte Vélô et parkings"></div>
-      <div class="lists">
-        @if (mapLayer() !== 'parking') {
-          <div class="list-block">
-            <h3>Stations les plus fournies</h3>
-            <ul class="list">
-              @for (station of topStations(); track station.stationId) {
-                <li>
-                  <a [routerLink]="['/velo', station.stationId]">
-                    <strong>{{ station.name }}</strong>
-                    <span>{{ station.bikesAvailable }} vélos · {{ station.docksAvailable }} places</span>
-                  </a>
-                </li>
+  @if (nextEvents().length === 0) {
+    <p class="empty">Aucun événement illustré pour le moment.</p>
+  } @else {
+    <ul class="listing-grid">
+      @for (event of nextEvents(); track event.eventId) {
+        <li>
+          <a
+            class="listing-card"
+            [href]="event.bookingUrl || '/evenements'"
+            [attr.target]="event.bookingUrl ? '_blank' : null"
+            [attr.rel]="event.bookingUrl ? 'noreferrer' : null"
+          >
+            <div class="listing-media">
+              @if (event.imageUrl) {
+                <img
+                  [src]="event.imageUrl"
+                  [alt]="event.title"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="media-fallback" aria-hidden="true">
+                  {{ event.title.charAt(0) }}
+                </div>
               }
-            </ul>
-          </div>
-        }
-        @if (mapLayer() !== 'velo') {
-          <div class="list-block">
-            <h3>Parkings</h3>
-            <ul class="list">
-              @for (lot of listLots(); track lot.parkingId) {
-                <li>
-                  <a [routerLink]="['/parkings', lot.parkingId]">
-                    <strong>{{ lot.name }}</strong>
-                    <span>{{ lot.capacity ?? '—' }} places · dispo inconnue</span>
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </div>
-    </div>
-    <p class="legend meta">
-      Vert ≥ 5 vélos · Orange 1–4 · Gris vide / hors service · Bleu parking
-    </p>
-  </section>
-
-  <section class="panel" id="perturbations">
-    <div class="panel-head">
-      <h2>Perturbations Tisséo</h2>
-      @if (tisseoCatalog(); as tisseo) {
-        <p class="meta">
-          {{ tisseo.status }} ·
-          @if (tisseo.fetchedAt) {
-            maj. {{ tisseo.fetchedAt | date: 'HH:mm' }}
-          }
-        </p>
-      }
-    </div>
-
-    @if (tisseoCatalog()?.status === 'unavailable') {
-      <p class="banner">
-        Alertes Tisséo temporairement indisponibles. Le reste du tableau de bord reste utilisable.
-      </p>
-    } @else if ((tisseoCatalog()?.data?.length ?? 0) === 0) {
-      <p class="empty">Aucune alerte Tisséo en cours.</p>
-    } @else {
-      <ul class="alert-list">
-        @for (alert of visibleAlerts(); track alert.alertId) {
-          <li [attr.data-severity]="alert.severity">
-            <span class="severity">{{ severityLabel(alert.severity) }}</span>
-            <div>
-              <strong>{{ alert.header }}</strong>
-              @if (alert.routeIds.length) {
-                <p class="routes">{{ alert.routeIds.join(' · ') }}</p>
-              }
-              @if (alert.summary) {
-                <p class="summary">{{ alert.summary }}</p>
+              @if (event.startsOn) {
+                <span class="badge">{{ event.startsOn | date: 'd MMM' }}</span>
               }
             </div>
-          </li>
-        }
-      </ul>
-      @if ((tisseoCatalog()?.data?.length ?? 0) > 5) {
-        <button type="button" class="more" (click)="toggleAlerts()">
-          {{ showAllAlerts() ? 'Réduire' : 'Voir toutes les alertes' }}
-        </button>
+            <div class="listing-body">
+              <h3>{{ event.title }}</h3>
+              <p class="loc">{{ event.venueName || event.city || 'Toulouse' }}</p>
+              @if (event.schedule) {
+                <p class="price-line">{{ event.schedule }}</p>
+              }
+            </div>
+          </a>
+        </li>
       }
-    }
-  </section>
+    </ul>
+  }
 
-  <section class="panel discover">
-    <div class="panel-head">
-      <h2>Découvrir</h2>
-      <p class="meta">Agenda & lieux open data</p>
+  <div class="section-head">
+    <h2>Lieux à découvrir</h2>
+    <a routerLink="/lieux">Explorer les lieux</a>
+  </div>
+
+  @if (featuredPlaces().length === 0) {
+    <p class="empty">Chargement des lieux…</p>
+  } @else {
+    <ul class="listing-grid">
+      @for (place of featuredPlaces(); track place.placeId) {
+        <li>
+          <a
+            class="listing-card"
+            [href]="place.website || '/lieux'"
+            [attr.target]="place.website ? '_blank' : null"
+            [attr.rel]="place.website ? 'noreferrer' : null"
+          >
+            <div class="listing-media">
+              @if (place.imageUrl) {
+                <img
+                  [src]="place.imageUrl"
+                  [alt]="place.name"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="media-fallback" aria-hidden="true">
+                  {{ place.name.charAt(0) }}
+                </div>
+              }
+              <span class="badge">{{ kindLabel(place.kind) }}</span>
+            </div>
+            <div class="listing-body">
+              <h3>{{ place.name }}</h3>
+              <p class="loc">
+                {{ place.district || place.city || 'Toulouse' }}
+              </p>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="map-cta">
+    <div>
+      <h2>Voir la carte</h2>
+      <p>Stations Vélô et parkings, sans encombrer l’accueil.</p>
     </div>
-    <div class="discover-grid">
-      <div>
-        <h3>Prochains événements</h3>
-        @if (nextEvents().length === 0) {
-          <p class="empty">Rien à afficher pour l’instant.</p>
-        } @else {
-          <ul class="mini-list">
-            @for (event of nextEvents(); track event.eventId) {
-              <li>
-                <span>{{ event.startsOn | date: 'd MMM' }}</span>
-                <strong>{{ event.title }}</strong>
-              </li>
-            }
-          </ul>
-        }
-        <a routerLink="/evenements">Tout l’agenda →</a>
-      </div>
-      <div>
-        <h3>Lieux</h3>
-        <p class="empty">Musées, patrimoine MH, aires de jeux, balades…</p>
-        <a routerLink="/lieux">Explorer les lieux →</a>
-      </div>
-    </div>
-  </section>
+    <a class="cta" routerLink="/carte">Ouvrir la carte</a>
+  </div>
 
   <p class="source">
-    Sources : JCDecaux / VélôToulouse · Tisséo · Open-Meteo · Atmo Occitanie · OpenAgenda · Toulouse Métropole Open Data
+    Sources : OpenAgenda · Wikimedia · OpenStreetMap · JCDecaux · Tisséo · Open-Meteo · Atmo · Toulouse Métropole
   </p>
 </section>

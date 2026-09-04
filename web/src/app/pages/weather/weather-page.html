@@ -1,11 +1,8 @@
-<section class="page">
-  <a routerLink="/" class="back">← tableau de bord</a>
-
-  <header>
-    <p class="eyebrow">Météo & air · Open-Meteo + Atmo Occitanie</p>
-    <h1>Météo & qualité de l’air</h1>
-    <p class="meta">
-      Météo = quartier choisi. ATMO = toujours Toulouse Métropole (échelle 1–6).
+<section class="page narrow">
+  <header class="page-header">
+    <h1>Météo & air</h1>
+    <p class="lede">
+      Prévisions par quartier · qualité de l’air métropole (ATMO 1–6).
     </p>
   </header>
 
@@ -26,20 +23,21 @@
   }
 
   @if (catalog()?.data; as forecast) {
-    <article class="panel hero-weather">
+    <article class="hero-weather">
       <p class="kicker">{{ forecast.district.name }}</p>
       <p class="temp">{{ forecast.current.temperature | number: '1.0-0' }}°</p>
       <p class="label">{{ forecast.current.weatherLabel }}</p>
       <p class="meta">
-        Ressenti {{ forecast.current.apparentTemperature | number: '1.0-0' }}° ·
-        maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }} ·
-        {{ catalog()?.status }}
+        Ressenti {{ forecast.current.apparentTemperature | number: '1.0-0' }}°
+        @if (catalog()?.fetchedAt) {
+          · maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }}
+        }
       </p>
     </article>
   }
 
-  <section class="panel">
-    <h2>ATMO · Toulouse Métropole</h2>
+  <section class="block">
+    <h2>Qualité de l’air</h2>
     @if (airError()) {
       <p class="banner">{{ airError() }}</p>
     }
@@ -48,9 +46,8 @@
         {{ air.qualityCode }} · {{ air.qualityLabel }}
       </p>
       <p class="meta">
-        Indice du {{ air.observedOn | date: 'd MMMM y' }} ·
-        polluant max {{ air.dominantPollutant ?? '—' }} ·
-        maj. {{ airCatalog()?.fetchedAt | date: 'HH:mm' }}
+        {{ air.observedOn | date: 'd MMMM y' }} · polluant max
+        {{ air.dominantPollutant ?? '—' }}
       </p>
       @if (air.advice) {
         <p class="advice">{{ air.advice }}</p>
@@ -59,7 +56,7 @@
   </section>
 
   @if (catalog()?.data; as forecast) {
-    <section class="panel">
+    <section class="block">
       <h2>Prochaines heures</h2>
       <ul class="hours">
         @for (hour of forecast.hourly.slice(0, 12); track hour.time) {
@@ -72,7 +69,7 @@
       </ul>
     </section>
 
-    <section class="panel">
+    <section class="block">
       <h2>5 prochains jours</h2>
       <ul class="days">
         @for (day of forecast.daily; track day.date) {
@@ -89,7 +86,5 @@
     </section>
   }
 
-  <p class="source">
-    Sources : Open-Meteo · Atmo Occitanie (ODbL) — échelle ATMO 1–6, pas un score 0–100.
-  </p>
+  <p class="source">Open-Meteo · Atmo Occitanie</p>
 </section>

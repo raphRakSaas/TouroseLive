@@ -9,6 +9,8 @@ export type PlaceKind =
   | 'walk'
   | 'heritage';
 
+export type PlaceImageSource = 'wikidata' | 'wikipedia' | 'commons' | null;
+
 export interface PlaceDto {
   placeId: string;
   kind: PlaceKind;
@@ -21,6 +23,8 @@ export interface PlaceDto {
   latitude: number | null;
   longitude: number | null;
   protection: string | null;
+  imageUrl: string | null;
+  imageSource: PlaceImageSource;
 }
 
 export interface CatalogResponse<T> {

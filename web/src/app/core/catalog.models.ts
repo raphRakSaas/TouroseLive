@@ -121,6 +121,8 @@ export interface CultureEvent {
   longitude: number | null;
   bookingUrl: string | null;
   provider?: 'ods' | 'openagenda';
+  imageUrl?: string | null;
+  imageSource?: 'openagenda' | 'commons' | 'wikidata' | 'wikipedia' | null;
 }
 
 export type PlaceKind =
@@ -144,6 +146,8 @@ export interface Place {
   latitude: number | null;
   longitude: number | null;
   protection: string | null;
+  imageUrl?: string | null;
+  imageSource?: 'wikidata' | 'wikipedia' | 'commons' | null;
 }
 
 export interface CatalogResponse<T> {

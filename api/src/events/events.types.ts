@@ -2,6 +2,8 @@ export type SnapshotStatus = 'ok' | 'stale' | 'unavailable';
 
 export type EventProvider = 'ods' | 'openagenda';
 
+export type EventImageSource = 'openagenda' | 'commons' | 'wikidata' | 'wikipedia' | null;
+
 export interface CultureEventDto {
   eventId: string;
   title: string;
@@ -19,6 +21,8 @@ export interface CultureEventDto {
   longitude: number | null;
   bookingUrl: string | null;
   provider: EventProvider;
+  imageUrl: string | null;
+  imageSource: EventImageSource;
 }
 
 export interface CatalogResponse<T> {
@@ -80,6 +84,12 @@ export interface OpenAgendaLocation {
   longitude?: number;
 }
 
+export interface OpenAgendaImage {
+  filename?: string;
+  base?: string;
+  variants?: Array<{ filename?: string; type?: string }>;
+}
+
 export interface OpenAgendaEvent {
   uid?: number;
   title?: string | Record<string, string>;
@@ -91,6 +101,7 @@ export interface OpenAgendaEvent {
   lastTiming?: OpenAgendaTiming;
   canonicalUrl?: string;
   registrationUrl?: string;
+  image?: OpenAgendaImage | null;
 }
 
 export interface OpenAgendaEventsResponse {

@@ -1,11 +1,8 @@
 <section class="page">
-  <a routerLink="/" class="back">← tableau de bord</a>
-
-  <header>
-    <p class="eyebrow">Découvrir · Open Data</p>
-    <h1>Lieux à Toulouse</h1>
-    <p class="meta">
-      Musées, patrimoine protégé, galeries, théâtres, aires de jeux, jardins partagés, balades.
+  <header class="page-header">
+    <h1>Lieux</h1>
+    <p class="lede">
+      Musées, patrimoine, galeries, théâtres, jardins, balades et aires de jeux.
     </p>
   </header>
 
@@ -27,47 +24,56 @@
 
   @if (catalog(); as payload) {
     <p class="meta">
-      {{ payload.data.length }} lieu(x) · affichage {{ visiblePlaces().length }} ·
-      {{ payload.status }} · maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+      {{ payload.data.length }} lieu(x) · affichage {{ visiblePlaces().length }}
+      @if (payload.fetchedAt) {
+        · maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+      }
     </p>
 
-    <ul class="feed">
+    <ul class="listing-grid">
       @for (place of visiblePlaces(); track place.placeId) {
         <li>
-          <p class="kicker">{{ kindLabel(place.kind) }}</p>
-          <h2>{{ place.name }}</h2>
-          <p class="meta">
-            {{ place.address || 'Adresse non renseignée' }}
-            @if (place.city) {
-              · {{ place.city }}
-            }
-          </p>
-          @if (place.protection) {
-            <p class="meta">{{ place.protection }}</p>
-          }
-          @if (place.description) {
-            <p class="summary">{{ place.description }}</p>
-          }
-          <div class="actions">
-            @if (place.website) {
-              <a [href]="place.website" target="_blank" rel="noreferrer">Site</a>
-            }
-            @if (mapsUrl(place); as url) {
-              <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
-            }
-          </div>
+          <article class="listing-card static">
+              <div class="listing-media">
+                @if (place.imageUrl) {
+                  <img [src]="place.imageUrl" [alt]="place.name" loading="lazy" />
+                } @else {
+                  <div class="media-fallback" aria-hidden="true">
+                    {{ place.name.charAt(0) }}
+                  </div>
+                }
+                <span class="badge">{{ kindLabel(place.kind) }}</span>
+              </div>
+            <div class="listing-body">
+              <h3>{{ place.name }}</h3>
+              <p class="loc">
+                {{ place.address || place.city || 'Toulouse' }}
+              </p>
+              @if (place.protection) {
+                <p class="sub">{{ place.protection }}</p>
+              }
+              <div class="card-actions">
+                @if (place.website) {
+                  <a [href]="place.website" target="_blank" rel="noreferrer">Site</a>
+                }
+                @if (mapsUrl(place); as url) {
+                  <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
+                }
+              </div>
+            </div>
+          </article>
         </li>
       }
     </ul>
 
     @if (visiblePlaces().length < payload.data.length) {
-      <button type="button" class="cta secondary" (click)="showMore()">
-        Voir plus de lieux
+      <button type="button" class="cta secondary more" (click)="showMore()">
+        Voir plus
       </button>
     }
 
     <p class="source">
-      Sources : Toulouse Métropole Open Data · Base Mérimée (ODbL) pour le patrimoine MH
+      Toulouse Métropole Open Data · photos Wikimedia · tuiles OpenStreetMap
     </p>
   }
 </section>

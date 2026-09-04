@@ -1,0 +1,63 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Carte</h1>
+    <p class="lede">Stations Vélô et parkings sur la métropole.</p>
+  </header>
+
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
+
+  <div class="toolbar">
+    <p class="meta">
+      @if (veloCatalog(); as velo) {
+        {{ velo.data.length }} stations
+      }
+      @if (parkingCatalog(); as parking) {
+        · {{ parking.data.length }} parkings
+      }
+      @if (veloCatalog()?.fetchedAt; as fetchedAt) {
+        · maj. {{ fetchedAt | date: 'HH:mm' }}
+      }
+    </p>
+    <div class="chip-row" role="group" aria-label="Couches">
+      <button type="button" [class.active]="mapLayer() === 'all'" (click)="setLayer('all')">Tous</button>
+      <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">Vélô</button>
+      <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">Parkings</button>
+    </div>
+  </div>
+
+  <div class="map-layout">
+    <div #mapHost class="map" aria-label="Carte Vélô et parkings"></div>
+    <aside class="side">
+      @if (mapLayer() !== 'parking') {
+        <h2>Stations bien fournies</h2>
+        <ul class="side-list">
+          @for (station of topStations(); track station.stationId) {
+            <li>
+              <a [routerLink]="['/velo', station.stationId]">
+                <strong>{{ station.name }}</strong>
+                <span>{{ station.bikesAvailable }} vélos · {{ station.docksAvailable }} places</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+      @if (mapLayer() !== 'velo') {
+        <h2>Parkings</h2>
+        <ul class="side-list">
+          @for (lot of listLots(); track lot.parkingId) {
+            <li>
+              <a [routerLink]="['/parkings', lot.parkingId]">
+                <strong>{{ lot.name }}</strong>
+                <span>{{ lot.capacity ?? '—' }} places · dispo inconnue</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </aside>
+  </div>
+
+  <p class="meta legend">Vert ≥ 5 vélos · Rouge 1–4 · Gris vide · Noir parking</p>
+</section>

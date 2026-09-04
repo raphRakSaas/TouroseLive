@@ -1,15 +1,16 @@
 <header class="top">
   <a routerLink="/" class="brand">Tou<span>R</span>ose</a>
   <nav class="nav" aria-label="Principal">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Quotidien</a>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Explorer</a>
     <a routerLink="/evenements" routerLinkActive="active">Événements</a>
     <a routerLink="/lieux" routerLinkActive="active">Lieux</a>
-    <a routerLink="/meteo" routerLinkActive="active">Météo & air</a>
+    <a routerLink="/carte" routerLinkActive="active">Carte</a>
+    <a routerLink="/meteo" routerLinkActive="active">Météo</a>
   </nav>
 </header>
 <main>
   <router-outlet />
 </main>
 <footer class="foot">
-  <p>TouRose · compagnon open data de Toulouse · lecture seule</p>
+  <p>TouRose · open data Toulouse · lecture seule</p>
 </footer>

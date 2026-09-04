@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogResponse, ParkingLot } from '../../core/catalog.models';
@@ -6,7 +5,7 @@ import { ParkingApi } from '../../core/parking-api';
 
 @Component({
   selector: 'app-parking-page',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink],
   templateUrl: './parking-page.html',
   styleUrl: './parking-page.scss',
 })

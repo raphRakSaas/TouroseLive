@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { PlaceMediaResolver } from '../common/place-media';
 import {
   CatalogResponse,
   OdsExploreResponse,
@@ -11,9 +12,11 @@ import {
 
 const ODS_BASE =
   'https://data.toulouse-metropole.fr/api/explore/v2.1/catalog/datasets';
-const USER_AGENT = 'TouRose/0.1 (https://tourose.local; open-data reuse)';
+const USER_AGENT =
+  'TouRose/0.1 (https://github.com/raphRakSaas/TouroseLive; open-data reuse)';
 const POLL_MS = 12 * 60 * 60_000;
 const STALE_AFTER_MS = 48 * 60 * 60_000;
+const MEDIA_CONCURRENCY = 2;
 
 type RawRecord = Record<string, unknown>;
 
@@ -24,6 +27,7 @@ export class PlacesService implements OnModuleInit {
   private fetchedAt: Date | null = null;
   private expiresAt: Date | null = null;
   private snapshotStatus: SnapshotStatus = 'unavailable';
+  private readonly mediaResolver = new PlaceMediaResolver();
 
   async onModuleInit(): Promise<void> {
     await this.refreshPlaces();
@@ -48,8 +52,8 @@ export class PlacesService implements OnModuleInit {
       fetchedAt: this.fetchedAt?.toISOString() ?? null,
       expiresAt: this.expiresAt?.toISOString() ?? null,
       source:
-        'Toulouse Métropole Open Data (musées, galeries, théâtres, aires de jeux, jardins, balades, Base Mérimée MH)',
-      license: 'Licence Ouverte / ODbL (Mérimée)',
+        'Toulouse Métropole Open Data + photos Wikidata / Wikipedia / Wikimedia Commons',
+      license: 'Licence Ouverte / ODbL (Mérimée) / CC Wikimedia',
       data,
     };
   }
@@ -110,11 +114,21 @@ export class PlacesService implements OnModuleInit {
           .filter((place): place is PlaceDto => place !== null),
       ].sort((left, right) => left.name.localeCompare(right.name, 'fr'));
 
+      // Publish places immediately, then fill real photos in background.
       this.places = merged;
       this.fetchedAt = new Date();
       this.expiresAt = new Date(Date.now() + POLL_MS);
       this.snapshotStatus = 'ok';
-      this.logger.log(`Places refresh ok (${this.places.length})`);
+      this.logger.log(`Places catalog ready (${this.places.length}), resolving photos…`);
+
+      void this.enrichImages(merged).then((enriched) => {
+        this.places = enriched;
+        const withPhoto = enriched.filter((place) => place.imageUrl).length;
+        this.fetchedAt = new Date();
+        this.logger.log(
+          `Places photos ready (${enriched.length}, photos=${withPhoto})`,
+        );
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Places refresh failed: ${message}`);
@@ -127,6 +141,42 @@ export class PlacesService implements OnModuleInit {
         this.snapshotStatus = 'unavailable';
       }
     }
+  }
+
+  private async enrichImages(places: PlaceDto[]): Promise<PlaceDto[]> {
+    const enriched: PlaceDto[] = new Array(places.length);
+    let cursor = 0;
+
+    const worker = async (): Promise<void> => {
+      while (cursor < places.length) {
+        const index = cursor;
+        cursor += 1;
+        const place = places[index];
+        try {
+          const media = await this.mediaResolver.resolve(place.name, place.kind);
+          enriched[index] = media
+            ? {
+                ...place,
+                imageUrl: media.imageUrl,
+                imageSource: media.imageSource,
+              }
+            : { ...place, imageUrl: null, imageSource: null };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.logger.debug(`Media resolve failed for ${place.name}: ${message}`);
+          enriched[index] = { ...place, imageUrl: null, imageSource: null };
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: MEDIA_CONCURRENCY }, () => worker()),
+    );
+    return enriched;
+  }
+
+  private emptyImages(): Pick<PlaceDto, 'imageUrl' | 'imageSource'> {
+    return { imageUrl: null, imageSource: null };
   }
 
   private mapEquipment(
@@ -150,6 +200,7 @@ export class PlacesService implements OnModuleInit {
       latitude: point?.lat ?? null,
       longitude: point?.lon ?? null,
       protection: null,
+      ...this.emptyImages(),
     };
   }
 
@@ -171,6 +222,7 @@ export class PlacesService implements OnModuleInit {
       latitude: point?.lat ?? null,
       longitude: point?.lon ?? null,
       protection: null,
+      ...this.emptyImages(),
     };
   }
 
@@ -196,6 +248,7 @@ export class PlacesService implements OnModuleInit {
       latitude: point?.lat ?? null,
       longitude: point?.lon ?? null,
       protection: null,
+      ...this.emptyImages(),
     };
   }
 
@@ -217,6 +270,7 @@ export class PlacesService implements OnModuleInit {
       latitude: point?.lat ?? null,
       longitude: point?.lon ?? null,
       protection: null,
+      ...this.emptyImages(),
     };
   }
 
@@ -242,6 +296,7 @@ export class PlacesService implements OnModuleInit {
       latitude: point?.lat ?? null,
       longitude: point?.lon ?? null,
       protection: null,
+      ...this.emptyImages(),
     };
   }
 
@@ -271,6 +326,7 @@ export class PlacesService implements OnModuleInit {
       latitude,
       longitude,
       protection: this.asString(record.chpprot),
+      ...this.emptyImages(),
     };
   }
 

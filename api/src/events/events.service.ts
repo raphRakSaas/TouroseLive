@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { PlaceMediaResolver } from '../common/place-media';
 import {
   CatalogResponse,
   CultureEventDto,
@@ -35,6 +36,7 @@ export class EventsService implements OnModuleInit {
   private openAgendaConfigured = false;
   private sourceLabel =
     'Toulouse Métropole Open Data / agenda-des-manifestations-culturelles-so-toulouse';
+  private readonly mediaResolver = new PlaceMediaResolver();
 
   async onModuleInit(): Promise<void> {
     await this.refreshEvents();
@@ -76,7 +78,8 @@ export class EventsService implements OnModuleInit {
         );
       }
 
-      this.events = this.mergeEvents([...openAgendaEvents, ...odsEvents]);
+      const merged = this.mergeEvents([...openAgendaEvents, ...odsEvents]);
+      this.events = merged;
       this.sourceLabel = this.openAgendaConfigured
         ? `OpenAgenda réseau Toulouse Métropole + ODS So Toulouse (${this.events.length} événements)`
         : `ODS So Toulouse seulement (${this.events.length}). Ajoute OPENAGENDA_PUBLIC_KEY (gratuite) pour plus d’événements.`;
@@ -86,6 +89,14 @@ export class EventsService implements OnModuleInit {
       this.logger.log(
         `Events refresh ok (ods=${odsEvents.length}, openagenda=${openAgendaEvents.length}, merged=${this.events.length})`,
       );
+
+      void this.enrichEventImages(merged).then((enriched) => {
+        this.events = enriched;
+        this.fetchedAt = new Date();
+        this.logger.log(
+          `Events photos ready (photos=${enriched.filter((event) => event.imageUrl).length}/${enriched.length})`,
+        );
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Events refresh failed: ${message}`);
@@ -199,6 +210,9 @@ export class EventsService implements OnModuleInit {
     const first = event.firstTiming ?? event.timings?.[0];
     const last =
       event.lastTiming ?? event.timings?.[event.timings.length - 1] ?? first;
+    const latitude = event.location?.latitude ?? null;
+    const longitude = event.location?.longitude ?? null;
+    const openAgendaImage = this.openAgendaImageUrl(event);
     return {
       eventId: `oa-${event.uid}`,
       title,
@@ -218,10 +232,12 @@ export class EventsService implements OnModuleInit {
       category: null,
       theme: null,
       type: 'OpenAgenda',
-      latitude: event.location?.latitude ?? null,
-      longitude: event.location?.longitude ?? null,
+      latitude,
+      longitude,
       bookingUrl: event.registrationUrl || event.canonicalUrl || null,
       provider: 'openagenda',
+      imageUrl: openAgendaImage,
+      imageSource: openAgendaImage ? 'openagenda' : null,
     };
   }
 
@@ -236,6 +252,8 @@ export class EventsService implements OnModuleInit {
     const address = [record.lieu_adresse_1, record.lieu_adresse_2]
       .filter(Boolean)
       .join(', ');
+    const latitude = this.toNumber(record.googlemap_latitude);
+    const longitude = this.toNumber(record.googlemap_longitude);
     return {
       eventId: `ods-${record.identifiant || `${title}-${record.date_debut ?? 'na'}`}`,
       title,
@@ -249,11 +267,58 @@ export class EventsService implements OnModuleInit {
       category: record.categorie_de_la_manifestation?.trim() || null,
       theme: record.theme_de_la_manifestation?.trim() || null,
       type: record.type_de_manifestation?.trim() || null,
-      latitude: this.toNumber(record.googlemap_latitude),
-      longitude: this.toNumber(record.googlemap_longitude),
+      latitude,
+      longitude,
       bookingUrl: record.reservation_site_internet?.trim() || null,
       provider: 'ods',
+      imageUrl: null,
+      imageSource: null,
     };
+  }
+
+  private async enrichEventImages(
+    events: CultureEventDto[],
+  ): Promise<CultureEventDto[]> {
+    const enriched: CultureEventDto[] = new Array(events.length);
+    let cursor = 0;
+    const concurrency = 4;
+
+    const worker = async (): Promise<void> => {
+      while (cursor < events.length) {
+        const index = cursor;
+        cursor += 1;
+        const event = events[index];
+        if (event.imageUrl) {
+          enriched[index] = event;
+          continue;
+        }
+        const query = event.venueName || event.title;
+        try {
+          const media = await this.mediaResolver.resolve(query, 'heritage');
+          enriched[index] = media
+            ? {
+                ...event,
+                imageUrl: media.imageUrl,
+                imageSource: media.imageSource,
+              }
+            : event;
+        } catch {
+          enriched[index] = event;
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: concurrency }, () => worker()));
+    return enriched;
+  }
+
+  private openAgendaImageUrl(event: OpenAgendaEvent): string | null {
+    const image = event.image;
+    if (!image?.base || !image.filename) {
+      return null;
+    }
+    const base = image.base.endsWith('/') ? image.base : `${image.base}/`;
+    return `${base}${image.filename}`;
   }
 
   private localizedText(

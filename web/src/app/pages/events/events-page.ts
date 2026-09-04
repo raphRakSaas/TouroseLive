@@ -1,12 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { CatalogResponse, CultureEvent } from '../../core/catalog.models';
 import { EventsApi } from '../../core/events-api';
 
 @Component({
   selector: 'app-events-page',
-  imports: [RouterLink, DatePipe],
+  imports: [DatePipe],
   templateUrl: './events-page.html',
   styleUrl: './events-page.scss',
 })

@@ -1,18 +1,16 @@
-<section class="page">
-  <a routerLink="/" class="back">← tableau de bord</a>
+<section class="page narrow">
+  <a routerLink="/" class="back">Retour</a>
 
   @if (loadError()) {
     <p class="banner">{{ loadError() }}</p>
   }
 
   @if (catalog()?.data; as station) {
-    <header>
-      <p class="eyebrow">Vélô · {{ station.stationId }}</p>
+    <header class="page-header">
       <h1>{{ station.name }}</h1>
-      <p class="meta">
+      <p class="lede">
         {{ station.address || 'Adresse non renseignée' }} ·
-        {{ station.isRenting ? 'En service' : 'Hors service' }} ·
-        maj. {{ catalog()?.fetchedAt | date: 'HH:mm:ss' }}
+        {{ station.isRenting ? 'En service' : 'Hors service' }}
       </p>
     </header>
 
@@ -21,7 +19,9 @@
         <dt>Vélos disponibles</dt>
         <dd>
           {{ station.bikesAvailable }}
-          <small>dont {{ station.electricalBikes }} électriques · {{ station.mechanicalBikes }} méca.</small>
+          <small>
+            {{ station.electricalBikes }} élec. · {{ station.mechanicalBikes }} méca.
+          </small>
         </dd>
       </div>
       <div class="stat">
@@ -34,6 +34,6 @@
     </dl>
 
     <a class="cta" [href]="mapsUrl(station)" target="_blank" rel="noreferrer">Y aller</a>
-    <p class="source">Source : JCDecaux / VélôToulouse · licence ODbL</p>
+    <p class="source">JCDecaux / VélôToulouse</p>
   }
 </section>
