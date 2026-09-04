@@ -1,6 +1,6 @@
 # TouRose — tickets P6 (READY)
 
-Statut : **P6 lecture API** (D-10). Tranche B **close** (T-06→T-09). T-02 / tranche D **gelés**.
+Statut : **P6 lecture API** (D-10 + D-11). Tranche mobilité/météo/Tisséo + agenda/lieux. WhatsApp / Supabase **gelés**.
 
 Légende : `front` Angular · `api` NestJS · `data` Supabase · `agent` n8n · `ops` compte / secret
 

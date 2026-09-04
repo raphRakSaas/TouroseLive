@@ -96,3 +96,15 @@ Format : date · décision · pourquoi · conséquences.
 - Clé Tisséo API v2 (mail)
 - Catégorie réelle du template (après soumission Meta, T-14) — **gelé avec D-10**
 - Reprise WhatsApp / Supabase : explicitement hors scope jusqu’à D-10 levée
+
+### D-11 — Agenda & lieux à découvrir (open data) — 2026-09-04
+
+**Décision :** en phase lecture API, on ajoute :
+- événements : `agenda-des-manifestations-culturelles-so-toulouse` **+ OpenAgenda** (réseau Toulouse Métropole `78678694`) via clé publique **gratuite** `OPENAGENDA_PUBLIC_KEY` ;
+- lieux : musées, galeries, théâtres, aires de jeux, jardins partagés, balades nature, monuments **classés/inscrits MH** (Base Mérimée, Toulouse).
+
+Sans clé OpenAgenda : seuls les ~événements ODS restent (souvent peu de futurs). Avec clé : fusion OpenAgenda + ODS. Pas de contenu éditorial « bonnes adresses ».
+
+**Pourquoi :** demande produit explicite ; ODS agenda trop pauvre pour un vrai calendrier ; OpenAgenda est gratuit en lecture.
+
+**Conséquences :** écrans `/evenements` et `/lieux` ; compte OpenAgenda optionnel mais recommandé.

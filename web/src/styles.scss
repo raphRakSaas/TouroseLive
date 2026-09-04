@@ -1,5 +1,19 @@
 @import 'leaflet/dist/leaflet.css';
 
+:root {
+  --bg: #fafaf8;
+  --bg-soft: #fcedf2;
+  --ink: #1a1a1a;
+  --muted: #5c5c5c;
+  --line: #e8e8e2;
+  --accent: #e8527a;
+  --accent-ink: #a12b45;
+  --ok: #2f6f4e;
+  --warn: #c47a12;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+}
+
 *,
 *::before,
 *::after {
@@ -10,7 +24,20 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: #fafaf8;
-  color: #1a1a1a;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(ellipse 80% 50% at 100% -10%, #fcedf2 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, #f0f4f1 0%, transparent 50%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+a {
+  color: var(--accent);
+}
+
+button,
+input,
+select {
+  font: inherit;
 }

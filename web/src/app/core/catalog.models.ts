@@ -104,6 +104,48 @@ export interface TisseoAlert {
   activeUntil: string | null;
 }
 
+export interface CultureEvent {
+  eventId: string;
+  title: string;
+  summary: string | null;
+  startsOn: string | null;
+  endsOn: string | null;
+  schedule: string | null;
+  venueName: string | null;
+  address: string | null;
+  city: string | null;
+  category: string | null;
+  theme: string | null;
+  type: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  bookingUrl: string | null;
+  provider?: 'ods' | 'openagenda';
+}
+
+export type PlaceKind =
+  | 'museum'
+  | 'gallery'
+  | 'theatre'
+  | 'playground'
+  | 'garden'
+  | 'walk'
+  | 'heritage';
+
+export interface Place {
+  placeId: string;
+  kind: PlaceKind;
+  name: string;
+  address: string | null;
+  city: string | null;
+  district: string | null;
+  description: string | null;
+  website: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  protection: string | null;
+}
+
 export interface CatalogResponse<T> {
   status: SnapshotStatus;
   fetchedAt: string | null;
@@ -111,4 +153,5 @@ export interface CatalogResponse<T> {
   source: string;
   license: string;
   data: T;
+  openAgendaConfigured?: boolean;
 }

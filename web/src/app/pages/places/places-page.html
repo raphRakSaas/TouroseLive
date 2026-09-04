@@ -1,0 +1,67 @@
+<a routerLink="/" class="back">← tableau de bord</a>
+
+<section class="page">
+  <header>
+    <p class="eyebrow">Découvrir · Open Data</p>
+    <h1>Lieux à Toulouse</h1>
+    <p class="meta">
+      Musées, patrimoine protégé, galeries, théâtres, aires de jeux, jardins partagés, balades.
+    </p>
+  </header>
+
+  <div class="filters" role="group" aria-label="Types de lieux">
+    @for (kind of kinds; track kind.id) {
+      <button
+        type="button"
+        [class.active]="selectedKind() === kind.id"
+        (click)="setKind(kind.id)"
+      >
+        {{ kind.label }}
+      </button>
+    }
+  </div>
+
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
+
+  @if (catalog(); as payload) {
+    <p class="meta">
+      {{ payload.data.length }} lieu(x) · {{ payload.status }} ·
+      maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+    </p>
+
+    <ul class="list">
+      @for (place of payload.data; track place.placeId) {
+        <li>
+          <p class="kind">{{ kindLabel(place.kind) }}</p>
+          <h2>{{ place.name }}</h2>
+          <p class="place">
+            {{ place.address || 'Adresse non renseignée' }}
+            @if (place.city) {
+              · {{ place.city }}
+            }
+          </p>
+          @if (place.protection) {
+            <p class="tags">{{ place.protection }}</p>
+          }
+          @if (place.description) {
+            <p class="summary">{{ place.description }}</p>
+          }
+          <div class="actions">
+            @if (place.website) {
+              <a [href]="place.website" target="_blank" rel="noreferrer">Site</a>
+            }
+            @if (mapsUrl(place); as url) {
+              <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+
+    <p class="source">
+      Sources : Toulouse Métropole Open Data · Base Mérimée (ODbL) pour le patrimoine MH
+    </p>
+  }
+</section>

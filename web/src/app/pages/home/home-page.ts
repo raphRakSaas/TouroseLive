@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   Component,
   computed,
@@ -17,20 +17,26 @@ import {
   tileLayer,
 } from 'leaflet';
 import {
+  AirIndex,
   CatalogResponse,
+  CultureEvent,
   ParkingLot,
   TisseoAlert,
   VeloStation,
+  WeatherForecast,
 } from '../../core/catalog.models';
+import { AirApi } from '../../core/air-api';
+import { EventsApi } from '../../core/events-api';
 import { ParkingApi } from '../../core/parking-api';
 import { TisseoApi } from '../../core/tisseo-api';
 import { VeloApi } from '../../core/velo-api';
+import { WeatherApi } from '../../core/weather-api';
 
 type MapLayer = 'all' | 'velo' | 'parking';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, DecimalPipe],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
@@ -38,6 +44,9 @@ export class HomePage implements OnDestroy {
   private readonly veloApi = inject(VeloApi);
   private readonly parkingApi = inject(ParkingApi);
   private readonly tisseoApi = inject(TisseoApi);
+  private readonly weatherApi = inject(WeatherApi);
+  private readonly airApi = inject(AirApi);
+  private readonly eventsApi = inject(EventsApi);
   private leafletMap: LeafletMap | null = null;
   private readonly mapHost = viewChild<ElementRef<HTMLDivElement>>('mapHost');
 
@@ -50,9 +59,35 @@ export class HomePage implements OnDestroy {
   protected readonly tisseoCatalog = signal<CatalogResponse<
     TisseoAlert[]
   > | null>(null);
+  protected readonly weatherCatalog = signal<CatalogResponse<WeatherForecast> | null>(
+    null,
+  );
+  protected readonly airCatalog = signal<CatalogResponse<AirIndex | null> | null>(
+    null,
+  );
+  protected readonly eventsCatalog = signal<CatalogResponse<
+    CultureEvent[]
+  > | null>(null);
   protected readonly loadError = signal<string | null>(null);
   protected readonly mapLayer = signal<MapLayer>('all');
   protected readonly showAllAlerts = signal(false);
+
+  protected readonly highlightStation = computed(() => {
+    const stations = this.veloCatalog()?.data ?? [];
+    if (stations.length === 0) {
+      return null;
+    }
+    return [...stations].sort(
+      (left, right) => right.bikesAvailable - left.bikesAvailable,
+    )[0];
+  });
+
+  protected readonly topStations = computed(() => {
+    const stations = this.veloCatalog()?.data ?? [];
+    return [...stations]
+      .sort((left, right) => right.bikesAvailable - left.bikesAvailable)
+      .slice(0, 10);
+  });
 
   protected readonly visibleStations = computed(() => {
     if (this.mapLayer() === 'parking') {
@@ -68,13 +103,28 @@ export class HomePage implements OnDestroy {
     return this.parkingCatalog()?.data ?? [];
   });
 
+  protected readonly listLots = computed(() =>
+    (this.parkingCatalog()?.data ?? []).slice(0, 8),
+  );
+
   protected readonly visibleAlerts = computed(() => {
     const alerts = this.tisseoCatalog()?.data ?? [];
     if (this.showAllAlerts()) {
       return alerts;
     }
-    return alerts.slice(0, 8);
+    return alerts.slice(0, 5);
   });
+
+  protected readonly nextEvents = computed(() =>
+    (this.eventsCatalog()?.data ?? []).slice(0, 3),
+  );
+
+  protected readonly severeAlertCount = computed(
+    () =>
+      (this.tisseoCatalog()?.data ?? []).filter(
+        (alert) => alert.severity === 'severe',
+      ).length,
+  );
 
   constructor() {
     this.veloApi.listStations().subscribe({
@@ -97,6 +147,18 @@ export class HomePage implements OnDestroy {
           license: 'ODbL',
           data: [],
         }),
+    });
+    this.weatherApi.getForecast('capitole').subscribe({
+      next: (payload) => this.weatherCatalog.set(payload),
+      error: () => this.weatherCatalog.set(null),
+    });
+    this.airApi.getIndex().subscribe({
+      next: (payload) => this.airCatalog.set(payload),
+      error: () => this.airCatalog.set(null),
+    });
+    this.eventsApi.listEvents().subscribe({
+      next: (payload) => this.eventsCatalog.set(payload),
+      error: () => this.eventsCatalog.set(null),
     });
 
     effect(() => {

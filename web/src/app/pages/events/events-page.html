@@ -1,0 +1,75 @@
+<a routerLink="/" class="back">← tableau de bord</a>
+
+<section class="page">
+  <header>
+    <p class="eyebrow">Agenda culturel · Open Data</p>
+    <h1>Événements à venir</h1>
+    <p class="meta">
+      Fusion ODS So Toulouse + OpenAgenda (réseau Toulouse Métropole) — gratuit.
+    </p>
+  </header>
+
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
+
+  @if (catalog(); as payload) {
+    <p class="meta">
+      {{ payload.data.length }} événement(s) · {{ payload.status }} ·
+      maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+    </p>
+    <p class="meta">{{ payload.source }}</p>
+
+    @if (payload.openAgendaConfigured === false) {
+      <p class="hint">
+        OpenAgenda n’est pas configuré : l’ODS So Toulouse ne donne souvent que peu d’événements futurs.
+        Crée un compte gratuit sur
+        <a href="https://openagenda.com/settings/apiKey" target="_blank" rel="noreferrer">openagenda.com/settings/apiKey</a>,
+        mets la clé publique dans <code>api/.env</code> (<code>OPENAGENDA_PUBLIC_KEY=…</code>), puis redémarre l’API.
+      </p>
+    }
+
+    @if (payload.data.length === 0) {
+      <p class="empty">Aucun événement à venir dans les sources configurées pour le moment.</p>
+    } @else {
+      <ul class="list">
+        @for (event of payload.data; track event.eventId) {
+          <li>
+            <p class="when">
+              {{ event.startsOn | date: 'd MMM y' }}
+              @if (event.endsOn && event.endsOn !== event.startsOn) {
+                → {{ event.endsOn | date: 'd MMM y' }}
+              }
+              @if (event.provider) {
+                · {{ event.provider === 'openagenda' ? 'OpenAgenda' : 'ODS' }}
+              }
+            </p>
+            <h2>{{ event.title }}</h2>
+            <p class="place">
+              {{ event.venueName || 'Lieu à préciser' }}
+              @if (event.city) {
+                · {{ event.city }}
+              }
+            </p>
+            @if (event.category || event.type) {
+              <p class="tags">{{ event.type }} · {{ event.category }}</p>
+            }
+            @if (event.summary) {
+              <p class="summary">{{ event.summary }}</p>
+            }
+            <div class="actions">
+              @if (event.bookingUrl) {
+                <a [href]="event.bookingUrl" target="_blank" rel="noreferrer">Réserver / infos</a>
+              }
+              @if (mapsUrl(event); as url) {
+                <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <p class="source">Sources : OpenAgenda (licence ouverte) · Toulouse Métropole Open Data</p>
+  }
+</section>

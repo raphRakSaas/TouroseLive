@@ -1,46 +1,166 @@
 <section class="page">
   <header class="hero">
-    <p class="eyebrow">Données publiques · Toulouse Métropole</p>
-    <h1>Ma vue quotidienne</h1>
-    <p class="meta">
-      @if (veloCatalog(); as velo) {
-        Vélô · {{ velo.data.length }} stations · maj. {{ velo.fetchedAt | date: 'HH:mm:ss' }}
-      }
-      @if (parkingCatalog(); as parking) {
-        · Parkings · {{ parking.data.length }} parcs · {{ parking.status }}
-      }
-    </p>
-    <div class="filters" role="group" aria-label="Couches carte">
-      <button type="button" [class.active]="mapLayer() === 'all'" (click)="setLayer('all')">Tous</button>
-      <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">Vélôs</button>
-      <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">Parkings</button>
+    <div>
+      <p class="eyebrow">Données publiques · Toulouse Métropole</p>
+      <h1>Ma vue quotidienne</h1>
+      <p class="meta">
+        @if (veloCatalog()?.fetchedAt; as fetchedAt) {
+          maj. {{ fetchedAt | date: 'HH:mm:ss' }} · auto ~45 s
+        } @else {
+          Chargement des sources open data…
+        }
+      </p>
     </div>
-    <p class="nav-links">
-      <a routerLink="/meteo">Météo & ATMO →</a>
-    </p>
   </header>
 
   @if (loadError()) {
     <p class="banner">{{ loadError() }}</p>
   }
 
-  <section class="alerts">
-    <div class="alerts-head">
+  <section class="snapshots" aria-label="Aperçu du jour">
+    <article class="shot">
+      <p class="shot-label">Vélô</p>
+      @if (highlightStation(); as station) {
+        <p class="shot-value">{{ station.bikesAvailable }}</p>
+        <p class="shot-detail">
+          vélos · {{ station.name }}
+          <small>dont {{ station.electricalBikes }} élec.</small>
+        </p>
+        <a class="shot-link" [routerLink]="['/velo', station.stationId]">Fiche station</a>
+      } @else {
+        <p class="shot-detail">Chargement…</p>
+      }
+    </article>
+
+    <article class="shot">
+      <p class="shot-label">Tisséo</p>
+      @if (tisseoCatalog(); as tisseo) {
+        @if (tisseo.status === 'unavailable') {
+          <p class="shot-value muted">—</p>
+          <p class="shot-detail">Alertes indisponibles</p>
+        } @else {
+          <p class="shot-value">{{ tisseo.data.length }}</p>
+          <p class="shot-detail">
+            alerte(s)
+            @if (severeAlertCount() > 0) {
+              · {{ severeAlertCount() }} fortes
+            }
+          </p>
+        }
+      } @else {
+        <p class="shot-detail">Chargement…</p>
+      }
+      <a class="shot-link" href="#perturbations">Voir les perturbations</a>
+    </article>
+
+    <a class="shot shot-linkable" routerLink="/meteo">
+      <p class="shot-label">Météo & ATMO</p>
+      @if (weatherCatalog()?.data; as weather) {
+        <p class="shot-value">{{ weather.current.temperature | number: '1.0-0' }}°</p>
+        <p class="shot-detail">{{ weather.current.weatherLabel }}</p>
+      } @else {
+        <p class="shot-detail">Météo…</p>
+      }
+      @if (airCatalog()?.data; as air) {
+        <p class="shot-air" [style.color]="air.qualityColor">
+          ATMO {{ air.qualityCode }} · {{ air.qualityLabel }}
+        </p>
+      }
+    </a>
+
+    <a class="shot shot-linkable" routerLink="/evenements">
+      <p class="shot-label">Agenda</p>
+      @if (eventsCatalog(); as events) {
+        <p class="shot-value">{{ events.data.length }}</p>
+        <p class="shot-detail">
+          @if (nextEvents()[0]; as firstEvent) {
+            prochain : {{ firstEvent.title }}
+          } @else {
+            événement(s) à venir
+          }
+        </p>
+      } @else {
+        <p class="shot-detail">Chargement…</p>
+      }
+    </a>
+  </section>
+
+  <section class="panel map-panel">
+    <div class="panel-head">
+      <div>
+        <h2>Carte de la métropole</h2>
+        <p class="meta">
+          @if (veloCatalog(); as velo) {
+            {{ velo.data.length }} stations Vélô
+          }
+          @if (parkingCatalog(); as parking) {
+            · {{ parking.data.length }} parkings
+          }
+        </p>
+      </div>
+      <div class="filters" role="group" aria-label="Couches carte">
+        <button type="button" [class.active]="mapLayer() === 'all'" (click)="setLayer('all')">Tous</button>
+        <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">Vélôs</button>
+        <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">Parkings</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div #mapHost class="map" aria-label="Carte Vélô et parkings"></div>
+      <div class="lists">
+        @if (mapLayer() !== 'parking') {
+          <div class="list-block">
+            <h3>Stations les plus fournies</h3>
+            <ul class="list">
+              @for (station of topStations(); track station.stationId) {
+                <li>
+                  <a [routerLink]="['/velo', station.stationId]">
+                    <strong>{{ station.name }}</strong>
+                    <span>{{ station.bikesAvailable }} vélos · {{ station.docksAvailable }} places</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (mapLayer() !== 'velo') {
+          <div class="list-block">
+            <h3>Parkings</h3>
+            <ul class="list">
+              @for (lot of listLots(); track lot.parkingId) {
+                <li>
+                  <a [routerLink]="['/parkings', lot.parkingId]">
+                    <strong>{{ lot.name }}</strong>
+                    <span>{{ lot.capacity ?? '—' }} places · dispo inconnue</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    </div>
+    <p class="legend meta">
+      Vert ≥ 5 vélos · Orange 1–4 · Gris vide / hors service · Bleu parking
+    </p>
+  </section>
+
+  <section class="panel" id="perturbations">
+    <div class="panel-head">
       <h2>Perturbations Tisséo</h2>
       @if (tisseoCatalog(); as tisseo) {
         <p class="meta">
           {{ tisseo.status }} ·
           @if (tisseo.fetchedAt) {
-            maj. {{ tisseo.fetchedAt | date: 'HH:mm' }} ·
+            maj. {{ tisseo.fetchedAt | date: 'HH:mm' }}
           }
-          {{ tisseo.data.length }} alerte(s)
         </p>
       }
     </div>
 
     @if (tisseoCatalog()?.status === 'unavailable') {
       <p class="banner">
-        Alertes Tisséo temporairement indisponibles (GTFS-RT). Le reste du tableau de bord reste utilisable.
+        Alertes Tisséo temporairement indisponibles. Le reste du tableau de bord reste utilisable.
       </p>
     } @else if ((tisseoCatalog()?.data?.length ?? 0) === 0) {
       <p class="empty">Aucune alerte Tisséo en cours.</p>
@@ -57,14 +177,11 @@
               @if (alert.summary) {
                 <p class="summary">{{ alert.summary }}</p>
               }
-              @if (alert.url) {
-                <a [href]="alert.url" target="_blank" rel="noreferrer">Détail Tisséo</a>
-              }
             </div>
           </li>
         }
       </ul>
-      @if ((tisseoCatalog()?.data?.length ?? 0) > 8) {
+      @if ((tisseoCatalog()?.data?.length ?? 0) > 5) {
         <button type="button" class="more" (click)="toggleAlerts()">
           {{ showAllAlerts() ? 'Réduire' : 'Voir toutes les alertes' }}
         </button>
@@ -72,40 +189,37 @@
     }
   </section>
 
-  <div class="layout">
-    <div #mapHost class="map" aria-label="Carte Vélô et parkings"></div>
-    <div class="lists">
-      @if (mapLayer() !== 'parking') {
-        <ul class="list">
-          @for (station of visibleStations(); track station.stationId) {
-            <li>
-              <a [routerLink]="['/velo', station.stationId]">
-                <strong>{{ station.name }}</strong>
-                <span>{{ station.bikesAvailable }} vélos · {{ station.docksAvailable }} places</span>
-              </a>
-            </li>
-          }
-        </ul>
-      }
-      @if (mapLayer() !== 'velo') {
-        <ul class="list">
-          @for (lot of visibleLots(); track lot.parkingId) {
-            <li>
-              <a [routerLink]="['/parkings', lot.parkingId]">
-                <strong>{{ lot.name }}</strong>
-                <span>
-                  {{ lot.kind === 'relais' ? 'Parc relais' : 'Parking' }} ·
-                  {{ lot.capacity ?? '—' }} places · dispo inconnue
-                </span>
-              </a>
-            </li>
-          }
-        </ul>
-      }
+  <section class="panel discover">
+    <div class="panel-head">
+      <h2>Découvrir</h2>
+      <p class="meta">Agenda & lieux open data</p>
     </div>
-  </div>
+    <div class="discover-grid">
+      <div>
+        <h3>Prochains événements</h3>
+        @if (nextEvents().length === 0) {
+          <p class="empty">Rien à afficher pour l’instant.</p>
+        } @else {
+          <ul class="mini-list">
+            @for (event of nextEvents(); track event.eventId) {
+              <li>
+                <span>{{ event.startsOn | date: 'd MMM' }}</span>
+                <strong>{{ event.title }}</strong>
+              </li>
+            }
+          </ul>
+        }
+        <a routerLink="/evenements">Tout l’agenda →</a>
+      </div>
+      <div>
+        <h3>Lieux</h3>
+        <p class="empty">Musées, patrimoine MH, aires de jeux, balades…</p>
+        <a routerLink="/lieux">Explorer les lieux →</a>
+      </div>
+    </div>
+  </section>
 
   <p class="source">
-    Sources : JCDecaux / VélôToulouse (ODbL) · Toulouse Métropole Open Data (Licence Ouverte) · Tisséo GTFS-RT (ODbL)
+    Sources : JCDecaux / VélôToulouse · Tisséo · Open-Meteo · Atmo Occitanie · OpenAgenda · Toulouse Métropole Open Data
   </p>
 </section>

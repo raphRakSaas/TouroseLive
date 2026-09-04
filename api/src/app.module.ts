@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AirModule } from './air/air.module';
 import { AppController } from './app.controller';
+import { EventsModule } from './events/events.module';
 import { ParkingModule } from './parking/parking.module';
+import { PlacesModule } from './places/places.module';
 import { TisseoModule } from './tisseo/tisseo.module';
 import { VeloModule } from './velo/velo.module';
 import { WeatherModule } from './weather/weather.module';
@@ -15,6 +17,8 @@ import { WeatherModule } from './weather/weather.module';
     WeatherModule,
     AirModule,
     TisseoModule,
+    EventsModule,
+    PlacesModule,
   ],
   controllers: [AppController],
 })

@@ -1,5 +1,11 @@
 <header class="top">
   <a routerLink="/" class="brand">Tou<span>R</span>ose</a>
+  <nav class="nav" aria-label="Principal">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Quotidien</a>
+    <a routerLink="/evenements" routerLinkActive="active">Événements</a>
+    <a routerLink="/lieux" routerLinkActive="active">Lieux</a>
+    <a routerLink="/meteo" routerLinkActive="active">Météo & air</a>
+  </nav>
 </header>
 <main>
   <router-outlet />
