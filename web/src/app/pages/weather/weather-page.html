@@ -2,15 +2,15 @@
 
 <section class="page">
   <header>
-    <p class="eyebrow">Météo · Open-Meteo</p>
-    <h1>Météo du quartier</h1>
+    <p class="eyebrow">Météo & air · Open-Meteo + Atmo Occitanie</p>
+    <h1>Météo & qualité de l’air</h1>
     <p class="meta">
-      ATMO métropole arrive ensuite (T-08). Ici : température locale seulement.
+      Météo = quartier choisi. ATMO = toujours Toulouse Métropole (échelle 1–6).
     </p>
   </header>
 
   <label class="district">
-    Quartier
+    Quartier (météo)
     <select
       [value]="selectedDistrictId()"
       (change)="onDistrictChange($any($event.target).value)"
@@ -36,7 +36,31 @@
         {{ catalog()?.status }}
       </p>
     </article>
+  }
 
+  <section class="air">
+    <h2>ATMO · Toulouse Métropole</h2>
+    @if (airError()) {
+      <p class="banner">{{ airError() }}</p>
+    }
+    @if (airCatalog()?.data; as air) {
+      <article class="air-card">
+        <p class="air-code" [style.color]="air.qualityColor">
+          {{ air.qualityCode }} · {{ air.qualityLabel }}
+        </p>
+        <p class="meta">
+          Indice du {{ air.observedOn | date: 'd MMMM y' }} ·
+          polluant max {{ air.dominantPollutant ?? '—' }} ·
+          maj. {{ airCatalog()?.fetchedAt | date: 'HH:mm' }}
+        </p>
+        @if (air.advice) {
+          <p class="advice">{{ air.advice }}</p>
+        }
+      </article>
+    }
+  </section>
+
+  @if (catalog()?.data; as forecast) {
     <section>
       <h2>Prochaines heures</h2>
       <ul class="hours">
@@ -67,7 +91,9 @@
         }
       </ul>
     </section>
-
-    <p class="source">Source : Open-Meteo · licence Open-Meteo / CC BY 4.0</p>
   }
+
+  <p class="source">
+    Sources : Open-Meteo · Atmo Occitanie (ODbL) — pas un score 0–100 type maquette.
+  </p>
 </section>

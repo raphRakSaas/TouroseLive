@@ -70,6 +70,25 @@ export interface WeatherForecast {
   daily: WeatherDaily[];
 }
 
+export interface AirIndex {
+  zoneCode: string;
+  zoneLabel: string;
+  observedOn: string;
+  qualityCode: number;
+  qualityLabel: string;
+  qualityColor: string;
+  dominantPollutant: string | null;
+  pollutants: {
+    no2: number | null;
+    o3: number | null;
+    pm10: number | null;
+    pm25: number | null;
+    so2: number | null;
+  };
+  advice: string | null;
+  source: string;
+}
+
 export interface CatalogResponse<T> {
   status: SnapshotStatus;
   fetchedAt: string | null;

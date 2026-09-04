@@ -83,7 +83,16 @@ Format : date · décision · pourquoi · conséquences.
 
 **Pourquoi :** spike `docs/SPIKE_WHATSAPP.md`. Un digest quotidien n’est en général pas Utility. Cercle proche = coût faible. Test Meta whitelist suffit pour T-16.
 
+### D-10 — Focus lecture open data (pause WhatsApp + Supabase) — 2026-09-04
+
+**Décision :** pour la phase courante, TouRoseLive = **affichage des données open data via l’API NestJS** uniquement. **Pas** de WhatsApp (tranche D), **pas** de Supabase / `data_snapshots` (T-02). Caches = mémoire process. Briefing, opt-in, n8n : hors sprint jusqu’à nouvelle décision.
+
+**Pourquoi :** livrer un dashboard utile (Vélô, parkings, météo, ATMO, Tisséo) avant l’infra perso / agent.
+
+**Conséquences :** T-02, T-13 (aperçu briefing), T-14→T-17 passent en **later / gelés**. Onboarding favoris locaux (T-11/T-12) reste optionnel après la tranche B lecture. Backlog = T-08 → T-09 puis polish UI.
+
 ## En attente
 
 - Clé Tisséo API v2 (mail)
-- Catégorie réelle du template (après soumission Meta, T-14)
+- Catégorie réelle du template (après soumission Meta, T-14) — **gelé avec D-10**
+- Reprise WhatsApp / Supabase : explicitement hors scope jusqu’à D-10 levée

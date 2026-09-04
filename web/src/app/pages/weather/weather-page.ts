@@ -2,10 +2,12 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  AirIndex,
   CatalogResponse,
   District,
   WeatherForecast,
 } from '../../core/catalog.models';
+import { AirApi } from '../../core/air-api';
 import { WeatherApi } from '../../core/weather-api';
 
 @Component({
@@ -16,6 +18,7 @@ import { WeatherApi } from '../../core/weather-api';
 })
 export class WeatherPage implements OnInit {
   private readonly weatherApi = inject(WeatherApi);
+  private readonly airApi = inject(AirApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -23,7 +26,11 @@ export class WeatherPage implements OnInit {
   protected readonly catalog = signal<CatalogResponse<WeatherForecast> | null>(
     null,
   );
+  protected readonly airCatalog = signal<CatalogResponse<AirIndex | null> | null>(
+    null,
+  );
   protected readonly loadError = signal<string | null>(null);
+  protected readonly airError = signal<string | null>(null);
   protected readonly selectedDistrictId = signal('capitole');
 
   ngOnInit(): void {
@@ -36,6 +43,7 @@ export class WeatherPage implements OnInit {
       error: () => this.districts.set([]),
     });
     this.loadForecast(districtId);
+    this.loadAir();
   }
 
   protected onDistrictChange(districtId: string): void {
@@ -60,6 +68,20 @@ export class WeatherPage implements OnInit {
         this.catalog.set(payload);
       },
       error: () => this.loadError.set('Météo temporairement indisponible.'),
+    });
+  }
+
+  private loadAir(): void {
+    this.airError.set(null);
+    this.airApi.getIndex().subscribe({
+      next: (payload) => {
+        this.airCatalog.set(payload);
+        if (!payload.data || payload.status === 'unavailable') {
+          this.airError.set('Qualité de l’air temporairement indisponible.');
+        }
+      },
+      error: () =>
+        this.airError.set('Qualité de l’air temporairement indisponible.'),
     });
   }
 }

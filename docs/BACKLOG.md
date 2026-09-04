@@ -1,6 +1,6 @@
 # TouRose — backlog
 
-**Objectif de session courant :** T-08 ATMO métropole 1–6 (complète S6).
+**Objectif de session courant :** T-09 Tisséo Alert (ou `unavailable`). Mode **lecture API only** (D-10).
 
 Dernière mise à jour : 2026-09-04
 
@@ -12,37 +12,28 @@ Légende des statuts : `now` · `next` · `later` · `blocked` · `done`
 
 | ID | Type | Titre | Critère de terminé |
 | --- | --- | --- | --- |
-| T-08 | build | ATMO EPCI 1–6 | S6 « Toulouse Métropole », pas score 58 |
+| T-09 | build | Tisséo Alert GTFS-RT ou `unavailable` | Liste perturbations ; 502 = F-06, pas crash |
 
 ## Next
 
 | ID | Type | Titre | Notes |
 | --- | --- | --- | --- |
-| T-09 | build | Tisséo Alert GTFS-RT ou `unavailable` | F-06 si 502 |
-| T-02 | data | Tables `data_snapshots` | SQL prêt, projet non lié |
+| polish | front | Rapprocher S2 de la maquette | Après sources lecture |
 
 ## Done
 
 | ID | Titre | Date |
 | --- | --- | --- |
 | P0–P5 | Planning jusqu’aux tickets | 2026-08-15 |
-| T-01 | Repo Angular 20 + NestJS 11 | 2026-08-15 |
-| T-03 | Poller GBFS + GET `/v1/velo/stations` | 2026-08-15 |
-| T-04 | S2/S3/S4 Vélô (carte Leaflet + fiche) | 2026-08-15 |
-| T-05 | Mentions JCDecaux / ODbL | 2026-08-15 |
-| T-06 | Parkings ODS + P+R, dispo inconnue | 2026-08-15 |
-| fix | Filtrer stations GBFS non installées / sans nom | 2026-09-04 |
-| T-07 | Open-Meteo par quartier (S6 météo) | 2026-09-04 |
+| T-01…T-07 | Repo, Vélô, parkings, météo | 2026-08/09 |
+| D-10 | Pause WhatsApp + Supabase | 2026-09-04 |
+| T-08 | ATMO EPCI 1–6 sur S6 | 2026-09-04 |
 
-## Later (V2 / V3)
+## Later (gelé — D-10)
 
-Inchangé.
-
-## Bloqué
-
-T-02 attend un projet Supabase (fichier SQL déjà dans `supabase/migrations/`). Caches = mémoire process en attendant.
+T-02 Supabase · T-10…T-13 favoris/briefing UI · T-14…T-17 WhatsApp
 
 ## Décisions
 
-- Tranchées : D-01 à D-09
-- En attente : catégorie template Meta ; mail Tisséo v2
+- D-01 à D-10
+- Focus : affichage open data uniquement

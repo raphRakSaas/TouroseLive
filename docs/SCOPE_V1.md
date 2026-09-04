@@ -5,6 +5,8 @@ Toute fonction hors de ce fichier va dans `docs/BACKLOG.md` → later, pas dans 
 
 Promesse V1 : **un écran quotidien + un message le matin**, à partir de données publiques toulousaines.
 
+**Focus courant (D-10, 2026-09-04) :** pour l’instant on livre **uniquement l’affichage des open data** (dashboard + fiches). Briefing WhatsApp et Supabase sont **hors sprint** jusqu’à nouvelle décision.
+
 ---
 
 ## In — on construit ça
