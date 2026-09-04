@@ -44,6 +44,14 @@ Light mode only. Photo-first cards. TouRose rose accent.
 - Events: OpenAgenda CDN when available, else map tile
 - Places: Wikipedia/Wikimedia thumb when found, else OSM tile, else kind stock photo
 
+## Open Graph
+
+Selected share image (Ville rose / Capitole) :
+
+- Public : `web/public/brand/og-ville-rose.png` (1200×630)
+- Source : `assets/brand/og/tourose-og-ville-rose-1200x630.png`
+- Meta : `og:image` + `twitter:image` in `web/src/index.html`
+
 ## Logo (system 2C)
 
 | Asset | Path | When |
