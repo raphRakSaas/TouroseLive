@@ -1,0 +1,13 @@
+# TouRose — Netlify static host for the Angular app in web/
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = "dist/web/browser"
+
+# Angular client-side routes (/, /carte, /evenements/:id, …)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
