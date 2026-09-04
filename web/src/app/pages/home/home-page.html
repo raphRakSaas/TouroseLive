@@ -43,68 +43,76 @@
   </div>
 
   <div class="pulse" aria-label="Aperçu du jour à Toulouse">
-    <a class="pulse-item" routerLink="/carte" [attr.aria-label]="veloAriaLabel()">
-      <span class="pulse-label">Vélô</span>
-      @if (highlightStation(); as station) {
-        <span class="pulse-value">
-          <strong>{{ station.bikesAvailable }}</strong>
-          <span class="pulse-unit">vélos</span>
-        </span>
-        <span class="pulse-meta" [title]="station.name">{{ station.name }}</span>
-      } @else {
-        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
+    @if (pulseLoading()) {
+      @for (slot of skeletonPulseSlots; track slot) {
+        <div class="pulse-item pulse-item--skeleton" aria-hidden="true">
+          <span class="skeleton-line skeleton-line--xs"></span>
+          <span class="skeleton-line skeleton-line--lg"></span>
+          <span class="skeleton-line skeleton-line--sm"></span>
+        </div>
       }
-    </a>
-
-    <a
-      class="pulse-item"
-      routerLink="/carte"
-      [attr.aria-label]="tisseoAriaLabel()"
-    >
-      <span class="pulse-label">Tisséo</span>
-      @if (tisseoCatalog(); as tisseo) {
-        @if (tisseo.status === 'unavailable') {
-          <strong>—</strong>
-          <span class="pulse-meta">Alertes indisponibles</span>
-        } @else {
+    } @else {
+      <a class="pulse-item" routerLink="/carte" [attr.aria-label]="veloAriaLabel()">
+        <span class="pulse-label">Vélô</span>
+        @if (highlightStation(); as station) {
           <span class="pulse-value">
-            <strong>{{ tisseo.data.length }}</strong>
-            <span class="pulse-unit">{{ tisseo.data.length <= 1 ? 'alerte' : 'alertes' }}</span>
+            <strong>{{ station.bikesAvailable }}</strong>
+            <span class="pulse-unit">vélos</span>
           </span>
-          <span class="pulse-meta">
-            @if (severeAlertCount() > 0) {
-              {{ severeAlertCount() }} fortes
-            } @else if (tisseo.data.length === 0) {
-              Aucune alerte
-            } @else {
-              En cours
-            }
-          </span>
+          <span class="pulse-meta" [title]="station.name">{{ station.name }}</span>
+        } @else {
+          <span class="pulse-meta">Indisponible</span>
         }
-      } @else {
-        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
-      }
-    </a>
+      </a>
 
-    <a class="pulse-item" routerLink="/meteo" [attr.aria-label]="weatherAriaLabel()">
-      <span class="pulse-label">Météo</span>
-      @if (weatherCatalog()?.data; as weather) {
-        <strong>{{ weather.current.temperature | number: '1.0-0' }}°</strong>
-        <span class="pulse-meta" [title]="weather.current.weatherLabel">{{ weather.current.weatherLabel }}</span>
-      } @else {
-        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
-      }
-    </a>
+      <a
+        class="pulse-item"
+        routerLink="/carte"
+        [attr.aria-label]="tisseoAriaLabel()"
+      >
+        <span class="pulse-label">Tisséo</span>
+        @if (tisseoCatalog(); as tisseo) {
+          @if (tisseo.status === 'unavailable') {
+            <strong>—</strong>
+            <span class="pulse-meta">Alertes indisponibles</span>
+          } @else {
+            <span class="pulse-value">
+              <strong>{{ tisseo.data.length }}</strong>
+              <span class="pulse-unit">{{ tisseo.data.length <= 1 ? 'alerte' : 'alertes' }}</span>
+            </span>
+            <span class="pulse-meta">
+              @if (severeAlertCount() > 0) {
+                {{ severeAlertCount() }} fortes
+              } @else if (tisseo.data.length === 0) {
+                Aucune alerte
+              } @else {
+                En cours
+              }
+            </span>
+          }
+        }
+      </a>
 
-    <a class="pulse-item" routerLink="/meteo" [attr.aria-label]="airAriaLabel()">
-      <span class="pulse-label">Air</span>
-      @if (airCatalog()?.data; as air) {
-        <strong [style.color]="air.qualityColor">{{ air.qualityCode }}</strong>
-        <span class="pulse-meta">{{ air.qualityLabel }}</span>
-      } @else {
-        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
-      }
-    </a>
+      <a class="pulse-item" routerLink="/meteo" [attr.aria-label]="weatherAriaLabel()">
+        <span class="pulse-label">Météo</span>
+        @if (weatherCatalog()?.data; as weather) {
+          <strong>{{ weather.current.temperature | number: '1.0-0' }}°</strong>
+          <span class="pulse-meta" [title]="weather.current.weatherLabel">{{ weather.current.weatherLabel }}</span>
+        } @else {
+          <span class="pulse-meta">Indisponible</span>
+        }
+      </a>
+
+      <a class="pulse-item" routerLink="/meteo" [attr.aria-label]="airAriaLabel()">
+        <span class="pulse-label">Air</span>
+        @if (airCatalog()?.data; as air) {
+          <strong [style.color]="air.qualityColor">{{ air.qualityCode }}</strong>
+          <span class="pulse-meta">{{ air.qualityLabel }}</span>
+        } @else {
+          <span class="pulse-meta">Indisponible</span>
+        }
+      </a>
+    }
   </div>
 
   <div class="section-head">
@@ -112,23 +120,38 @@
     <a routerLink="/evenements">Tout voir</a>
   </div>
 
-  @if (nextEvents().length === 0) {
+  @if (eventsLoading()) {
+    <ul class="listing-grid" aria-busy="true" aria-label="Chargement des événements">
+      @for (slot of skeletonCardSlots; track slot) {
+        <li>
+          <div class="listing-card listing-card--skeleton">
+            <div class="listing-media skeleton-block"></div>
+            <div class="listing-body">
+              <span class="skeleton-line skeleton-line--md"></span>
+              <span class="skeleton-line skeleton-line--sm"></span>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (nextEvents().length === 0) {
     <p class="empty">Aucun événement pour le moment.</p>
   } @else {
     <ul class="listing-grid">
       @for (event of nextEvents(); track event.eventId) {
         <li>
           <a class="listing-card" [routerLink]="['/evenements', event.eventId]">
-            <div class="listing-media">
-              <div class="media-fallback" aria-hidden="true">
-                {{ event.title.charAt(0) }}
-              </div>
-              @if (event.imageUrl) {
+            <div class="listing-media" [class.listing-media--quiet]="!hasVisibleImage(event.imageUrl)">
+              <div class="media-fallback media-fallback--quiet" aria-hidden="true"></div>
+              @if (event.imageUrl && !isImageBroken(event.imageUrl)) {
                 <img
                   [src]="event.imageUrl"
                   [alt]="event.title"
                   [attr.loading]="$index < 4 ? 'eager' : 'lazy'"
                   decoding="async"
+                  (load)="onImageLoad(event.imageUrl!)"
+                  (error)="onImageError(event.imageUrl!)"
+                  [class.is-loaded]="isImageLoaded(event.imageUrl)"
                 />
               }
               @if (event.startsOn) {
@@ -153,23 +176,38 @@
     <a routerLink="/lieux">Tout voir</a>
   </div>
 
-  @if (featuredPlaces().length === 0) {
-    <p class="empty">Chargement des lieux…</p>
+  @if (placesLoading()) {
+    <ul class="listing-grid" aria-busy="true" aria-label="Chargement des lieux">
+      @for (slot of skeletonCardSlots; track slot) {
+        <li>
+          <div class="listing-card listing-card--skeleton">
+            <div class="listing-media skeleton-block"></div>
+            <div class="listing-body">
+              <span class="skeleton-line skeleton-line--md"></span>
+              <span class="skeleton-line skeleton-line--sm"></span>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (featuredPlaces().length === 0) {
+    <p class="empty">Aucun lieu pour le moment.</p>
   } @else {
     <ul class="listing-grid">
       @for (place of featuredPlaces(); track place.placeId) {
         <li>
           <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
-            <div class="listing-media">
-              <div class="media-fallback" aria-hidden="true">
-                {{ place.name.charAt(0) }}
-              </div>
-              @if (place.imageUrl) {
+            <div class="listing-media" [class.listing-media--quiet]="!hasVisibleImage(place.imageUrl)">
+              <div class="media-fallback media-fallback--quiet" aria-hidden="true"></div>
+              @if (place.imageUrl && !isImageBroken(place.imageUrl)) {
                 <img
                   [src]="place.imageUrl"
                   [alt]="place.name"
                   [attr.loading]="$index < 4 ? 'eager' : 'lazy'"
                   decoding="async"
+                  (load)="onImageLoad(place.imageUrl!)"
+                  (error)="onImageError(place.imageUrl!)"
+                  [class.is-loaded]="isImageLoaded(place.imageUrl)"
                 />
               }
               <span class="badge">{{ kindLabel(place.kind) }}</span>

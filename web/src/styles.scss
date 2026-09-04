@@ -193,7 +193,14 @@ select {
   object-fit: cover;
   object-position: center 50%;
   display: block;
-  transition: transform 0.25s ease;
+  opacity: 0;
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.listing-media img.is-loaded {
+  opacity: 1;
 }
 
 .listing-media .media-fallback {
@@ -207,6 +214,16 @@ select {
   font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.04em;
+}
+
+.listing-media .media-fallback--quiet {
+  color: transparent;
+  background:
+    linear-gradient(145deg, #f6f6f6 0%, #efefef 55%, #ececec 100%);
+}
+
+.listing-media--quiet {
+  background: #f4f4f4;
 }
 
 .listing-card:hover .listing-media img {
@@ -381,6 +398,10 @@ select {
 
   .listing-card:hover .listing-media img {
     transform: none;
+  }
+
+  .listing-media img.is-loaded {
+    opacity: 1;
   }
 }
 

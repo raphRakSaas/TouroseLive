@@ -43,6 +43,11 @@ export class HomePage implements OnInit, OnDestroy {
   private readonly placesApi = inject(PlacesApi);
   private placesPhotoPollHandle: number | null = null;
   private placesPhotoPollCount = 0;
+  private eventsPhotoPollHandle: number | null = null;
+  private eventsPhotoPollCount = 0;
+
+  protected readonly skeletonPulseSlots = [1, 2, 3, 4];
+  protected readonly skeletonCardSlots = [1, 2, 3, 4, 5, 6, 7, 8];
 
   protected readonly veloCatalog = signal<CatalogResponse<VeloStation[]> | null>(
     null,
@@ -64,6 +69,8 @@ export class HomePage implements OnInit, OnDestroy {
   );
   protected readonly searchQuery = signal('');
   protected readonly searchOpen = signal(false);
+  protected readonly brokenImages = signal<ReadonlySet<string>>(new Set());
+  protected readonly loadedImages = signal<ReadonlySet<string>>(new Set());
 
   protected readonly searchHits = computed(() => {
     // Depend explicitly on catalog updates + query.
@@ -86,6 +93,18 @@ export class HomePage implements OnInit, OnDestroy {
     return 'ready' as const;
   });
 
+  protected readonly pulseLoading = computed(
+    () =>
+      this.veloCatalog() === null ||
+      this.tisseoCatalog() === null ||
+      this.weatherCatalog() === null ||
+      this.airCatalog() === null,
+  );
+
+  protected readonly eventsLoading = computed(() => this.eventsCatalog() === null);
+
+  protected readonly placesLoading = computed(() => this.placesCatalog() === null);
+
   protected readonly highlightStation = computed(() => {
     const stations = this.veloCatalog()?.data ?? [];
     if (stations.length === 0) {
@@ -96,13 +115,20 @@ export class HomePage implements OnInit, OnDestroy {
     )[0];
   });
 
-  protected readonly nextEvents = computed(() =>
-    (this.eventsCatalog()?.data ?? []).slice(0, 8),
-  );
+  protected readonly nextEvents = computed(() => {
+    const events = this.eventsCatalog()?.data ?? [];
+    const withPhoto = events.filter(
+      (event) => Boolean(event.imageUrl) && !this.brokenImages().has(event.imageUrl!),
+    );
+    const pool = withPhoto.length >= 4 ? withPhoto : events;
+    return pool.slice(0, 8);
+  });
 
   protected readonly featuredPlaces = computed(() => {
     const places = this.placesCatalog()?.data ?? [];
-    const withPhoto = places.filter((place) => Boolean(place.imageUrl));
+    const withPhoto = places.filter(
+      (place) => Boolean(place.imageUrl) && !this.brokenImages().has(place.imageUrl!),
+    );
     const pool = withPhoto.length >= 4 ? withPhoto : places;
     return pool.slice(0, 8);
   });
@@ -191,8 +217,17 @@ export class HomePage implements OnInit, OnDestroy {
       next: (payload) => {
         this.eventsCatalog.set(payload);
         this.searchCatalog.hydrate({ events: payload.data });
+        this.maybeStartEventsPhotoPoll(payload.data);
       },
-      error: () => this.eventsCatalog.set(null),
+      error: () =>
+        this.eventsCatalog.set({
+          status: 'unavailable',
+          fetchedAt: null,
+          expiresAt: null,
+          source: 'Events',
+          license: '',
+          data: [],
+        }),
     });
     this.placesApi.listPlaces('all').subscribe({
       next: (payload) => {
@@ -200,12 +235,21 @@ export class HomePage implements OnInit, OnDestroy {
         this.searchCatalog.hydrate({ places: payload.data });
         this.maybeStartPlacesPhotoPoll(payload.data);
       },
-      error: () => this.placesCatalog.set(null),
+      error: () =>
+        this.placesCatalog.set({
+          status: 'unavailable',
+          fetchedAt: null,
+          expiresAt: null,
+          source: 'Places',
+          license: '',
+          data: [],
+        }),
     });
   }
 
   ngOnDestroy(): void {
     this.clearPlacesPhotoPoll();
+    this.clearEventsPhotoPoll();
   }
 
   @HostListener('document:keydown.escape')
@@ -247,6 +291,40 @@ export class HomePage implements OnInit, OnDestroy {
     return labels[kind];
   }
 
+  protected isImageBroken(imageUrl: string | null | undefined): boolean {
+    return Boolean(imageUrl && this.brokenImages().has(imageUrl));
+  }
+
+  protected isImageLoaded(imageUrl: string | null | undefined): boolean {
+    return Boolean(imageUrl && this.loadedImages().has(imageUrl));
+  }
+
+  protected hasVisibleImage(imageUrl: string | null | undefined): boolean {
+    return Boolean(imageUrl) && !this.isImageBroken(imageUrl);
+  }
+
+  protected onImageLoad(imageUrl: string): void {
+    this.loadedImages.update((current) => {
+      if (current.has(imageUrl)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(imageUrl);
+      return next;
+    });
+  }
+
+  protected onImageError(imageUrl: string): void {
+    this.brokenImages.update((current) => {
+      if (current.has(imageUrl)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(imageUrl);
+      return next;
+    });
+  }
+
   private maybeStartPlacesPhotoPoll(places: Place[]): void {
     const featured = places.slice(0, 12);
     const missing = featured.filter((place) => !place.imageUrl).length;
@@ -271,10 +349,39 @@ export class HomePage implements OnInit, OnDestroy {
     }, 2500);
   }
 
+  private maybeStartEventsPhotoPoll(events: CultureEvent[]): void {
+    const withPhoto = events.filter((event) => Boolean(event.imageUrl)).length;
+    if (withPhoto >= 8 || this.eventsPhotoPollHandle !== null) {
+      return;
+    }
+
+    this.eventsPhotoPollHandle = window.setInterval(() => {
+      this.eventsPhotoPollCount += 1;
+      this.eventsApi.listEvents().subscribe({
+        next: (payload) => {
+          this.eventsCatalog.set(payload);
+          this.searchCatalog.hydrate({ events: payload.data });
+          const photos = payload.data.filter((event) => Boolean(event.imageUrl))
+            .length;
+          if (photos >= 8 || this.eventsPhotoPollCount >= 16) {
+            this.clearEventsPhotoPoll();
+          }
+        },
+      });
+    }, 2500);
+  }
+
   private clearPlacesPhotoPoll(): void {
     if (this.placesPhotoPollHandle !== null) {
       window.clearInterval(this.placesPhotoPollHandle);
       this.placesPhotoPollHandle = null;
+    }
+  }
+
+  private clearEventsPhotoPoll(): void {
+    if (this.eventsPhotoPollHandle !== null) {
+      window.clearInterval(this.eventsPhotoPollHandle);
+      this.eventsPhotoPollHandle = null;
     }
   }
 }
