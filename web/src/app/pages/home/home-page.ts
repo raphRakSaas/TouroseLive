@@ -116,7 +116,11 @@ export class HomePage implements OnInit, OnDestroy {
   });
 
   protected readonly nextEvents = computed(() => {
-    const events = this.eventsCatalog()?.data ?? [];
+    const today = this.parisToday();
+    const events = (this.eventsCatalog()?.data ?? []).filter((event) => {
+      const end = event.endsOn ?? event.startsOn ?? '';
+      return Boolean(end) && end >= today;
+    });
     const withPhoto = events.filter(
       (event) => Boolean(event.imageUrl) && !this.brokenImages().has(event.imageUrl!),
     );
@@ -383,5 +387,14 @@ export class HomePage implements OnInit, OnDestroy {
       window.clearInterval(this.eventsPhotoPollHandle);
       this.eventsPhotoPollHandle = null;
     }
+  }
+
+  private parisToday(): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Paris',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
   }
 }

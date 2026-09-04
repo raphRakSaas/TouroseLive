@@ -7,10 +7,15 @@
 
   @if (catalog()?.data; as event) {
     <div class="hero-media">
-      @if (event.imageUrl) {
-        <img [src]="event.imageUrl" [alt]="event.title" />
+      @if (event.imageUrlLarge || event.imageUrl) {
+        <img
+          [src]="event.imageUrlLarge || event.imageUrl"
+          [alt]="event.title"
+          loading="eager"
+          decoding="async"
+        />
       } @else {
-        <div class="media-fallback">{{ event.title.charAt(0) }}</div>
+        <div class="media-fallback media-fallback--quiet" aria-hidden="true"></div>
       }
     </div>
 

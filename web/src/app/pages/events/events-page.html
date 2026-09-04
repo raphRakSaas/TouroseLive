@@ -2,7 +2,7 @@
   <header class="page-header">
     <h1>Événements</h1>
     <p class="lede">
-      Agenda culturel Toulouse — OpenAgenda et open data métropole.
+      Agenda culturel Toulouse — uniquement les dates à venir.
     </p>
   </header>
 
@@ -11,10 +11,77 @@
   }
 
   @if (catalog(); as payload) {
+    <div class="toolbar">
+      <div class="search" role="search">
+        <label class="sr-only" for="events-search">Rechercher un événement</label>
+        <input
+          id="events-search"
+          type="search"
+          name="eventsSearch"
+          placeholder="Rechercher un titre, lieu, ville…"
+          [value]="searchQuery()"
+          (input)="onSearchInput($any($event.target).value)"
+          autocomplete="off"
+        />
+      </div>
+
+      <label class="sort">
+        <span class="sr-only">Trier</span>
+        <select
+          [value]="sortMode()"
+          (change)="onSortChange($any($event.target).value)"
+          aria-label="Trier les événements"
+        >
+          <option value="date-asc">Date · bientôt</option>
+          <option value="date-desc">Date · plus loin</option>
+          <option value="title-asc">Titre A–Z</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="chip-row" role="group" aria-label="Période">
+      <button type="button" [class.active]="whenFilter() === 'all'" (click)="setWhenFilter('all')">
+        Tous
+      </button>
+      <button type="button" [class.active]="whenFilter() === 'week'" (click)="setWhenFilter('week')">
+        7 jours
+      </button>
+      <button type="button" [class.active]="whenFilter() === 'month'" (click)="setWhenFilter('month')">
+        30 jours
+      </button>
+      <button
+        type="button"
+        [class.active]="photoFilter() === 'with-photo'"
+        (click)="setPhotoFilter(photoFilter() === 'with-photo' ? 'all' : 'with-photo')"
+      >
+        Avec photo
+      </button>
+    </div>
+
+    @if (cityOptions().length > 1) {
+      <div class="chip-row city-row" role="group" aria-label="Ville">
+        <button type="button" [class.active]="cityFilter() === 'all'" (click)="setCityFilter('all')">
+          Toutes villes
+        </button>
+        @for (city of cityOptions(); track city) {
+          <button type="button" [class.active]="cityFilter() === city" (click)="setCityFilter(city)">
+            {{ city }}
+          </button>
+        }
+      </div>
+    }
+
     <p class="meta">
-      {{ payload.data.length }} événement(s)
+      {{ filteredEvents().length }} événement(s)
+      @if (filteredEvents().length !== payload.data.length) {
+        · sur {{ payload.data.length }}
+      }
       @if (payload.fetchedAt) {
         · maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+      }
+      @if (hasActiveFilters()) {
+        ·
+        <button type="button" class="linkish" (click)="clearFilters()">Réinitialiser</button>
       }
     </p>
 
@@ -26,23 +93,24 @@
       </p>
     }
 
-    @if (payload.data.length === 0) {
-      <p class="empty">Aucun événement à venir pour le moment.</p>
+    @if (filteredEvents().length === 0) {
+      <p class="empty">Aucun événement à venir pour ces critères.</p>
     } @else {
       <ul class="listing-grid">
-        @for (event of payload.data; track event.eventId) {
+        @for (event of filteredEvents(); track event.eventId) {
           <li>
             <a class="listing-card" [routerLink]="['/evenements', event.eventId]">
-              <div class="listing-media">
-                <div class="media-fallback" aria-hidden="true">
-                  {{ event.title.charAt(0) }}
-                </div>
+              <div class="listing-media" [class.listing-media--quiet]="!event.imageUrl">
+                <div class="media-fallback media-fallback--quiet" aria-hidden="true"></div>
                 @if (event.imageUrl) {
                   <img
                     [src]="event.imageUrl"
                     [alt]="event.title"
-                    [attr.loading]="$index < 6 ? 'eager' : 'lazy'"
+                    [attr.loading]="$index < 4 ? 'eager' : 'lazy'"
                     decoding="async"
+                    width="400"
+                    height="400"
+                    class="is-loaded"
                   />
                 }
                 @if (event.startsOn) {

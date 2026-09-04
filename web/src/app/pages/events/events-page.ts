@@ -1,8 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CatalogResponse, CultureEvent } from '../../core/catalog.models';
 import { EventsApi } from '../../core/events-api';
+
+type EventSort = 'date-asc' | 'date-desc' | 'title-asc';
+type WhenFilter = 'all' | 'week' | 'month';
+type PhotoFilter = 'all' | 'with-photo';
 
 @Component({
   selector: 'app-events-page',
@@ -17,6 +21,89 @@ export class EventsPage implements OnInit {
     null,
   );
   protected readonly loadError = signal<string | null>(null);
+  protected readonly searchQuery = signal('');
+  protected readonly sortMode = signal<EventSort>('date-asc');
+  protected readonly whenFilter = signal<WhenFilter>('all');
+  protected readonly cityFilter = signal<string>('all');
+  protected readonly photoFilter = signal<PhotoFilter>('all');
+
+  protected readonly cityOptions = computed(() => {
+    const cities = new Set<string>();
+    for (const event of this.catalog()?.data ?? []) {
+      const city = event.city?.trim();
+      if (city) {
+        cities.add(city);
+      }
+    }
+    return [...cities].sort((left, right) => left.localeCompare(right, 'fr'));
+  });
+
+  protected readonly filteredEvents = computed(() => {
+    const today = this.parisToday();
+    const query = this.normalize(this.searchQuery());
+    const when = this.whenFilter();
+    const city = this.cityFilter();
+    const photo = this.photoFilter();
+    const sortMode = this.sortMode();
+    const weekLimit = this.addDays(today, 7);
+    const monthLimit = this.addDays(today, 31);
+
+    let events = (this.catalog()?.data ?? []).filter((event) =>
+      this.isUpcomingOrOngoing(event, today),
+    );
+
+    if (query) {
+      events = events.filter((event) => {
+        const haystack = this.normalize(
+          [
+            event.title,
+            event.venueName,
+            event.city,
+            event.category,
+            event.type,
+            event.theme,
+            ...(event.keywords ?? []),
+          ]
+            .filter(Boolean)
+            .join(' '),
+        );
+        return haystack.includes(query);
+      });
+    }
+
+    if (city !== 'all') {
+      events = events.filter((event) => event.city === city);
+    }
+
+    if (photo === 'with-photo') {
+      events = events.filter((event) => Boolean(event.imageUrl));
+    }
+
+    if (when === 'week') {
+      events = events.filter((event) => {
+        const start = event.startsOn ?? event.endsOn ?? '';
+        return start !== '' && start <= weekLimit;
+      });
+    } else if (when === 'month') {
+      events = events.filter((event) => {
+        const start = event.startsOn ?? event.endsOn ?? '';
+        return start !== '' && start <= monthLimit;
+      });
+    }
+
+    return [...events].sort((left, right) => {
+      if (sortMode === 'title-asc') {
+        return left.title.localeCompare(right.title, 'fr');
+      }
+      const leftDate = left.startsOn ?? left.endsOn ?? '';
+      const rightDate = right.startsOn ?? right.endsOn ?? '';
+      const byDate = leftDate.localeCompare(rightDate);
+      if (sortMode === 'date-desc') {
+        return -byDate || left.title.localeCompare(right.title, 'fr');
+      }
+      return byDate || left.title.localeCompare(right.title, 'fr');
+    });
+  });
 
   ngOnInit(): void {
     this.eventsApi.listEvents().subscribe({
@@ -25,10 +112,71 @@ export class EventsPage implements OnInit {
     });
   }
 
-  protected mapsUrl(event: CultureEvent): string | null {
-    if (event.latitude === null || event.longitude === null) {
-      return null;
+  protected onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+  }
+
+  protected onSortChange(value: string): void {
+    if (value === 'date-asc' || value === 'date-desc' || value === 'title-asc') {
+      this.sortMode.set(value);
     }
-    return `https://www.google.com/maps/dir/?api=1&destination=${event.latitude},${event.longitude}`;
+  }
+
+  protected setWhenFilter(value: WhenFilter): void {
+    this.whenFilter.set(value);
+  }
+
+  protected setCityFilter(value: string): void {
+    this.cityFilter.set(value);
+  }
+
+  protected setPhotoFilter(value: PhotoFilter): void {
+    this.photoFilter.set(value);
+  }
+
+  protected clearFilters(): void {
+    this.searchQuery.set('');
+    this.sortMode.set('date-asc');
+    this.whenFilter.set('all');
+    this.cityFilter.set('all');
+    this.photoFilter.set('all');
+  }
+
+  protected hasActiveFilters(): boolean {
+    return (
+      this.searchQuery().trim().length > 0 ||
+      this.whenFilter() !== 'all' ||
+      this.cityFilter() !== 'all' ||
+      this.photoFilter() !== 'all' ||
+      this.sortMode() !== 'date-asc'
+    );
+  }
+
+  private isUpcomingOrOngoing(event: CultureEvent, today: string): boolean {
+    const end = event.endsOn ?? event.startsOn ?? '';
+    return Boolean(end) && end >= today;
+  }
+
+  private parisToday(): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Paris',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  }
+
+  private addDays(isoDate: string, days: number): string {
+    const date = new Date(`${isoDate}T12:00:00`);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  private normalize(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 }

@@ -49,7 +49,11 @@ export class EventsService implements OnModuleInit {
   }
 
   listEvents(): CatalogResponse<CultureEventDto[]> {
-    return this.wrap(this.events);
+    const today = this.parisToday();
+    const upcoming = this.events.filter((event) =>
+      this.isUpcomingOrOngoing(event, today),
+    );
+    return this.wrap(upcoming);
   }
 
   getEvent(eventId: string): CatalogResponse<CultureEventDto | null> {
@@ -115,7 +119,10 @@ export class EventsService implements OnModuleInit {
     odsEvents: CultureEventDto[],
     openAgendaEvents: CultureEventDto[],
   ): void {
-    this.events = this.mergeEvents([...openAgendaEvents, ...odsEvents]);
+    const today = this.parisToday();
+    this.events = this.mergeEvents([...openAgendaEvents, ...odsEvents]).filter(
+      (event) => this.isUpcomingOrOngoing(event, today),
+    );
     this.sourceLabel = this.openAgendaConfigured
       ? `OpenAgenda réseau Toulouse Métropole + ODS So Toulouse (${this.events.length} événements)`
       : `ODS So Toulouse seulement (${this.events.length}). Ajoute OPENAGENDA_PUBLIC_KEY (gratuite) pour plus d’événements.`;
@@ -153,7 +160,7 @@ export class EventsService implements OnModuleInit {
       }
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = this.parisToday();
     return records
       .map((record) => this.mapOdsEvent(record))
       .filter((event): event is CultureEventDto => event !== null)
@@ -222,6 +229,7 @@ export class EventsService implements OnModuleInit {
     const payload = await this.fetchJson<OpenAgendaEventsResponse>(
       `${OPENAGENDA_API}/agendas/${agendaUid}/events?${query}`,
     );
+    const today = this.parisToday();
     return (payload.events ?? [])
       .map((event) => {
         try {
@@ -235,6 +243,7 @@ export class EventsService implements OnModuleInit {
         }
       })
       .filter((event): event is CultureEventDto => event !== null)
+      .filter((event) => this.isUpcomingOrOngoing(event, today))
       .slice(0, MAX_EVENTS_PER_AGENDA);
   }
 
@@ -243,18 +252,30 @@ export class EventsService implements OnModuleInit {
     if (!title || !event.uid) {
       return null;
     }
-    const first = event.firstTiming ?? event.timings?.[0];
+    const today = this.parisToday();
+    const allTimings = (event.timings ?? []).filter((timing) =>
+      Boolean(timing.begin),
+    );
+    const upcomingTimings = allTimings.filter((timing) => {
+      const endDate = (timing.end ?? timing.begin ?? '').slice(0, 10);
+      return endDate >= today;
+    });
+    const first =
+      upcomingTimings[0] ?? event.firstTiming ?? allTimings[0] ?? null;
     const last =
-      event.lastTiming ?? event.timings?.[event.timings.length - 1] ?? first;
+      upcomingTimings[upcomingTimings.length - 1] ??
+      event.lastTiming ??
+      allTimings[allTimings.length - 1] ??
+      first;
     const latitude = event.location?.latitude ?? null;
     const longitude = event.location?.longitude ?? null;
-    const openAgendaImage = this.openAgendaImageUrl(event);
-    const timings = (event.timings ?? [])
-      .filter((timing) => Boolean(timing.begin))
-      .map((timing) => ({
+    const openAgendaImages = this.openAgendaImageUrls(event);
+    const timings = (upcomingTimings.length > 0 ? upcomingTimings : allTimings).map(
+      (timing) => ({
         begin: timing.begin as string,
         end: timing.end ?? null,
-      }));
+      }),
+    );
     const keywords = this.keywordList(event.keywords);
     return {
       eventId: `oa-${event.uid}`,
@@ -262,7 +283,7 @@ export class EventsService implements OnModuleInit {
       summary: this.localizedText(event.description) || null,
       longDescription: this.localizedText(event.longDescription) || null,
       startsOn: first?.begin ? first.begin.slice(0, 10) : null,
-      endsOn: last?.end ? last.end.slice(0, 10) : null,
+      endsOn: last?.end ? last.end.slice(0, 10) : first?.begin ? first.begin.slice(0, 10) : null,
       schedule: first?.begin
         ? new Date(first.begin).toLocaleTimeString('fr-FR', {
             hour: '2-digit',
@@ -295,8 +316,9 @@ export class EventsService implements OnModuleInit {
       conditions: this.localizedText(event.conditions) || null,
       accessibility: this.accessibilityText(event.accessibility),
       provider: 'openagenda',
-      imageUrl: openAgendaImage,
-      imageSource: openAgendaImage ? 'openagenda' : null,
+      imageUrl: openAgendaImages.thumb,
+      imageUrlLarge: openAgendaImages.large,
+      imageSource: openAgendaImages.thumb ? 'openagenda' : null,
       updatedAt:
         event.updatedAt != null ? String(event.updatedAt) : null,
     };
@@ -352,6 +374,7 @@ export class EventsService implements OnModuleInit {
       accessibility: null,
       provider: 'ods',
       imageUrl: null,
+      imageUrlLarge: null,
       imageSource: null,
       updatedAt: null,
     };
@@ -427,13 +450,30 @@ export class EventsService implements OnModuleInit {
     return null;
   }
 
-  private openAgendaImageUrl(event: OpenAgendaEvent): string | null {
+  private openAgendaImageUrls(event: OpenAgendaEvent): {
+    thumb: string | null;
+    large: string | null;
+  } {
     const image = event.image;
-    if (!image?.base || !image.filename) {
-      return null;
+    if (!image?.base) {
+      return { thumb: null, large: null };
     }
     const base = image.base.endsWith('/') ? image.base : `${image.base}/`;
-    return `${base}${image.filename}`;
+    const variantFile = (typeName: string): string | null => {
+      const match = image.variants?.find(
+        (variant) => variant.type === typeName && Boolean(variant.filename),
+      );
+      return match?.filename ? `${base}${match.filename}` : null;
+    };
+
+    // OpenAgenda CDN (img.openagenda.com): prefer thumb for grids (~200px),
+    // base (~700px) for detail, never the multi‑MB "full" asset in lists.
+    const thumb = variantFile('thumbnail') ?? (image.filename ? `${base}${image.filename}` : null);
+    const large =
+      (image.filename ? `${base}${image.filename}` : null) ??
+      variantFile('thumbnail');
+
+    return { thumb, large };
   }
 
   private localizedText(value: unknown): string {
@@ -464,13 +504,22 @@ export class EventsService implements OnModuleInit {
     return '';
   }
 
+  private parisToday(): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Paris',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  }
+
   private isUpcomingOrOngoing(event: CultureEventDto, today: string): boolean {
-    const start = event.startsOn ?? '';
-    const end = event.endsOn ?? start;
-    if (!start && !end) {
+    // Keep only events that have not fully ended (date in Europe/Paris).
+    const end = event.endsOn ?? event.startsOn ?? '';
+    if (!end) {
       return false;
     }
-    return end >= today || start >= today;
+    return end >= today;
   }
 
   private toNumber(value: number | string | null | undefined): number | null {

@@ -47,6 +47,8 @@ export interface CultureEventDto {
   accessibility: string | null;
   provider: EventProvider;
   imageUrl: string | null;
+  /** Larger OpenAgenda CDN asset for detail pages (base / full). */
+  imageUrlLarge: string | null;
   imageSource: EventImageSource;
   updatedAt: string | null;
 }
@@ -118,7 +120,12 @@ export interface OpenAgendaLocation {
 export interface OpenAgendaImage {
   filename?: string;
   base?: string;
-  variants?: Array<{ filename?: string; type?: string }>;
+  size?: { width?: number; height?: number };
+  variants?: Array<{
+    filename?: string;
+    type?: string;
+    size?: { width?: number; height?: number };
+  }>;
 }
 
 export interface OpenAgendaEvent {

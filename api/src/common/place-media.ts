@@ -116,6 +116,13 @@ export class PlaceMediaResolver {
   private commonsCatalog: string[] = [];
   private catalogReady = false;
   private lastRequestAt = 0;
+  private cooldownUntil = 0;
+  private consecutiveRateLimits = 0;
+
+  /** True when Wikimedia asked us to slow down heavily. */
+  isCoolingDown(): boolean {
+    return Date.now() < this.cooldownUntil;
+  }
 
   async warmCatalog(): Promise<void> {
     if (this.catalogReady) {
@@ -531,11 +538,15 @@ export class PlaceMediaResolver {
   }
 
   private async throttle(minGapMs: number): Promise<void> {
+    const cooldownWait = this.cooldownUntil - Date.now();
+    if (cooldownWait > 0) {
+      await new Promise((resolve) => setTimeout(resolve, cooldownWait));
+    }
+    // Wikimedia rate-limits aggressively; keep a wide default gap.
+    const gapMs = Math.max(minGapMs, 900);
     const elapsed = Date.now() - this.lastRequestAt;
-    if (elapsed < minGapMs) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, minGapMs - elapsed),
-      );
+    if (elapsed < gapMs) {
+      await new Promise((resolve) => setTimeout(resolve, gapMs - elapsed));
     }
     this.lastRequestAt = Date.now();
   }
@@ -548,10 +559,13 @@ export class PlaceMediaResolver {
       },
     });
     if (response.status === 429 || response.status === 503) {
-      if (attempt >= 4) {
+      this.consecutiveRateLimits += 1;
+      const backoffMs = Math.min(60_000, 4_000 * 2 ** (attempt - 1));
+      this.cooldownUntil = Date.now() + backoffMs;
+      if (attempt >= 3 || this.consecutiveRateLimits >= 8) {
         throw new Error(`${url} → HTTP ${response.status}`);
       }
-      await new Promise((resolve) => setTimeout(resolve, 600 * attempt));
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
       return this.fetchJson<T>(url, attempt + 1);
     }
     if (!response.ok) {
@@ -559,12 +573,16 @@ export class PlaceMediaResolver {
     }
     const text = await response.text();
     if (text.startsWith('You are making too many requests')) {
-      if (attempt >= 4) {
+      this.consecutiveRateLimits += 1;
+      const backoffMs = Math.min(60_000, 5_000 * 2 ** (attempt - 1));
+      this.cooldownUntil = Date.now() + backoffMs;
+      if (attempt >= 3 || this.consecutiveRateLimits >= 8) {
         throw new Error('Wikimedia rate limit');
       }
-      await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
       return this.fetchJson<T>(url, attempt + 1);
     }
+    this.consecutiveRateLimits = 0;
     return JSON.parse(text) as T;
   }
 }

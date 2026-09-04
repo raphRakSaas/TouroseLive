@@ -16,7 +16,7 @@ const USER_AGENT =
   'TouRose/0.1 (https://github.com/raphRakSaas/TouroseLive; open-data reuse)';
 const POLL_MS = 12 * 60 * 60_000;
 const STALE_AFTER_MS = 48 * 60 * 60_000;
-const MEDIA_CONCURRENCY = 2;
+const MEDIA_CONCURRENCY = 1;
 
 type RawRecord = Record<string, unknown>;
 
@@ -188,6 +188,12 @@ export class PlacesService implements OnModuleInit {
 
     const worker = async (): Promise<void> => {
       while (cursor < pending.length) {
+        if (this.mediaResolver.isCoolingDown()) {
+          this.logger.warn(
+            'Pausing place photo enrichment — Wikimedia rate limit cooldown',
+          );
+          break;
+        }
         const current = pending[cursor];
         cursor += 1;
         const { place, index } = current;
@@ -204,6 +210,12 @@ export class PlacesService implements OnModuleInit {
           const message = error instanceof Error ? error.message : String(error);
           this.logger.debug(`Media resolve failed for ${place.name}: ${message}`);
           working[index] = { ...place, imageUrl: null, imageSource: null };
+          if (/429|rate limit/i.test(message)) {
+            this.logger.warn(
+              'Stopping place photo enrichment after Wikimedia 429',
+            );
+            break;
+          }
         }
 
         resolvedCount += 1;

@@ -142,6 +142,7 @@ export interface CultureEvent {
   accessibility?: string | null;
   provider?: 'ods' | 'openagenda';
   imageUrl?: string | null;
+  imageUrlLarge?: string | null;
   imageSource?: 'openagenda' | 'commons' | 'wikidata' | 'wikipedia' | null;
   updatedAt?: string | null;
 }
