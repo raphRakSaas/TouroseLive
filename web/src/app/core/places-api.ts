@@ -13,4 +13,10 @@ export class PlacesApi {
       `${this.baseUrl}/places${query}`,
     );
   }
+
+  getPlace(placeId: string) {
+    return this.http.get<CatalogResponse<Place>>(
+      `${this.baseUrl}/places/${encodeURIComponent(placeId)}`,
+    );
+  }
 }

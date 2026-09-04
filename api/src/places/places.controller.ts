@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { PLACE_KINDS, PlacesService } from './places.service';
 
 @Controller('places')
@@ -11,5 +11,14 @@ export class PlacesController {
       return this.placesService.listPlaces('all');
     }
     return this.placesService.listPlaces(kind);
+  }
+
+  @Get(':placeId')
+  getPlace(@Param('placeId') placeId: string) {
+    const payload = this.placesService.getPlace(placeId);
+    if (!payload.data) {
+      throw new NotFoundException(`Place ${placeId} not found`);
+    }
+    return payload;
   }
 }

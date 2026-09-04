@@ -1,0 +1,59 @@
+<section class="page narrow">
+  <a routerLink="/lieux" class="back">Retour aux lieux</a>
+
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
+
+  @if (catalog()?.data; as place) {
+    <div class="hero-media">
+      @if (place.imageUrl) {
+        <img [src]="place.imageUrl" [alt]="place.name" />
+      } @else {
+        <div class="media-fallback">{{ place.name.charAt(0) }}</div>
+      }
+    </div>
+
+    <header class="page-header">
+      <p class="meta">{{ kindLabel(place.kind) }}</p>
+      <h1>{{ place.name }}</h1>
+      <p class="lede">
+        {{ place.address || 'Adresse non renseignée' }}
+        @if (place.city) {
+          · {{ place.city }}
+        }
+      </p>
+    </header>
+
+    @if (place.description) {
+      <section class="block">
+        <h2>Description</h2>
+        <p>{{ place.description }}</p>
+      </section>
+    }
+
+    <section class="block">
+      <h2>Détails</h2>
+      <dl class="info">
+        @if (place.district) {
+          <div><dt>Quartier</dt><dd>{{ place.district }}</dd></div>
+        }
+        @if (place.protection) {
+          <div><dt>Protection</dt><dd>{{ place.protection }}</dd></div>
+        }
+        @if (place.imageSource) {
+          <div><dt>Photo</dt><dd>{{ place.imageSource }}</dd></div>
+        }
+      </dl>
+    </section>
+
+    <div class="actions">
+      @if (place.website) {
+        <a class="cta" [href]="place.website" target="_blank" rel="noreferrer">Site web</a>
+      }
+      @if (mapsUrl(place); as url) {
+        <a class="cta secondary" [href]="url" target="_blank" rel="noreferrer">Y aller</a>
+      }
+    </div>
+  }
+</section>

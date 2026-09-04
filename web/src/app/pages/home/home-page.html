@@ -1,26 +1,37 @@
 <section class="page">
-  <header class="hero">
-    <h1>Tou<span>R</span>ose</h1>
-    <p class="lede">
-      Événements, lieux et mobilité à Toulouse — données publiques, photos réelles.
-    </p>
-  </header>
+  <form class="search" role="search" (submit)="$event.preventDefault()">
+    <label class="sr-only" for="home-search">Rechercher</label>
+    <input
+      id="home-search"
+      type="search"
+      placeholder="Rechercher un événement, un lieu, une station Vélô…"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="onSearchInput($event)"
+      autocomplete="off"
+    />
+    <span class="search-btn" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+    </span>
 
-  <ul class="listing-grid categories">
-    @for (category of categories; track category.link) {
-      <li>
-        <a class="listing-card" [routerLink]="category.link">
-          <div class="listing-media">
-            <img [src]="category.image" [alt]="category.title" loading="lazy" />
-          </div>
-          <div class="listing-body">
-            <h3>{{ category.title }}</h3>
-            <p class="sub">{{ category.subtitle }}</p>
-          </div>
-        </a>
-      </li>
+    @if (searchOpen() && searchHits().length) {
+      <ul class="search-results" role="listbox">
+        @for (hit of searchHits(); track hit.link) {
+          <li>
+            <button type="button" (click)="goToHit(hit)">
+              <span class="hit-kind">{{ kindLabelHit(hit.kind) }}</span>
+              <strong>{{ hit.label }}</strong>
+              <span class="hit-sub">{{ hit.sub }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else if (searchOpen() && searchQuery().trim().length >= 2) {
+      <div class="search-results empty-results">Aucun résultat</div>
     }
-  </ul>
+  </form>
 
   <div class="pulse" aria-label="Aperçu du jour">
     <a class="pulse-item" routerLink="/carte">
@@ -72,29 +83,20 @@
   </div>
 
   <div class="section-head">
-    <h2>À venir</h2>
-    <a routerLink="/evenements">Tout l’agenda</a>
+    <h2>Événements populaires · Toulouse</h2>
+    <a routerLink="/evenements">Tout voir</a>
   </div>
 
   @if (nextEvents().length === 0) {
-    <p class="empty">Aucun événement illustré pour le moment.</p>
+    <p class="empty">Aucun événement pour le moment.</p>
   } @else {
     <ul class="listing-grid">
       @for (event of nextEvents(); track event.eventId) {
         <li>
-          <a
-            class="listing-card"
-            [href]="event.bookingUrl || '/evenements'"
-            [attr.target]="event.bookingUrl ? '_blank' : null"
-            [attr.rel]="event.bookingUrl ? 'noreferrer' : null"
-          >
+          <a class="listing-card" [routerLink]="['/evenements', event.eventId]">
             <div class="listing-media">
               @if (event.imageUrl) {
-                <img
-                  [src]="event.imageUrl"
-                  [alt]="event.title"
-                  loading="lazy"
-                />
+                <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
               } @else {
                 <div class="media-fallback" aria-hidden="true">
                   {{ event.title.charAt(0) }}
@@ -118,8 +120,8 @@
   }
 
   <div class="section-head">
-    <h2>Lieux à découvrir</h2>
-    <a routerLink="/lieux">Explorer les lieux</a>
+    <h2>Lieux à découvrir · Toulouse</h2>
+    <a routerLink="/lieux">Tout voir</a>
   </div>
 
   @if (featuredPlaces().length === 0) {
@@ -128,19 +130,10 @@
     <ul class="listing-grid">
       @for (place of featuredPlaces(); track place.placeId) {
         <li>
-          <a
-            class="listing-card"
-            [href]="place.website || '/lieux'"
-            [attr.target]="place.website ? '_blank' : null"
-            [attr.rel]="place.website ? 'noreferrer' : null"
-          >
+          <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
             <div class="listing-media">
               @if (place.imageUrl) {
-                <img
-                  [src]="place.imageUrl"
-                  [alt]="place.name"
-                  loading="lazy"
-                />
+                <img [src]="place.imageUrl" [alt]="place.name" loading="lazy" />
               } @else {
                 <div class="media-fallback" aria-hidden="true">
                   {{ place.name.charAt(0) }}
@@ -159,14 +152,6 @@
       }
     </ul>
   }
-
-  <div class="map-cta">
-    <div>
-      <h2>Voir la carte</h2>
-      <p>Stations Vélô et parkings, sans encombrer l’accueil.</p>
-    </div>
-    <a class="cta" routerLink="/carte">Ouvrir la carte</a>
-  </div>
 
   <p class="source">
     Sources : OpenAgenda · Wikimedia · OpenStreetMap · JCDecaux · Tisséo · Open-Meteo · Atmo · Toulouse Métropole

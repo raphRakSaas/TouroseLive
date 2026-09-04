@@ -12,4 +12,10 @@ export class EventsApi {
       `${this.baseUrl}/events`,
     );
   }
+
+  getEvent(eventId: string) {
+    return this.http.get<CatalogResponse<CultureEvent>>(
+      `${this.baseUrl}/events/${encodeURIComponent(eventId)}`,
+    );
+  }
 }

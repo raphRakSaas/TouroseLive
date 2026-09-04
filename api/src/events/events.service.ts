@@ -51,6 +51,12 @@ export class EventsService implements OnModuleInit {
     return this.wrap(this.events);
   }
 
+  getEvent(eventId: string): CatalogResponse<CultureEventDto | null> {
+    const found =
+      this.events.find((event) => event.eventId === eventId) ?? null;
+    return this.wrap(found);
+  }
+
   private wrap<T>(data: T): CatalogResponse<T> {
     return {
       status: this.snapshotStatus,
@@ -189,6 +195,7 @@ export class EventsService implements OnModuleInit {
       size: String(Math.min(MAX_EVENTS_PER_AGENDA, 100)),
       monolingual: 'fr',
       'relative[]': 'upcoming',
+      detailed: '1',
     });
     // URLSearchParams doesn't support duplicate keys well for relative[]=current
     const query = `${params.toString()}&relative[]=current&sort=timings.asc`;
@@ -213,10 +220,18 @@ export class EventsService implements OnModuleInit {
     const latitude = event.location?.latitude ?? null;
     const longitude = event.location?.longitude ?? null;
     const openAgendaImage = this.openAgendaImageUrl(event);
+    const timings = (event.timings ?? [])
+      .filter((timing) => Boolean(timing.begin))
+      .map((timing) => ({
+        begin: timing.begin as string,
+        end: timing.end ?? null,
+      }));
+    const keywords = this.keywordList(event.keywords);
     return {
       eventId: `oa-${event.uid}`,
       title,
       summary: this.localizedText(event.description) || null,
+      longDescription: this.localizedText(event.longDescription) || null,
       startsOn: first?.begin ? first.begin.slice(0, 10) : null,
       endsOn: last?.end ? last.end.slice(0, 10) : null,
       schedule: first?.begin
@@ -226,18 +241,35 @@ export class EventsService implements OnModuleInit {
             timeZone: 'Europe/Paris',
           })
         : null,
+      timings,
       venueName: event.location?.name ?? null,
       address: event.location?.address ?? null,
       city: event.location?.city ?? null,
-      category: null,
+      postalCode: event.location?.postalCode ?? null,
+      district: event.location?.district ?? null,
+      department: event.location?.department ?? null,
+      countryCode: event.location?.countryCode ?? null,
+      category: keywords[0] ?? null,
       theme: null,
       type: 'OpenAgenda',
+      keywords,
       latitude,
       longitude,
       bookingUrl: event.registrationUrl || event.canonicalUrl || null,
+      canonicalUrl: event.canonicalUrl ?? null,
+      registrationUrl: event.registrationUrl ?? null,
+      onlineAccessLink: event.onlineAccessLink ?? null,
+      status: event.status != null ? String(event.status) : null,
+      attendanceMode:
+        event.attendanceMode != null ? String(event.attendanceMode) : null,
+      age: this.localizedText(event.age) || null,
+      conditions: this.localizedText(event.conditions) || null,
+      accessibility: this.accessibilityText(event.accessibility),
       provider: 'openagenda',
       imageUrl: openAgendaImage,
       imageSource: openAgendaImage ? 'openagenda' : null,
+      updatedAt:
+        event.updatedAt != null ? String(event.updatedAt) : null,
     };
   }
 
@@ -258,22 +290,67 @@ export class EventsService implements OnModuleInit {
       eventId: `ods-${record.identifiant || `${title}-${record.date_debut ?? 'na'}`}`,
       title,
       summary: record.descriptif_court?.trim() || null,
+      longDescription: record.descriptif_long?.trim() || null,
       startsOn: record.date_debut ?? null,
       endsOn: record.date_fin ?? null,
       schedule: record.horaires?.trim() || null,
+      timings: [],
       venueName: record.lieu_nom?.trim() || null,
       address: address || null,
       city: record.commune?.trim() || null,
+      postalCode: null,
+      district: null,
+      department: null,
+      countryCode: 'FR',
       category: record.categorie_de_la_manifestation?.trim() || null,
       theme: record.theme_de_la_manifestation?.trim() || null,
       type: record.type_de_manifestation?.trim() || null,
+      keywords: [
+        record.type_de_manifestation,
+        record.categorie_de_la_manifestation,
+        record.theme_de_la_manifestation,
+      ].filter((value): value is string => Boolean(value?.trim())),
       latitude,
       longitude,
       bookingUrl: record.reservation_site_internet?.trim() || null,
+      canonicalUrl: null,
+      registrationUrl: record.reservation_site_internet?.trim() || null,
+      onlineAccessLink: null,
+      status: null,
+      attendanceMode: null,
+      age: null,
+      conditions: null,
+      accessibility: null,
       provider: 'ods',
       imageUrl: null,
       imageSource: null,
+      updatedAt: null,
     };
+  }
+
+  private keywordList(
+    value: { fr?: string[] } | string[] | undefined,
+  ): string[] {
+    if (!value) {
+      return [];
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => item.trim()).filter(Boolean);
+    }
+    return (value.fr ?? []).map((item) => item.trim()).filter(Boolean);
+  }
+
+  private accessibilityText(value: unknown): string | null {
+    if (!value) {
+      return null;
+    }
+    if (typeof value === 'string') {
+      return value.trim() || null;
+    }
+    if (typeof value === 'object') {
+      return this.localizedText(value as Record<string, string>) || null;
+    }
+    return null;
   }
 
   private async enrichEventImages(

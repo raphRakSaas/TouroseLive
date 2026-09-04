@@ -33,17 +33,17 @@
     <ul class="listing-grid">
       @for (place of visiblePlaces(); track place.placeId) {
         <li>
-          <article class="listing-card static">
-              <div class="listing-media">
-                @if (place.imageUrl) {
-                  <img [src]="place.imageUrl" [alt]="place.name" loading="lazy" />
-                } @else {
-                  <div class="media-fallback" aria-hidden="true">
-                    {{ place.name.charAt(0) }}
-                  </div>
-                }
-                <span class="badge">{{ kindLabel(place.kind) }}</span>
-              </div>
+          <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
+            <div class="listing-media">
+              @if (place.imageUrl) {
+                <img [src]="place.imageUrl" [alt]="place.name" loading="lazy" />
+              } @else {
+                <div class="media-fallback" aria-hidden="true">
+                  {{ place.name.charAt(0) }}
+                </div>
+              }
+              <span class="badge">{{ kindLabel(place.kind) }}</span>
+            </div>
             <div class="listing-body">
               <h3>{{ place.name }}</h3>
               <p class="loc">
@@ -52,16 +52,8 @@
               @if (place.protection) {
                 <p class="sub">{{ place.protection }}</p>
               }
-              <div class="card-actions">
-                @if (place.website) {
-                  <a [href]="place.website" target="_blank" rel="noreferrer">Site</a>
-                }
-                @if (mapsUrl(place); as url) {
-                  <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
-                }
-              </div>
             </div>
-          </article>
+          </a>
         </li>
       }
     </ul>

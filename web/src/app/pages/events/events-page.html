@@ -32,7 +32,7 @@
       <ul class="listing-grid">
         @for (event of payload.data; track event.eventId) {
           <li>
-            <article class="listing-card static">
+            <a class="listing-card" [routerLink]="['/evenements', event.eventId]">
               <div class="listing-media">
                 @if (event.imageUrl) {
                   <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
@@ -56,16 +56,8 @@
                 @if (event.type || event.category) {
                   <p class="sub">{{ event.type }} {{ event.category }}</p>
                 }
-                <div class="card-actions">
-                  @if (event.bookingUrl) {
-                    <a [href]="event.bookingUrl" target="_blank" rel="noreferrer">Infos</a>
-                  }
-                  @if (mapsUrl(event); as url) {
-                    <a [href]="url" target="_blank" rel="noreferrer">Y aller</a>
-                  }
-                </div>
               </div>
-            </article>
+            </a>
           </li>
         }
       </ul>

@@ -2,27 +2,53 @@ export type SnapshotStatus = 'ok' | 'stale' | 'unavailable';
 
 export type EventProvider = 'ods' | 'openagenda';
 
-export type EventImageSource = 'openagenda' | 'commons' | 'wikidata' | 'wikipedia' | null;
+export type EventImageSource =
+  | 'openagenda'
+  | 'commons'
+  | 'wikidata'
+  | 'wikipedia'
+  | null;
+
+export interface EventTimingDto {
+  begin: string;
+  end: string | null;
+}
 
 export interface CultureEventDto {
   eventId: string;
   title: string;
   summary: string | null;
+  longDescription: string | null;
   startsOn: string | null;
   endsOn: string | null;
   schedule: string | null;
+  timings: EventTimingDto[];
   venueName: string | null;
   address: string | null;
   city: string | null;
+  postalCode: string | null;
+  district: string | null;
+  department: string | null;
+  countryCode: string | null;
   category: string | null;
   theme: string | null;
   type: string | null;
+  keywords: string[];
   latitude: number | null;
   longitude: number | null;
   bookingUrl: string | null;
+  canonicalUrl: string | null;
+  registrationUrl: string | null;
+  onlineAccessLink: string | null;
+  status: string | null;
+  attendanceMode: string | null;
+  age: string | null;
+  conditions: string | null;
+  accessibility: string | null;
   provider: EventProvider;
   imageUrl: string | null;
   imageSource: EventImageSource;
+  updatedAt: string | null;
 }
 
 export interface CatalogResponse<T> {
@@ -45,6 +71,7 @@ export interface OdsEventRecord {
   nom_generique?: string | null;
   nom_de_la_manifestation?: string | null;
   descriptif_court?: string | null;
+  descriptif_long?: string | null;
   date_debut?: string | null;
   date_fin?: string | null;
   horaires?: string | null;
@@ -80,6 +107,10 @@ export interface OpenAgendaLocation {
   name?: string;
   address?: string;
   city?: string;
+  postalCode?: string;
+  district?: string;
+  department?: string;
+  countryCode?: string;
   latitude?: number;
   longitude?: number;
 }
@@ -94,6 +125,7 @@ export interface OpenAgendaEvent {
   uid?: number;
   title?: string | Record<string, string>;
   description?: string | Record<string, string>;
+  longDescription?: string | Record<string, string>;
   keywords?: { fr?: string[] } | string[];
   location?: OpenAgendaLocation;
   timings?: OpenAgendaTiming[];
@@ -101,7 +133,14 @@ export interface OpenAgendaEvent {
   lastTiming?: OpenAgendaTiming;
   canonicalUrl?: string;
   registrationUrl?: string;
+  onlineAccessLink?: string;
+  status?: string | number;
+  attendanceMode?: string | number;
+  age?: string | Record<string, string>;
+  conditions?: string | Record<string, string>;
+  accessibility?: string | Record<string, string> | unknown;
   image?: OpenAgendaImage | null;
+  updatedAt?: number | string;
 }
 
 export interface OpenAgendaEventsResponse {

@@ -46,6 +46,12 @@ export class PlacesService implements OnModuleInit {
     return this.wrap(filtered);
   }
 
+  getPlace(placeId: string): CatalogResponse<PlaceDto | null> {
+    const found =
+      this.places.find((place) => place.placeId === placeId) ?? null;
+    return this.wrap(found);
+  }
+
   private wrap<T>(data: T): CatalogResponse<T> {
     return {
       status: this.snapshotStatus,

@@ -1,12 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogResponse, Place, PlaceKind } from '../../core/catalog.models';
 import { PlacesApi } from '../../core/places-api';
 
 @Component({
   selector: 'app-places-page',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './places-page.html',
   styleUrl: './places-page.scss',
 })

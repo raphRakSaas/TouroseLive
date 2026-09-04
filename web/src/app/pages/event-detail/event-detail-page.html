@@ -1,0 +1,131 @@
+<section class="page narrow">
+  <a routerLink="/evenements" class="back">Retour aux événements</a>
+
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
+
+  @if (catalog()?.data; as event) {
+    <div class="hero-media">
+      @if (event.imageUrl) {
+        <img [src]="event.imageUrl" [alt]="event.title" />
+      } @else {
+        <div class="media-fallback">{{ event.title.charAt(0) }}</div>
+      }
+    </div>
+
+    <header class="page-header">
+      <p class="meta">
+        {{ event.provider === 'openagenda' ? 'OpenAgenda' : 'ODS So Toulouse' }}
+        @if (event.startsOn) {
+          · {{ event.startsOn | date: 'EEEE d MMMM y' }}
+        }
+        @if (event.schedule) {
+          · {{ event.schedule }}
+        }
+      </p>
+      <h1>{{ event.title }}</h1>
+      <p class="lede">
+        {{ event.venueName || 'Lieu à préciser' }}
+        @if (event.address) {
+          · {{ event.address }}
+        }
+        @if (event.city) {
+          · {{ event.city }}
+        }
+      </p>
+    </header>
+
+    @if (event.summary) {
+      <p class="summary">{{ event.summary }}</p>
+    }
+
+    @if (event.longDescription) {
+      <section class="block">
+        <h2>Description</h2>
+        <div class="rich" [innerHTML]="event.longDescription"></div>
+      </section>
+    }
+
+    <section class="block">
+      <h2>Informations</h2>
+      <dl class="info">
+        @if (event.type) {
+          <div><dt>Type</dt><dd>{{ event.type }}</dd></div>
+        }
+        @if (event.category) {
+          <div><dt>Catégorie</dt><dd>{{ event.category }}</dd></div>
+        }
+        @if (event.theme) {
+          <div><dt>Thème</dt><dd>{{ event.theme }}</dd></div>
+        }
+        @if (attendanceLabel(event.attendanceMode); as attendance) {
+          <div><dt>Participation</dt><dd>{{ attendance }}</dd></div>
+        }
+        @if (event.age) {
+          <div><dt>Public</dt><dd>{{ event.age }}</dd></div>
+        }
+        @if (event.conditions) {
+          <div><dt>Conditions</dt><dd>{{ event.conditions }}</dd></div>
+        }
+        @if (event.accessibility) {
+          <div><dt>Accessibilité</dt><dd>{{ event.accessibility }}</dd></div>
+        }
+        @if (event.status) {
+          <div><dt>Statut</dt><dd>{{ event.status }}</dd></div>
+        }
+        @if (event.postalCode || event.district || event.department) {
+          <div>
+            <dt>Localisation</dt>
+            <dd>
+              {{ event.district }}
+              {{ event.postalCode }}
+              {{ event.department }}
+            </dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    @if (event.keywords?.length) {
+      <section class="block">
+        <h2>Mots-clés</h2>
+        <div class="tags">
+          @for (keyword of event.keywords; track keyword) {
+            <span>{{ keyword }}</span>
+          }
+        </div>
+      </section>
+    }
+
+    @if (event.timings?.length) {
+      <section class="block">
+        <h2>Horaires</h2>
+        <ul class="timings">
+          @for (timing of event.timings; track timing.begin) {
+            <li>
+              {{ timing.begin | date: 'EEE d MMM · HH:mm' }}
+              @if (timing.end) {
+                → {{ timing.end | date: 'HH:mm' }}
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <div class="actions">
+      @if (event.registrationUrl || event.bookingUrl; as url) {
+        <a class="cta" [href]="url" target="_blank" rel="noreferrer">Réserver / infos</a>
+      }
+      @if (event.canonicalUrl) {
+        <a class="cta secondary" [href]="event.canonicalUrl" target="_blank" rel="noreferrer">
+          Voir sur OpenAgenda
+        </a>
+      }
+      @if (mapsUrl(event); as url) {
+        <a class="cta secondary" [href]="url" target="_blank" rel="noreferrer">Y aller</a>
+      }
+    </div>
+  }
+</section>

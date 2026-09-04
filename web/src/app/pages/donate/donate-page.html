@@ -1,0 +1,27 @@
+<section class="page narrow">
+  <a routerLink="/" class="back">Retour</a>
+  <header class="page-header">
+    <h1>Offrir un café au développeur</h1>
+    <p class="lede">
+      TouRose est gratuit et open data. Si ça t’aide à bouger à Toulouse, tu peux
+      soutenir le projet — avec humour, et sans pression.
+    </p>
+  </header>
+
+  <ul class="tiers">
+    @for (tier of tiers; track tier.amount) {
+      <li>
+        <p class="amount">{{ tier.amount }}</p>
+        <h2>{{ tier.title }}</h2>
+        <p>{{ tier.text }}</p>
+        <button type="button" class="cta" disabled title="Paiement bientôt branché">
+          Bientôt disponible
+        </button>
+      </li>
+    }
+  </ul>
+
+  <p class="meta">
+    Le paiement réel (Ko-fi / Stripe) n’est pas encore branché — la page est prête, le terminal de paiement arrive bientôt.
+  </p>
+</section>

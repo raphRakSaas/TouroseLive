@@ -1,0 +1,39 @@
+.tiers {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.tiers li {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  background: #fff;
+}
+
+.amount {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tiers h2 {
+  margin: 6px 0 8px;
+  font-size: 1.2rem;
+}
+
+.tiers p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.cta[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

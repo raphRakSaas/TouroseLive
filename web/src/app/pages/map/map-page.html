@@ -1,7 +1,7 @@
 <section class="page">
   <header class="page-header">
     <h1>Carte</h1>
-    <p class="lede">Stations Vélô et parkings sur la métropole.</p>
+    <p class="lede">Vélô, parkings et événements autour de Toulouse.</p>
   </header>
 
   @if (loadError()) {
@@ -16,48 +16,57 @@
       @if (parkingCatalog(); as parking) {
         · {{ parking.data.length }} parkings
       }
-      @if (veloCatalog()?.fetchedAt; as fetchedAt) {
-        · maj. {{ fetchedAt | date: 'HH:mm' }}
+      @if (mappedEvents().length) {
+        · {{ mappedEvents().length }} événements géolocalisés
       }
     </p>
     <div class="chip-row" role="group" aria-label="Couches">
       <button type="button" [class.active]="mapLayer() === 'all'" (click)="setLayer('all')">Tous</button>
       <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">Vélô</button>
       <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">Parkings</button>
+      <button type="button" [class.active]="mapLayer() === 'events'" (click)="setLayer('events')">Événements</button>
     </div>
   </div>
 
-  <div class="map-layout">
-    <div #mapHost class="map" aria-label="Carte Vélô et parkings"></div>
-    <aside class="side">
-      @if (mapLayer() !== 'parking') {
-        <h2>Stations bien fournies</h2>
-        <ul class="side-list">
-          @for (station of topStations(); track station.stationId) {
-            <li>
-              <a [routerLink]="['/velo', station.stationId]">
-                <strong>{{ station.name }}</strong>
-                <span>{{ station.bikesAvailable }} vélos · {{ station.docksAvailable }} places</span>
-              </a>
-            </li>
-          }
-        </ul>
-      }
-      @if (mapLayer() !== 'velo') {
-        <h2>Parkings</h2>
-        <ul class="side-list">
-          @for (lot of listLots(); track lot.parkingId) {
-            <li>
-              <a [routerLink]="['/parkings', lot.parkingId]">
-                <strong>{{ lot.name }}</strong>
-                <span>{{ lot.capacity ?? '—' }} places · dispo inconnue</span>
-              </a>
-            </li>
-          }
-        </ul>
-      }
-    </aside>
+  <div #mapHost class="map" aria-label="Carte Toulouse"></div>
+  <p class="meta legend">Vert Vélô · Noir parking · Rose événement</p>
+
+  <div class="rail-head">
+    <h2>Événements à proximité</h2>
+    <div class="rail-nav">
+      <button type="button" aria-label="Précédent" (click)="scrollRail(-1)">‹</button>
+      <button type="button" aria-label="Suivant" (click)="scrollRail(1)">›</button>
+    </div>
   </div>
 
-  <p class="meta legend">Vert ≥ 5 vélos · Rouge 1–4 · Gris vide · Noir parking</p>
+  @if (railEvents().length === 0) {
+    <p class="empty">Pas encore d’événements géolocalisés.</p>
+  } @else {
+    <div #railHost class="rail" tabindex="0">
+      @for (event of railEvents(); track event.eventId) {
+        <article
+          class="pill"
+          [class.selected]="selectedEventId() === event.eventId"
+        >
+          <button type="button" class="pill-hit" (click)="selectEvent(event)">
+            <div class="pill-media">
+              @if (event.imageUrl) {
+                <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
+              } @else {
+                <div class="media-fallback">{{ event.title.charAt(0) }}</div>
+              }
+            </div>
+            <div class="pill-body">
+              <h3>{{ event.title }}</h3>
+              <p>{{ event.venueName || event.city || 'Toulouse' }}</p>
+              @if (event.startsOn) {
+                <p class="when">{{ event.startsOn | date: 'd MMM' }} · {{ event.schedule }}</p>
+              }
+            </div>
+          </button>
+          <a class="pill-link" [routerLink]="['/evenements', event.eventId]">Voir</a>
+        </article>
+      }
+    </div>
+  }
 </section>

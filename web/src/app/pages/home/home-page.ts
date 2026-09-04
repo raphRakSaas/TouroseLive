@@ -1,6 +1,14 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  Component,
+  computed,
+  HostListener,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import {
   AirIndex,
   CatalogResponse,
@@ -13,17 +21,20 @@ import {
 import { AirApi } from '../../core/air-api';
 import { EventsApi } from '../../core/events-api';
 import { PlacesApi } from '../../core/places-api';
+import { SearchCatalog, SearchHit } from '../../core/search-catalog';
 import { TisseoApi } from '../../core/tisseo-api';
 import { VeloApi } from '../../core/velo-api';
 import { WeatherApi } from '../../core/weather-api';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, DatePipe, DecimalPipe],
+  imports: [RouterLink, DatePipe, DecimalPipe, FormsModule],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
 export class HomePage implements OnInit {
+  private readonly router = inject(Router);
+  private readonly searchCatalog = inject(SearchCatalog);
   private readonly veloApi = inject(VeloApi);
   private readonly tisseoApi = inject(TisseoApi);
   private readonly weatherApi = inject(WeatherApi);
@@ -48,6 +59,12 @@ export class HomePage implements OnInit {
   > | null>(null);
   protected readonly placesCatalog = signal<CatalogResponse<Place[]> | null>(
     null,
+  );
+  protected readonly searchQuery = signal('');
+  protected readonly searchOpen = signal(false);
+
+  protected readonly searchHits = computed(() =>
+    this.searchCatalog.search(this.searchQuery()),
   );
 
   protected readonly highlightStation = computed(() => {
@@ -78,38 +95,8 @@ export class HomePage implements OnInit {
       ).length,
   );
 
-  protected readonly categories = [
-    {
-      title: 'Événements',
-      subtitle: 'Agenda culturel',
-      link: '/evenements',
-      image:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Toulouse_Capitole_Night_Wikimedia_Commons.jpg/960px-Toulouse_Capitole_Night_Wikimedia_Commons.jpg',
-    },
-    {
-      title: 'Lieux',
-      subtitle: 'Musées & patrimoine',
-      link: '/lieux',
-      image:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Mus%C3%A9e_des_Augustin%2C_l%27aile_Darcy_-_Viollet-le-duc.jpg/960px-Mus%C3%A9e_des_Augustin%2C_l%27aile_Darcy_-_Viollet-le-duc.jpg',
-    },
-    {
-      title: 'Carte',
-      subtitle: 'Vélô & parkings',
-      link: '/carte',
-      image:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Le_Pont-Neuf_de_Toulouse.jpg/960px-Le_Pont-Neuf_de_Toulouse.jpg',
-    },
-    {
-      title: 'Météo',
-      subtitle: 'Temps & ATMO',
-      link: '/meteo',
-      image:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Lac_et_pavillon_du_th%C3%A9.jpg/960px-Lac_et_pavillon_du_th%C3%A9.jpg',
-    },
-  ];
-
   ngOnInit(): void {
+    this.searchCatalog.ensureLoaded();
     this.veloApi.listStations().subscribe({
       next: (payload) => this.veloCatalog.set(payload),
       error: () => this.veloCatalog.set(null),
@@ -142,6 +129,32 @@ export class HomePage implements OnInit {
       next: (payload) => this.placesCatalog.set(payload),
       error: () => this.placesCatalog.set(null),
     });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.searchOpen.set(false);
+  }
+
+  protected onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    this.searchOpen.set(value.trim().length >= 2);
+  }
+
+  protected goToHit(hit: SearchHit): void {
+    this.searchQuery.set('');
+    this.searchOpen.set(false);
+    void this.router.navigateByUrl(hit.link);
+  }
+
+  protected kindLabelHit(kind: SearchHit['kind']): string {
+    if (kind === 'event') {
+      return 'Événement';
+    }
+    if (kind === 'place') {
+      return 'Lieu';
+    }
+    return 'Vélô';
   }
 
   protected kindLabel(kind: Place['kind']): string {

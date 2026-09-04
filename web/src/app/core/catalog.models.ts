@@ -104,25 +104,46 @@ export interface TisseoAlert {
   activeUntil: string | null;
 }
 
+export interface EventTiming {
+  begin: string;
+  end: string | null;
+}
+
 export interface CultureEvent {
   eventId: string;
   title: string;
   summary: string | null;
+  longDescription?: string | null;
   startsOn: string | null;
   endsOn: string | null;
   schedule: string | null;
+  timings?: EventTiming[];
   venueName: string | null;
   address: string | null;
   city: string | null;
+  postalCode?: string | null;
+  district?: string | null;
+  department?: string | null;
+  countryCode?: string | null;
   category: string | null;
   theme: string | null;
   type: string | null;
+  keywords?: string[];
   latitude: number | null;
   longitude: number | null;
   bookingUrl: string | null;
+  canonicalUrl?: string | null;
+  registrationUrl?: string | null;
+  onlineAccessLink?: string | null;
+  status?: string | null;
+  attendanceMode?: string | null;
+  age?: string | null;
+  conditions?: string | null;
+  accessibility?: string | null;
   provider?: 'ods' | 'openagenda';
   imageUrl?: string | null;
   imageSource?: 'openagenda' | 'commons' | 'wikidata' | 'wikipedia' | null;
+  updatedAt?: string | null;
 }
 
 export type PlaceKind =
