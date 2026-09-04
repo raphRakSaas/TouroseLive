@@ -35,12 +35,16 @@
         <li>
           <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
             <div class="listing-media">
+              <div class="media-fallback" aria-hidden="true">
+                {{ place.name.charAt(0) }}
+              </div>
               @if (place.imageUrl) {
-                <img [src]="place.imageUrl" [alt]="place.name" loading="lazy" />
-              } @else {
-                <div class="media-fallback" aria-hidden="true">
-                  {{ place.name.charAt(0) }}
-                </div>
+                <img
+                  [src]="place.imageUrl"
+                  [alt]="place.name"
+                  [attr.loading]="$index < 6 ? 'eager' : 'lazy'"
+                  decoding="async"
+                />
               }
               <span class="badge">{{ kindLabel(place.kind) }}</span>
             </div>

@@ -4,6 +4,7 @@ import {
   computed,
   HostListener,
   inject,
+  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -31,7 +32,7 @@ import { WeatherApi } from '../../core/weather-api';
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
-export class HomePage implements OnInit {
+export class HomePage implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly searchCatalog = inject(SearchCatalog);
   private readonly veloApi = inject(VeloApi);
@@ -40,6 +41,8 @@ export class HomePage implements OnInit {
   private readonly airApi = inject(AirApi);
   private readonly eventsApi = inject(EventsApi);
   private readonly placesApi = inject(PlacesApi);
+  private placesPhotoPollHandle: number | null = null;
+  private placesPhotoPollCount = 0;
 
   protected readonly veloCatalog = signal<CatalogResponse<VeloStation[]> | null>(
     null,
@@ -195,9 +198,14 @@ export class HomePage implements OnInit {
       next: (payload) => {
         this.placesCatalog.set(payload);
         this.searchCatalog.hydrate({ places: payload.data });
+        this.maybeStartPlacesPhotoPoll(payload.data);
       },
       error: () => this.placesCatalog.set(null),
     });
+  }
+
+  ngOnDestroy(): void {
+    this.clearPlacesPhotoPoll();
   }
 
   @HostListener('document:keydown.escape')
@@ -237,5 +245,36 @@ export class HomePage implements OnInit {
       heritage: 'Patrimoine',
     };
     return labels[kind];
+  }
+
+  private maybeStartPlacesPhotoPoll(places: Place[]): void {
+    const featured = places.slice(0, 12);
+    const missing = featured.filter((place) => !place.imageUrl).length;
+    if (missing === 0 || this.placesPhotoPollHandle !== null) {
+      return;
+    }
+
+    this.placesPhotoPollHandle = window.setInterval(() => {
+      this.placesPhotoPollCount += 1;
+      this.placesApi.listPlaces('all').subscribe({
+        next: (payload) => {
+          this.placesCatalog.set(payload);
+          this.searchCatalog.hydrate({ places: payload.data });
+          const stillMissing = payload.data
+            .slice(0, 12)
+            .filter((place) => !place.imageUrl).length;
+          if (stillMissing === 0 || this.placesPhotoPollCount >= 20) {
+            this.clearPlacesPhotoPoll();
+          }
+        },
+      });
+    }, 2500);
+  }
+
+  private clearPlacesPhotoPoll(): void {
+    if (this.placesPhotoPollHandle !== null) {
+      window.clearInterval(this.placesPhotoPollHandle);
+      this.placesPhotoPollHandle = null;
+    }
   }
 }

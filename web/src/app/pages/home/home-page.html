@@ -120,12 +120,16 @@
         <li>
           <a class="listing-card" [routerLink]="['/evenements', event.eventId]">
             <div class="listing-media">
+              <div class="media-fallback" aria-hidden="true">
+                {{ event.title.charAt(0) }}
+              </div>
               @if (event.imageUrl) {
-                <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
-              } @else {
-                <div class="media-fallback" aria-hidden="true">
-                  {{ event.title.charAt(0) }}
-                </div>
+                <img
+                  [src]="event.imageUrl"
+                  [alt]="event.title"
+                  [attr.loading]="$index < 4 ? 'eager' : 'lazy'"
+                  decoding="async"
+                />
               }
               @if (event.startsOn) {
                 <span class="badge">{{ event.startsOn | date: 'd MMM' }}</span>
@@ -157,12 +161,16 @@
         <li>
           <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
             <div class="listing-media">
+              <div class="media-fallback" aria-hidden="true">
+                {{ place.name.charAt(0) }}
+              </div>
               @if (place.imageUrl) {
-                <img [src]="place.imageUrl" [alt]="place.name" loading="lazy" />
-              } @else {
-                <div class="media-fallback" aria-hidden="true">
-                  {{ place.name.charAt(0) }}
-                </div>
+                <img
+                  [src]="place.imageUrl"
+                  [alt]="place.name"
+                  [attr.loading]="$index < 4 ? 'eager' : 'lazy'"
+                  decoding="async"
+                />
               }
               <span class="badge">{{ kindLabel(place.kind) }}</span>
             </div>

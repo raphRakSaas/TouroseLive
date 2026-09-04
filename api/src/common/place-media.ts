@@ -260,7 +260,7 @@ export class PlaceMediaResolver {
       gsrlimit: '6',
       prop: 'pageimages',
       piprop: 'thumbnail',
-      pithumbsize: '800',
+      pithumbsize: '480',
       format: 'json',
       origin: '*',
     });
@@ -414,7 +414,7 @@ export class PlaceMediaResolver {
       titles: title,
       prop: 'pageimages',
       piprop: 'thumbnail',
-      pithumbsize: '800',
+      pithumbsize: '480',
       format: 'json',
       origin: '*',
     });
@@ -439,7 +439,7 @@ export class PlaceMediaResolver {
       titles: title,
       prop: 'imageinfo',
       iiprop: 'url|mime',
-      iiurlwidth: '960',
+      iiurlwidth: '640',
       format: 'json',
       origin: '*',
     });

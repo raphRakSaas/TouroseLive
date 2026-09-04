@@ -120,21 +120,33 @@ export class PlacesService implements OnModuleInit {
           .filter((place): place is PlaceDto => place !== null),
       ].sort((left, right) => left.name.localeCompare(right.name, 'fr'));
 
-      // Publish places immediately, then fill real photos in background.
-      this.places = merged;
+      // Keep previously resolved photos, then fill missing ones in background.
+      const previousById = new Map(
+        this.places.map((place) => [place.placeId, place] as const),
+      );
+      const withCachedPhotos = merged.map((place) => {
+        const previous = previousById.get(place.placeId);
+        if (previous?.imageUrl) {
+          return {
+            ...place,
+            imageUrl: previous.imageUrl,
+            imageSource: previous.imageSource,
+          };
+        }
+        return place;
+      });
+
+      this.places = withCachedPhotos;
       this.fetchedAt = new Date();
       this.expiresAt = new Date(Date.now() + POLL_MS);
       this.snapshotStatus = 'ok';
-      this.logger.log(`Places catalog ready (${this.places.length}), resolving photos…`);
+      const cachedPhotos = withCachedPhotos.filter((place) => place.imageUrl)
+        .length;
+      this.logger.log(
+        `Places catalog ready (${withCachedPhotos.length}, cached photos=${cachedPhotos}), resolving missing…`,
+      );
 
-      void this.enrichImages(merged).then((enriched) => {
-        this.places = enriched;
-        const withPhoto = enriched.filter((place) => place.imageUrl).length;
-        this.fetchedAt = new Date();
-        this.logger.log(
-          `Places photos ready (${enriched.length}, photos=${withPhoto})`,
-        );
-      });
+      void this.enrichImages(withCachedPhotos);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Places refresh failed: ${message}`);
@@ -149,18 +161,38 @@ export class PlacesService implements OnModuleInit {
     }
   }
 
-  private async enrichImages(places: PlaceDto[]): Promise<PlaceDto[]> {
-    const enriched: PlaceDto[] = new Array(places.length);
+  private async enrichImages(places: PlaceDto[]): Promise<void> {
+    const working = places.map((place) => ({ ...place }));
+    const pending = working
+      .map((place, index) => ({ place, index }))
+      .filter(({ place }) => !place.imageUrl)
+      .sort(
+        (left, right) =>
+          this.mediaPriority(left.place.kind) -
+          this.mediaPriority(right.place.kind),
+      );
+
+    if (pending.length === 0) {
+      this.logger.log(`Places photos already cached (${working.length})`);
+      return;
+    }
+
     let cursor = 0;
+    let resolvedCount = 0;
+
+    const publish = (): void => {
+      this.places = working.map((place) => ({ ...place }));
+      this.fetchedAt = new Date();
+    };
 
     const worker = async (): Promise<void> => {
-      while (cursor < places.length) {
-        const index = cursor;
+      while (cursor < pending.length) {
+        const current = pending[cursor];
         cursor += 1;
-        const place = places[index];
+        const { place, index } = current;
         try {
           const media = await this.mediaResolver.resolve(place.name, place.kind);
-          enriched[index] = media
+          working[index] = media
             ? {
                 ...place,
                 imageUrl: media.imageUrl,
@@ -170,7 +202,13 @@ export class PlacesService implements OnModuleInit {
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           this.logger.debug(`Media resolve failed for ${place.name}: ${message}`);
-          enriched[index] = { ...place, imageUrl: null, imageSource: null };
+          working[index] = { ...place, imageUrl: null, imageSource: null };
+        }
+
+        resolvedCount += 1;
+        // Publish early so the home grid can show photos without waiting for all.
+        if (resolvedCount <= 24 || resolvedCount % 8 === 0) {
+          publish();
         }
       }
     };
@@ -178,7 +216,25 @@ export class PlacesService implements OnModuleInit {
     await Promise.all(
       Array.from({ length: MEDIA_CONCURRENCY }, () => worker()),
     );
-    return enriched;
+    publish();
+    const withPhoto = working.filter((place) => place.imageUrl).length;
+    this.logger.log(
+      `Places photos ready (${working.length}, photos=${withPhoto})`,
+    );
+  }
+
+  private mediaPriority(kind: PlaceKind): number {
+    const order: PlaceKind[] = [
+      'museum',
+      'heritage',
+      'theatre',
+      'gallery',
+      'garden',
+      'walk',
+      'playground',
+    ];
+    const rank = order.indexOf(kind);
+    return rank === -1 ? 99 : rank;
   }
 
   private emptyImages(): Pick<PlaceDto, 'imageUrl' | 'imageSource'> {

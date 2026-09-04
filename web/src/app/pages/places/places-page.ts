@@ -45,10 +45,10 @@ export class PlacesPage implements OnInit, OnDestroy {
     this.photoPollHandle = window.setInterval(() => {
       this.photoPollCount += 1;
       this.loadPlaces(this.selectedKind(), true);
-      if (this.photoPollCount >= 12) {
+      if (this.photoPollCount >= 24) {
         this.clearPhotoPoll();
       }
-    }, 12_000);
+    }, 2500);
   }
 
   ngOnDestroy(): void {

@@ -53,16 +53,39 @@
 
   .listing-media {
     border-radius: 10px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .listing-body {
+    gap: 4px;
+    /* Title (2 lines) + location (1 line) — keeps cards aligned in the grid */
+    min-height: calc(1.3em * 2 + 4px + 1.25em);
   }
 
   .listing-body h3,
   .listing-body .title {
     font-size: 0.9rem;
+    line-height: 1.3;
+    min-height: calc(1.3em * 2);
     white-space: normal;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .listing-body .loc,
+  .listing-body .sub,
+  .listing-body .price-line {
+    font-size: 0.8rem;
+    line-height: 1.25;
+    min-height: 1.25em;
+  }
+
+  /* Extra lines break row alignment on a 2-col phone grid */
+  .listing-body .sub,
+  .listing-body .price-line {
+    display: none;
   }
 
   .chip-row {
