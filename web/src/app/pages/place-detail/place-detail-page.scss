@@ -72,3 +72,23 @@
   gap: 10px;
   margin-top: 28px;
 }
+
+@media (max-width: 560px) {
+  .hero-media {
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+  }
+
+  .info div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions .cta {
+    width: 100%;
+  }
+}

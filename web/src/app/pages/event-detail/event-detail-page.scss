@@ -117,4 +117,28 @@
     grid-template-columns: 1fr;
     gap: 2px;
   }
+
+  .hero-media {
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+    margin-inline: 0;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions .cta {
+    width: 100%;
+  }
+
+  .tags {
+    gap: 6px;
+  }
+
+  .tags span {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+  }
 }

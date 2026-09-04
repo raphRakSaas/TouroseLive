@@ -157,7 +157,41 @@
 }
 
 @media (max-width: 720px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
   .map {
-    min-height: 340px;
+    min-height: 52vh;
+    border-radius: 12px;
+    margin-inline: -2px;
+  }
+
+  .rail-head {
+    margin-top: 20px;
+  }
+
+  .rail-nav button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .rail {
+    margin-inline: -14px;
+    padding-inline: 14px;
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pill {
+    flex-basis: min(78vw, 280px);
+  }
+
+  .pill-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 }
