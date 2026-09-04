@@ -19,9 +19,11 @@ import {
 import {
   CatalogResponse,
   ParkingLot,
+  TisseoAlert,
   VeloStation,
 } from '../../core/catalog.models';
 import { ParkingApi } from '../../core/parking-api';
+import { TisseoApi } from '../../core/tisseo-api';
 import { VeloApi } from '../../core/velo-api';
 
 type MapLayer = 'all' | 'velo' | 'parking';
@@ -35,6 +37,7 @@ type MapLayer = 'all' | 'velo' | 'parking';
 export class HomePage implements OnDestroy {
   private readonly veloApi = inject(VeloApi);
   private readonly parkingApi = inject(ParkingApi);
+  private readonly tisseoApi = inject(TisseoApi);
   private leafletMap: LeafletMap | null = null;
   private readonly mapHost = viewChild<ElementRef<HTMLDivElement>>('mapHost');
 
@@ -44,8 +47,12 @@ export class HomePage implements OnDestroy {
   protected readonly parkingCatalog = signal<CatalogResponse<
     ParkingLot[]
   > | null>(null);
+  protected readonly tisseoCatalog = signal<CatalogResponse<
+    TisseoAlert[]
+  > | null>(null);
   protected readonly loadError = signal<string | null>(null);
   protected readonly mapLayer = signal<MapLayer>('all');
+  protected readonly showAllAlerts = signal(false);
 
   protected readonly visibleStations = computed(() => {
     if (this.mapLayer() === 'parking') {
@@ -61,6 +68,14 @@ export class HomePage implements OnDestroy {
     return this.parkingCatalog()?.data ?? [];
   });
 
+  protected readonly visibleAlerts = computed(() => {
+    const alerts = this.tisseoCatalog()?.data ?? [];
+    if (this.showAllAlerts()) {
+      return alerts;
+    }
+    return alerts.slice(0, 8);
+  });
+
   constructor() {
     this.veloApi.listStations().subscribe({
       next: (payload) => this.veloCatalog.set(payload),
@@ -70,6 +85,18 @@ export class HomePage implements OnDestroy {
       next: (payload) => this.parkingCatalog.set(payload),
       error: () =>
         this.loadError.set('Donnée parkings temporairement indisponible.'),
+    });
+    this.tisseoApi.listAlerts().subscribe({
+      next: (payload) => this.tisseoCatalog.set(payload),
+      error: () =>
+        this.tisseoCatalog.set({
+          status: 'unavailable',
+          fetchedAt: null,
+          expiresAt: null,
+          source: 'Tisséo',
+          license: 'ODbL',
+          data: [],
+        }),
     });
 
     effect(() => {
@@ -88,6 +115,20 @@ export class HomePage implements OnDestroy {
 
   protected setLayer(layer: MapLayer): void {
     this.mapLayer.set(layer);
+  }
+
+  protected toggleAlerts(): void {
+    this.showAllAlerts.update((value) => !value);
+  }
+
+  protected severityLabel(severity: TisseoAlert['severity']): string {
+    if (severity === 'severe') {
+      return 'Fort';
+    }
+    if (severity === 'warning') {
+      return 'Attention';
+    }
+    return 'Info';
   }
 
   protected markerTone(station: VeloStation): string {

@@ -89,6 +89,21 @@ export interface AirIndex {
   source: string;
 }
 
+export type AlertSeverity = 'info' | 'warning' | 'severe';
+
+export interface TisseoAlert {
+  alertId: string;
+  header: string;
+  summary: string;
+  severity: AlertSeverity;
+  effectCode: number | null;
+  causeCode: number | null;
+  routeIds: string[];
+  url: string | null;
+  activeFrom: string | null;
+  activeUntil: string | null;
+}
+
 export interface CatalogResponse<T> {
   status: SnapshotStatus;
   fetchedAt: string | null;

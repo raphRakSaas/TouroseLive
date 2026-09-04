@@ -24,6 +24,54 @@
     <p class="banner">{{ loadError() }}</p>
   }
 
+  <section class="alerts">
+    <div class="alerts-head">
+      <h2>Perturbations Tisséo</h2>
+      @if (tisseoCatalog(); as tisseo) {
+        <p class="meta">
+          {{ tisseo.status }} ·
+          @if (tisseo.fetchedAt) {
+            maj. {{ tisseo.fetchedAt | date: 'HH:mm' }} ·
+          }
+          {{ tisseo.data.length }} alerte(s)
+        </p>
+      }
+    </div>
+
+    @if (tisseoCatalog()?.status === 'unavailable') {
+      <p class="banner">
+        Alertes Tisséo temporairement indisponibles (GTFS-RT). Le reste du tableau de bord reste utilisable.
+      </p>
+    } @else if ((tisseoCatalog()?.data?.length ?? 0) === 0) {
+      <p class="empty">Aucune alerte Tisséo en cours.</p>
+    } @else {
+      <ul class="alert-list">
+        @for (alert of visibleAlerts(); track alert.alertId) {
+          <li [attr.data-severity]="alert.severity">
+            <span class="severity">{{ severityLabel(alert.severity) }}</span>
+            <div>
+              <strong>{{ alert.header }}</strong>
+              @if (alert.routeIds.length) {
+                <p class="routes">{{ alert.routeIds.join(' · ') }}</p>
+              }
+              @if (alert.summary) {
+                <p class="summary">{{ alert.summary }}</p>
+              }
+              @if (alert.url) {
+                <a [href]="alert.url" target="_blank" rel="noreferrer">Détail Tisséo</a>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+      @if ((tisseoCatalog()?.data?.length ?? 0) > 8) {
+        <button type="button" class="more" (click)="toggleAlerts()">
+          {{ showAllAlerts() ? 'Réduire' : 'Voir toutes les alertes' }}
+        </button>
+      }
+    }
+  </section>
+
   <div class="layout">
     <div #mapHost class="map" aria-label="Carte Vélô et parkings"></div>
     <div class="lists">
@@ -58,6 +106,6 @@
   </div>
 
   <p class="source">
-    Sources : JCDecaux / VélôToulouse (ODbL) · Toulouse Métropole Open Data (Licence Ouverte)
+    Sources : JCDecaux / VélôToulouse (ODbL) · Toulouse Métropole Open Data (Licence Ouverte) · Tisséo GTFS-RT (ODbL)
   </p>
 </section>
