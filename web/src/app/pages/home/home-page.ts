@@ -111,6 +111,50 @@ export class HomePage implements OnInit {
       ).length,
   );
 
+  protected veloAriaLabel(): string {
+    const station = this.highlightStation();
+    if (!station) {
+      return 'Vélô : chargement';
+    }
+    return `Vélô : ${station.bikesAvailable} vélos à ${station.name}`;
+  }
+
+  protected tisseoAriaLabel(): string {
+    const catalog = this.tisseoCatalog();
+    if (!catalog) {
+      return 'Tisséo : chargement';
+    }
+    if (catalog.status === 'unavailable') {
+      return 'Tisséo : alertes indisponibles';
+    }
+    const severeCount = this.severeAlertCount();
+    const alertCount = catalog.data.length;
+    if (alertCount === 0) {
+      return 'Tisséo : aucune alerte';
+    }
+    if (severeCount > 0) {
+      return `Tisséo : ${alertCount} alertes dont ${severeCount} fortes`;
+    }
+    return `Tisséo : ${alertCount} alertes en cours`;
+  }
+
+  protected weatherAriaLabel(): string {
+    const weather = this.weatherCatalog()?.data;
+    if (!weather) {
+      return 'Météo : chargement';
+    }
+    const temperature = Math.round(weather.current.temperature);
+    return `Météo : ${temperature}°, ${weather.current.weatherLabel}`;
+  }
+
+  protected airAriaLabel(): string {
+    const air = this.airCatalog()?.data;
+    if (!air) {
+      return 'Qualité de l’air : chargement';
+    }
+    return `Qualité de l’air : indice ${air.qualityCode} sur 6, ${air.qualityLabel}`;
+  }
+
   ngOnInit(): void {
     this.searchCatalog.ensureLoaded();
     this.veloApi.listStations().subscribe({

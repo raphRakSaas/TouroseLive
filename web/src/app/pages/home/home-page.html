@@ -42,51 +42,67 @@
     }
   </div>
 
-  <div class="pulse" aria-label="Aperçu du jour">
-    <a class="pulse-item" routerLink="/carte">
+  <div class="pulse" aria-label="Aperçu du jour à Toulouse">
+    <a class="pulse-item" routerLink="/carte" [attr.aria-label]="veloAriaLabel()">
       <span class="pulse-label">Vélô</span>
       @if (highlightStation(); as station) {
-        <strong>{{ station.bikesAvailable }}</strong>
-        <span>{{ station.name }}</span>
+        <span class="pulse-value">
+          <strong>{{ station.bikesAvailable }}</strong>
+          <span class="pulse-unit">vélos</span>
+        </span>
+        <span class="pulse-meta" [title]="station.name">{{ station.name }}</span>
       } @else {
-        <span>Chargement…</span>
+        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
       }
     </a>
-    <a class="pulse-item" routerLink="/carte">
+
+    <a
+      class="pulse-item"
+      routerLink="/carte"
+      [attr.aria-label]="tisseoAriaLabel()"
+    >
       <span class="pulse-label">Tisséo</span>
       @if (tisseoCatalog(); as tisseo) {
         @if (tisseo.status === 'unavailable') {
           <strong>—</strong>
-          <span>Alertes indisponibles</span>
+          <span class="pulse-meta">Alertes indisponibles</span>
         } @else {
-          <strong>{{ tisseo.data.length }}</strong>
-          <span>
-            alerte(s)
+          <span class="pulse-value">
+            <strong>{{ tisseo.data.length }}</strong>
+            <span class="pulse-unit">{{ tisseo.data.length <= 1 ? 'alerte' : 'alertes' }}</span>
+          </span>
+          <span class="pulse-meta">
             @if (severeAlertCount() > 0) {
-              · {{ severeAlertCount() }} fortes
+              {{ severeAlertCount() }} fortes
+            } @else if (tisseo.data.length === 0) {
+              Aucune alerte
+            } @else {
+              En cours
             }
           </span>
         }
       } @else {
-        <span>Chargement…</span>
+        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
       }
     </a>
-    <a class="pulse-item" routerLink="/meteo">
+
+    <a class="pulse-item" routerLink="/meteo" [attr.aria-label]="weatherAriaLabel()">
       <span class="pulse-label">Météo</span>
       @if (weatherCatalog()?.data; as weather) {
         <strong>{{ weather.current.temperature | number: '1.0-0' }}°</strong>
-        <span>{{ weather.current.weatherLabel }}</span>
+        <span class="pulse-meta" [title]="weather.current.weatherLabel">{{ weather.current.weatherLabel }}</span>
       } @else {
-        <span>Chargement…</span>
+        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
       }
     </a>
-    <a class="pulse-item" routerLink="/meteo">
+
+    <a class="pulse-item" routerLink="/meteo" [attr.aria-label]="airAriaLabel()">
       <span class="pulse-label">Air</span>
       @if (airCatalog()?.data; as air) {
         <strong [style.color]="air.qualityColor">{{ air.qualityCode }}</strong>
-        <span>{{ air.qualityLabel }}</span>
+        <span class="pulse-meta">{{ air.qualityLabel }}</span>
       } @else {
-        <span>Chargement…</span>
+        <span class="pulse-meta pulse-meta--loading">Chargement…</span>
       }
     </a>
   </div>
