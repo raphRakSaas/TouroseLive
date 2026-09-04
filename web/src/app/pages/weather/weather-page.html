@@ -1,85 +1,147 @@
-<section class="page narrow">
+<section class="page weather-page">
   <header class="page-header">
     <h1>Météo & air</h1>
     <p class="lede">
-      Prévisions par quartier · qualité de l’air métropole (ATMO 1–6).
+      Prévisions par quartier et qualité de l’air métropole — Atmo 1 à 6.
     </p>
   </header>
 
-  <label class="district">
-    Quartier (météo)
-    <select
-      [value]="selectedDistrictId()"
-      (change)="onDistrictChange($any($event.target).value)"
-    >
-      @for (district of districts(); track district.districtId) {
-        <option [value]="district.districtId">{{ district.name }}</option>
-      }
-    </select>
-  </label>
+  <div class="district-row" role="group" aria-label="Quartier météo">
+    @for (district of districts(); track district.districtId) {
+      <button
+        type="button"
+        class="district-chip"
+        [class.active]="selectedDistrictId() === district.districtId"
+        (click)="onDistrictChange(district.districtId)"
+      >
+        {{ district.name }}
+      </button>
+    }
+  </div>
 
   @if (loadError()) {
     <p class="banner">{{ loadError() }}</p>
   }
 
   @if (catalog()?.data; as forecast) {
-    <article class="hero-weather">
-      <p class="kicker">{{ forecast.district.name }}</p>
-      <p class="temp">{{ forecast.current.temperature | number: '1.0-0' }}°</p>
-      <p class="label">{{ forecast.current.weatherLabel }}</p>
-      <p class="meta">
-        Ressenti {{ forecast.current.apparentTemperature | number: '1.0-0' }}°
-        @if (catalog()?.fetchedAt) {
-          · maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }}
-        }
-      </p>
+    <article class="hero-weather" [attr.data-sky]="skyTone()">
+      <div class="hero-copy">
+        <p class="kicker">{{ forecast.district.name }}</p>
+        <div class="hero-temp-row">
+          <p class="temp">{{ forecast.current.temperature | number: '1.0-0' }}°</p>
+          <div class="hero-icon" aria-hidden="true">
+            <app-weather-icon [kind]="currentIcon()" />
+          </div>
+        </div>
+        <p class="label">{{ forecast.current.weatherLabel }}</p>
+        <p class="meta">
+          Ressenti {{ forecast.current.apparentTemperature | number: '1.0-0' }}°
+          @if (catalog()?.fetchedAt) {
+            · maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }}
+          }
+        </p>
+      </div>
     </article>
   }
 
-  <section class="block">
-    <h2>Qualité de l’air</h2>
+  <section class="panel air-panel">
+    <div class="panel-head">
+      <h2>Qualité de l’air</h2>
+      <span class="panel-tag">Métropole</span>
+    </div>
+
     @if (airError()) {
       <p class="banner">{{ airError() }}</p>
     }
+
     @if (airCatalog()?.data; as air) {
-      <p class="air-code" [style.color]="air.qualityColor">
-        {{ air.qualityCode }} · {{ air.qualityLabel }}
-      </p>
-      <p class="meta">
-        {{ air.observedOn | date: 'd MMMM y' }} · polluant max
-        {{ air.dominantPollutant ?? '—' }}
-      </p>
-      @if (air.advice) {
-        <p class="advice">{{ air.advice }}</p>
-      }
+      <div class="air-hero">
+        <div
+          class="air-badge"
+          [style.--air-color]="air.qualityColor"
+          [attr.aria-label]="'Indice ' + air.qualityCode + ', ' + air.qualityLabel"
+        >
+          <span class="air-number">{{ air.qualityCode }}</span>
+          <span class="air-label">{{ air.qualityLabel }}</span>
+        </div>
+        <div class="air-copy">
+          <p class="meta">
+            {{ air.observedOn | date: 'd MMMM y' }}
+            · polluant max {{ air.dominantPollutant ?? '—' }}
+          </p>
+          @if (air.advice) {
+            <p class="advice">{{ air.advice }}</p>
+          }
+        </div>
+      </div>
+
+      <ol class="air-scale" aria-label="Échelle ATMO">
+        @for (level of airLevels; track level.code) {
+          <li [class.active]="air.qualityCode === level.code">
+            <span class="scale-dot" [attr.data-level]="level.code" aria-hidden="true"></span>
+            <span class="scale-code">{{ level.code }}</span>
+            <span class="scale-label">{{ level.label }}</span>
+          </li>
+        }
+      </ol>
+
+      <ul class="pollutant-grid" aria-label="Polluants">
+        @for (entry of pollutantEntries(air); track entry.key) {
+          <li>
+            <span>{{ entry.key }}</span>
+            <strong>{{ entry.value ?? '—' }}</strong>
+          </li>
+        }
+      </ul>
     }
   </section>
 
   @if (catalog()?.data; as forecast) {
-    <section class="block">
-      <h2>Prochaines heures</h2>
-      <ul class="hours">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Prochaines heures</h2>
+      </div>
+      <div class="hours-rail" tabindex="0">
         @for (hour of forecast.hourly.slice(0, 12); track hour.time) {
-          <li>
-            <span>{{ hour.time | date: 'HH:mm' }}</span>
-            <strong>{{ hour.temperature | number: '1.0-0' }}°</strong>
-            <span class="rain">{{ hour.precipitationProbability ?? '—' }}% pluie</span>
-          </li>
+          <article class="hour-card">
+            <span class="hour-time">{{ hour.time | date: 'HH:mm' }}</span>
+            <div class="hour-icon" aria-hidden="true">
+              <app-weather-icon [kind]="iconForHour(hour.precipitationProbability)" />
+            </div>
+            <strong class="hour-temp">{{ hour.temperature | number: '1.0-0' }}°</strong>
+            <span class="hour-rain">
+              <span class="rain-mark" aria-hidden="true"></span>
+              {{ hour.precipitationProbability ?? 0 }}%
+            </span>
+          </article>
         }
-      </ul>
+      </div>
     </section>
 
-    <section class="block">
-      <h2>5 prochains jours</h2>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>5 prochains jours</h2>
+      </div>
       <ul class="days">
         @for (day of forecast.daily; track day.date) {
           <li>
-            <span>{{ day.date | date: 'EEE d MMM' }}</span>
-            <span>{{ day.weatherLabel }}</span>
-            <strong>
-              {{ day.temperatureMin | number: '1.0-0' }}° /
-              {{ day.temperatureMax | number: '1.0-0' }}°
-            </strong>
+            <div class="day-main">
+              <div class="day-icon" aria-hidden="true">
+                <app-weather-icon [kind]="iconForCode(day.weatherCode)" />
+              </div>
+              <div class="day-copy">
+                <span class="day-date">{{ day.date | date: 'EEEE d MMM' }}</span>
+                <span class="day-label">{{ day.weatherLabel }}</span>
+              </div>
+            </div>
+            <div class="day-temps" aria-label="Températures min et max">
+              <span class="day-min">{{ day.temperatureMin | number: '1.0-0' }}°</span>
+              <div class="temp-track" aria-hidden="true">
+                @let bar = tempBarStyle(day.temperatureMin, day.temperatureMax);
+                <span class="temp-fill" [style.left]="bar.left" [style.width]="bar.width"></span>
+              </div>
+              <span class="day-max">{{ day.temperatureMax | number: '1.0-0' }}°</span>
+            </div>
           </li>
         }
       </ul>
