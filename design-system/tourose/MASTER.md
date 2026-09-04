@@ -48,8 +48,9 @@ Light mode only. Photo-first cards. TouRose rose accent.
 
 Selected share image (Ville rose / Capitole) :
 
-- Public : `web/public/brand/og-ville-rose.png` (1200×630)
-- Source : `assets/brand/og/tourose-og-ville-rose-1200x630.png`
+- Public : `web/public/brand/og-ville-rose.jpg` (1200×630, JPEG)
+- Fallback PNG : `web/public/brand/og-ville-rose.png`
+- Source : `assets/brand/og/tourose-og-ville-rose-1200x630.jpg`
 - Meta : `og:image` + `twitter:image` in `web/src/index.html`
 
 ## Logo (system 2C)
