@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogResponse, Place, PlaceKind } from '../../core/catalog.models';
 import { PlacesApi } from '../../core/places-api';
@@ -29,6 +29,11 @@ export class PlacesPage implements OnInit {
   protected readonly selectedKind = signal<PlaceKind | 'all'>('all');
   protected readonly catalog = signal<CatalogResponse<Place[]> | null>(null);
   protected readonly loadError = signal<string | null>(null);
+  protected readonly visibleCount = signal(24);
+
+  protected readonly visiblePlaces = computed(() =>
+    (this.catalog()?.data ?? []).slice(0, this.visibleCount()),
+  );
 
   ngOnInit(): void {
     const kindParam = this.route.snapshot.queryParamMap.get('kind');
@@ -39,12 +44,17 @@ export class PlacesPage implements OnInit {
 
   protected setKind(kind: PlaceKind | 'all'): void {
     this.selectedKind.set(kind);
+    this.visibleCount.set(24);
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { kind: kind === 'all' ? null : kind },
       queryParamsHandling: 'merge',
     });
     this.loadPlaces(kind);
+  }
+
+  protected showMore(): void {
+    this.visibleCount.update((count) => count + 24);
   }
 
   protected kindLabel(kind: PlaceKind): string {

@@ -1,6 +1,6 @@
-<a routerLink="/" class="back">← tableau de bord</a>
-
 <section class="page">
+  <a routerLink="/" class="back">← tableau de bord</a>
+
   <header>
     <p class="eyebrow">Découvrir · Open Data</p>
     <h1>Lieux à Toulouse</h1>
@@ -9,7 +9,7 @@
     </p>
   </header>
 
-  <div class="filters" role="group" aria-label="Types de lieux">
+  <div class="chip-row" role="group" aria-label="Types de lieux">
     @for (kind of kinds; track kind.id) {
       <button
         type="button"
@@ -27,23 +27,23 @@
 
   @if (catalog(); as payload) {
     <p class="meta">
-      {{ payload.data.length }} lieu(x) · {{ payload.status }} ·
-      maj. {{ payload.fetchedAt | date: 'HH:mm' }}
+      {{ payload.data.length }} lieu(x) · affichage {{ visiblePlaces().length }} ·
+      {{ payload.status }} · maj. {{ payload.fetchedAt | date: 'HH:mm' }}
     </p>
 
-    <ul class="list">
-      @for (place of payload.data; track place.placeId) {
+    <ul class="feed">
+      @for (place of visiblePlaces(); track place.placeId) {
         <li>
-          <p class="kind">{{ kindLabel(place.kind) }}</p>
+          <p class="kicker">{{ kindLabel(place.kind) }}</p>
           <h2>{{ place.name }}</h2>
-          <p class="place">
+          <p class="meta">
             {{ place.address || 'Adresse non renseignée' }}
             @if (place.city) {
               · {{ place.city }}
             }
           </p>
           @if (place.protection) {
-            <p class="tags">{{ place.protection }}</p>
+            <p class="meta">{{ place.protection }}</p>
           }
           @if (place.description) {
             <p class="summary">{{ place.description }}</p>
@@ -59,6 +59,12 @@
         </li>
       }
     </ul>
+
+    @if (visiblePlaces().length < payload.data.length) {
+      <button type="button" class="cta secondary" (click)="showMore()">
+        Voir plus de lieux
+      </button>
+    }
 
     <p class="source">
       Sources : Toulouse Métropole Open Data · Base Mérimée (ODbL) pour le patrimoine MH

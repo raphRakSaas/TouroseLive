@@ -1,25 +1,34 @@
-<a routerLink="/" class="back">← tableau de bord</a>
+<section class="page">
+  <a routerLink="/" class="back">← tableau de bord</a>
 
-@if (loadError()) {
-  <p class="banner">{{ loadError() }}</p>
-}
+  @if (loadError()) {
+    <p class="banner">{{ loadError() }}</p>
+  }
 
-@if (catalog()?.data; as lot) {
-  <article class="card">
-    <p class="code">{{ lot.kind === 'relais' ? 'PARC RELAIS' : 'PARKING' }} · {{ lot.parkingId }}</p>
-    <h1>{{ lot.name }}</h1>
-    <p>{{ lot.address }}</p>
-    <p class="meta">
-      maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }} ·
-      {{ lot.operator || 'gestionnaire inconnu' }}
+  @if (catalog()?.data; as lot) {
+    <header>
+      <p class="eyebrow">{{ lot.kind === 'relais' ? 'Parc relais' : 'Parking' }} · {{ lot.parkingId }}</p>
+      <h1>{{ lot.name }}</h1>
+      <p class="meta">
+        {{ lot.address || 'Adresse non renseignée' }}
+        @if (lot.city) {
+          · {{ lot.city }}
+        }
+        · {{ lot.operator || 'gestionnaire inconnu' }} ·
+        maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }}
+      </p>
+    </header>
+
+    <p class="hint">
+      Disponibilité inconnue — l’open data ne publie pas l’occupation live.
     </p>
-    <p class="occupancy">Disponibilité inconnue — l’open data ne publie pas l’occupation live.</p>
-    <dl>
-      <div>
+
+    <dl class="stat-grid">
+      <div class="stat">
         <dt>Capacité</dt>
         <dd>{{ lot.capacity ?? '—' }} <small>places catalogue</small></dd>
       </div>
-      <div>
+      <div class="stat">
         <dt>Tarif 1 h</dt>
         <dd>
           @if (lot.isFree) {
@@ -31,7 +40,8 @@
         </dd>
       </div>
     </dl>
-    <a class="maps" [href]="mapsUrl(lot)" target="_blank" rel="noreferrer">Y aller</a>
+
+    <a class="cta" [href]="mapsUrl(lot)" target="_blank" rel="noreferrer">Y aller</a>
     <p class="source">Source : Toulouse Métropole Open Data · Licence Ouverte</p>
-  </article>
-}
+  }
+</section>

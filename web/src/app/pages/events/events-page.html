@@ -1,6 +1,6 @@
-<a routerLink="/" class="back">← tableau de bord</a>
-
 <section class="page">
+  <a routerLink="/" class="back">← tableau de bord</a>
+
   <header>
     <p class="eyebrow">Agenda culturel · Open Data</p>
     <h1>Événements à venir</h1>
@@ -32,27 +32,25 @@
     @if (payload.data.length === 0) {
       <p class="empty">Aucun événement à venir dans les sources configurées pour le moment.</p>
     } @else {
-      <ul class="list">
+      <ul class="feed">
         @for (event of payload.data; track event.eventId) {
           <li>
-            <p class="when">
+            <p class="kicker">
               {{ event.startsOn | date: 'd MMM y' }}
               @if (event.endsOn && event.endsOn !== event.startsOn) {
                 → {{ event.endsOn | date: 'd MMM y' }}
               }
-              @if (event.provider) {
-                · {{ event.provider === 'openagenda' ? 'OpenAgenda' : 'ODS' }}
-              }
+              · {{ event.provider === 'openagenda' ? 'OpenAgenda' : 'ODS' }}
             </p>
             <h2>{{ event.title }}</h2>
-            <p class="place">
+            <p class="meta">
               {{ event.venueName || 'Lieu à préciser' }}
               @if (event.city) {
                 · {{ event.city }}
               }
             </p>
             @if (event.category || event.type) {
-              <p class="tags">{{ event.type }} · {{ event.category }}</p>
+              <p class="meta">{{ event.type }} · {{ event.category }}</p>
             }
             @if (event.summary) {
               <p class="summary">{{ event.summary }}</p>

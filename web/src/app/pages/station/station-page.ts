@@ -24,8 +24,17 @@ export class StationPage implements OnInit {
       return;
     }
     this.veloApi.getStation(stationId).subscribe({
-      next: (payload) => this.catalog.set(payload),
+      next: (payload) => {
+        if (!payload.data) {
+          this.loadError.set('Station introuvable.');
+        }
+        this.catalog.set(payload);
+      },
       error: () => this.loadError.set('Donnée temporairement indisponible.'),
     });
+  }
+
+  protected mapsUrl(station: VeloStation): string {
+    return `https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`;
   }
 }

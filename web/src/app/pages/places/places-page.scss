@@ -1,86 +1,11 @@
-.back {
-  display: inline-block;
-  margin: 16px;
-  color: #5c5c5c;
+.summary {
+  margin: 8px 0 0;
+  color: var(--ink);
+  line-height: 1.45;
 }
 
-.page {
-  max-width: 860px;
-  margin: 0 16px 48px;
-}
-
-.eyebrow,
-.meta,
-.source,
-.place,
-.tags,
-.summary,
-.kind {
-  color: #5c5c5c;
-  font-size: 0.875rem;
-}
-
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 16px 0;
-}
-
-.filters button {
-  border: 1px solid #e4e4e0;
-  background: #fff;
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-.filters button.active {
-  background: #e8527a;
-  border-color: #e8527a;
-  color: #fff;
-}
-
-.banner {
-  background: #f4e6ea;
-  color: #7a2438;
-  padding: 12px 14px;
-  border-radius: 8px;
-}
-
-.list {
-  list-style: none;
-  margin: 12px 0 0;
-  padding: 0;
-}
-
-.list li {
-  padding: 14px 0;
-  border-bottom: 1px solid #e4e4e0;
-}
-
-.list h2 {
-  margin: 2px 0 6px;
-  font-size: 1.1rem;
-}
-
-.kind {
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  color: #e8527a;
-}
-
-.actions {
-  display: flex;
-  gap: 14px;
-  margin-top: 8px;
-}
-
-.actions a {
-  color: #e8527a;
-  text-decoration: none;
-  font-size: 0.9rem;
+.cta.secondary {
+  margin-top: 16px;
 }
 
 .source {
