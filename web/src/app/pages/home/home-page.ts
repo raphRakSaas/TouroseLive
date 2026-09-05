@@ -22,6 +22,7 @@ import { AirApi } from '../../core/air-api';
 import { EventsApi } from '../../core/events-api';
 import { PlacesApi } from '../../core/places-api';
 import { SearchCatalog, SearchHit } from '../../core/search-catalog';
+import { SuggestApi, SuggestItem, SuggestResponse } from '../../core/suggest-api';
 import { TisseoApi } from '../../core/tisseo-api';
 import { VeloApi } from '../../core/velo-api';
 import { WeatherApi } from '../../core/weather-api';
@@ -35,6 +36,7 @@ import { WeatherApi } from '../../core/weather-api';
 export class HomePage implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly searchCatalog = inject(SearchCatalog);
+  private readonly suggestApi = inject(SuggestApi);
   private readonly veloApi = inject(VeloApi);
   private readonly tisseoApi = inject(TisseoApi);
   private readonly weatherApi = inject(WeatherApi);
@@ -69,8 +71,19 @@ export class HomePage implements OnInit, OnDestroy {
   );
   protected readonly searchQuery = signal('');
   protected readonly searchOpen = signal(false);
+  protected readonly askPrompt = signal('');
+  protected readonly askLoading = signal(false);
+  protected readonly askError = signal<string | null>(null);
+  protected readonly askResult = signal<SuggestResponse | null>(null);
+  protected readonly askMode = signal<'llm' | 'heuristic' | null>(null);
   protected readonly brokenImages = signal<ReadonlySet<string>>(new Set());
   protected readonly loadedImages = signal<ReadonlySet<string>>(new Set());
+
+  protected readonly askExamples = [
+    'Concert ce soir',
+    'Balade au soleil',
+    'Vélo près du Capitole',
+  ];
 
   protected readonly searchHits = computed(() => {
     // Depend explicitly on catalog updates + query.
@@ -209,6 +222,10 @@ export class HomePage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.searchCatalog.ensureLoaded();
+    this.suggestApi.status().subscribe({
+      next: (status) => this.askMode.set(status.mode),
+      error: () => this.askMode.set('heuristic'),
+    });
     this.veloApi.listStations().subscribe({
       next: (payload) => {
         this.veloCatalog.set(payload);
@@ -289,6 +306,59 @@ export class HomePage implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.searchOpen.set(false);
     void this.router.navigateByUrl(hit.link);
+  }
+
+  protected onAskInput(value: string): void {
+    this.askPrompt.set(value);
+  }
+
+  protected useAskExample(example: string): void {
+    this.askPrompt.set(example);
+    this.runAsk();
+  }
+
+  protected runAsk(): void {
+    const prompt = this.askPrompt().trim();
+    if (prompt.length < 2 || this.askLoading()) {
+      return;
+    }
+    this.askLoading.set(true);
+    this.askError.set(null);
+    this.suggestApi.suggest(prompt).subscribe({
+      next: (payload) => {
+        this.askResult.set(payload);
+        this.askLoading.set(false);
+      },
+      error: () => {
+        this.askLoading.set(false);
+        this.askError.set('Suggestion indisponible pour le moment.');
+      },
+    });
+  }
+
+  protected goToSuggestion(item: SuggestItem): void {
+    if (item.queryParams && Object.keys(item.queryParams).length > 0) {
+      const params = new URLSearchParams(item.queryParams).toString();
+      void this.router.navigateByUrl(`${item.link}?${params}`);
+      return;
+    }
+    void this.router.navigateByUrl(item.link);
+  }
+
+  protected suggestionKindLabel(kind: SuggestItem['kind']): string {
+    if (kind === 'event') {
+      return 'Événement';
+    }
+    if (kind === 'place') {
+      return 'Lieu';
+    }
+    if (kind === 'velo') {
+      return 'Vélô';
+    }
+    if (kind === 'weather') {
+      return 'Météo';
+    }
+    return 'Carte';
   }
 
   protected kindLabelHit(kind: SearchHit['kind']): string {

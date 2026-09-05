@@ -9,6 +9,8 @@ import { TisseoModule } from './tisseo/tisseo.module';
 import { VeloModule } from './velo/velo.module';
 import { WeatherModule } from './weather/weather.module';
 
+import { SuggestModule } from './suggest/suggest.module';
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -19,6 +21,7 @@ import { WeatherModule } from './weather/weather.module';
     TisseoModule,
     EventsModule,
     PlacesModule,
+    SuggestModule,
   ],
   controllers: [AppController],
 })

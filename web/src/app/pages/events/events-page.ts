@@ -105,6 +105,12 @@ export class EventsPage implements OnInit {
     }
 
     return [...events].sort((left, right) => {
+      // Photos d’abord : évite une grille “vide” en tête de liste.
+      const leftPhoto = left.imageUrl ? 0 : 1;
+      const rightPhoto = right.imageUrl ? 0 : 1;
+      if (leftPhoto !== rightPhoto) {
+        return leftPhoto - rightPhoto;
+      }
       if (sortMode === 'title-asc') {
         return left.title.localeCompare(right.title, 'fr');
       }

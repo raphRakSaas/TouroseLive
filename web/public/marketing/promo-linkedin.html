@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1080" />
+    <title>TouRose — promo LinkedIn</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --rose: #e8527a;
+        --ink: #1a1520;
+        --paper: #faf7f5;
+        --muted: rgba(26, 21, 32, 0.72);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background: #111;
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        color: var(--ink);
+      }
+
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1080px;
+        background: var(--paper);
+        overflow: hidden;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        display: grid;
+        place-items: center;
+        padding: 72px;
+        text-align: center;
+      }
+
+      .scene.is-on {
+        opacity: 1;
+        animation: fadeIn 0.55s ease both;
+      }
+
+      .scene.is-off {
+        animation: fadeOut 0.45s ease both;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(18px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(-12px);
+        }
+      }
+
+      @keyframes ken {
+        from {
+          transform: scale(1.08);
+        }
+        to {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        animation: ken 5.5s ease-out both;
+        filter: saturate(1.05);
+      }
+
+      .veil {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(250, 247, 245, 0.35) 0%,
+          rgba(250, 247, 245, 0.82) 48%,
+          rgba(250, 247, 245, 0.94) 100%
+        );
+      }
+
+      .veil--dark {
+        background: linear-gradient(
+          180deg,
+          rgba(18, 12, 18, 0.25) 0%,
+          rgba(18, 12, 18, 0.55) 45%,
+          rgba(18, 12, 18, 0.78) 100%
+        );
+      }
+
+      .content {
+        position: relative;
+        z-index: 2;
+        max-width: 860px;
+      }
+
+      .kicker {
+        display: inline-block;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--rose);
+        margin-bottom: 28px;
+        animation: rise 0.6s 0.1s ease both;
+      }
+
+      h1 {
+        font-size: 64px;
+        line-height: 1.12;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 28px;
+        animation: rise 0.65s 0.18s ease both;
+      }
+
+      h1.light {
+        color: #fff;
+      }
+
+      p {
+        font-size: 34px;
+        line-height: 1.35;
+        color: var(--muted);
+        font-weight: 500;
+        animation: rise 0.65s 0.28s ease both;
+      }
+
+      p.light {
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      .logo {
+        width: 220px;
+        height: auto;
+        margin: 0 auto 36px;
+        display: block;
+        animation: rise 0.6s ease both;
+      }
+
+      .logo--lg {
+        width: 280px;
+      }
+
+      .features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: center;
+        margin-top: 36px;
+        animation: rise 0.65s 0.35s ease both;
+      }
+
+      .chip {
+        background: rgba(232, 82, 122, 0.12);
+        color: var(--ink);
+        border: 1px solid rgba(232, 82, 122, 0.28);
+        border-radius: 999px;
+        padding: 12px 22px;
+        font-size: 26px;
+        font-weight: 700;
+      }
+
+      .shot-wrap {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 920px;
+      }
+
+      .shot {
+        width: 100%;
+        border-radius: 28px;
+        box-shadow: 0 30px 80px rgba(26, 21, 32, 0.28);
+        display: block;
+        animation: rise 0.7s ease both;
+      }
+
+      .shot-label {
+        margin-top: 28px;
+        font-size: 40px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        animation: rise 0.6s 0.15s ease both;
+      }
+
+      .cta-url {
+        margin-top: 28px;
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--rose);
+        animation: rise 0.6s 0.35s ease both;
+      }
+
+      .footer-mark {
+        position: absolute;
+        left: 56px;
+        bottom: 48px;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 24px;
+        font-weight: 700;
+        color: rgba(26, 21, 32, 0.55);
+      }
+
+      .footer-mark img {
+        width: 42px;
+        height: 42px;
+      }
+
+      .footer-mark.light {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage">
+      <!-- 1 Hook -->
+      <section class="scene" data-scene="0">
+        <div
+          class="bg"
+          style="background-image: url('./hero-capitole.jpg')"
+        ></div>
+        <div class="veil"></div>
+        <div class="content">
+          <span class="kicker">Toulouse</span>
+          <h1>Une mine d’open data.</h1>
+          <p>Et pourtant… savoir quoi faire ce soir reste trop compliqué.</p>
+        </div>
+        <div class="footer-mark">
+          <img src="../brand/tourose-logo-mark.png" alt="" />
+          TouRose
+        </div>
+      </section>
+
+      <!-- 2 Problem -->
+      <section class="scene" data-scene="1">
+        <div class="content">
+          <span class="kicker">Le problème</span>
+          <h1>4 apps. 3 onglets.</h1>
+          <p>
+            Sorties, mobilité, météo, infos locales — tout est éclaté. Le vivant
+            de la ville n’est pas encore vraiment utilisable.
+          </p>
+        </div>
+        <div class="footer-mark">
+          <img src="../brand/tourose-logo-mark.png" alt="" />
+          TouRose
+        </div>
+      </section>
+
+      <!-- 3 Reveal -->
+      <section class="scene" data-scene="2">
+        <div
+          class="bg"
+          style="background-image: url('./hero-capitole.jpg')"
+        ></div>
+        <div class="veil"></div>
+        <div class="content">
+          <img
+            class="logo logo--lg"
+            src="../brand/tourose-logo-full.png"
+            alt="TouRose"
+          />
+          <h1>Un companion simple pour le quotidien.</h1>
+          <div class="features">
+            <span class="chip">Événements</span>
+            <span class="chip">Lieux</span>
+            <span class="chip">Carte</span>
+            <span class="chip">Météo</span>
+            <span class="chip">Vélô</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 Events -->
+      <section class="scene" data-scene="3">
+        <div class="shot-wrap">
+          <img class="shot" src="./screens/events.jpg" alt="Événements" />
+          <p class="shot-label">Quoi faire ce soir</p>
+        </div>
+      </section>
+
+      <!-- 5 Map -->
+      <section class="scene" data-scene="4">
+        <div class="shot-wrap">
+          <img class="shot" src="./screens/map.jpg" alt="Carte" />
+          <p class="shot-label">Où bouger près de toi</p>
+        </div>
+      </section>
+
+      <!-- 6 Explorer -->
+      <section class="scene" data-scene="5">
+        <div class="shot-wrap">
+          <img class="shot" src="./screens/explorer.jpg" alt="Explorer" />
+          <p class="shot-label">La ville, en un coup d’œil</p>
+        </div>
+      </section>
+
+      <!-- 7 CTA -->
+      <section class="scene" data-scene="6">
+        <div
+          class="bg"
+          style="background-image: url('./hero-capitole.jpg')"
+        ></div>
+        <div class="veil"></div>
+        <div class="content">
+          <img
+            class="logo"
+            src="../brand/tourose-logo-full.png"
+            alt="TouRose"
+          />
+          <h1>Shippé. Pas juste prototypé.</h1>
+          <p>Projet perso · open data Toulouse · Angular</p>
+          <p class="cta-url">tourose.netlify.app</p>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const scenes = [...document.querySelectorAll('.scene')];
+      const durations = [3200, 3000, 3400, 2800, 2800, 2800, 3800];
+      let index = 0;
+
+      function show(nextIndex) {
+        scenes.forEach((scene, sceneIndex) => {
+          scene.classList.remove('is-on', 'is-off');
+          if (sceneIndex === nextIndex) {
+            scene.classList.add('is-on');
+            const background = scene.querySelector('.bg');
+            if (background) {
+              background.style.animation = 'none';
+              void background.offsetWidth;
+              background.style.animation = '';
+            }
+          }
+        });
+      }
+
+      show(0);
+
+      function tick() {
+        const current = scenes[index];
+        current.classList.add('is-off');
+        index += 1;
+        if (index >= scenes.length) {
+          document.body.dataset.done = '1';
+          return;
+        }
+        window.setTimeout(() => {
+          show(index);
+          window.setTimeout(tick, durations[index]);
+        }, 420);
+      }
+
+      window.setTimeout(tick, durations[0]);
+    </script>
+  </body>
+</html>
