@@ -15,7 +15,7 @@
     </a>
     <nav class="landing-nav-links" aria-label="Navigation marketing">
       <a href="#pourquoi">Pourquoi</a>
-      <a href="#fonctionnalites">Découvrir</a>
+      <a href="#apercu">Aperçu</a>
       <a href="#histoire">L’histoire</a>
       <a routerLink="/explorer" class="nav-cta">Ouvrir l’app</a>
     </nav>
@@ -35,24 +35,77 @@
     </div>
 
     <div class="hero-copy">
-      <p class="hero-kicker" data-reveal data-delay="0">Compagnon open data · Toulouse</p>
+      <p class="hero-kicker" data-reveal data-delay="0">Compagnon de ville · Toulouse</p>
       <h1 data-reveal data-delay="1">
         Toulouse, maintenant —<br />
         sans ouvrir dix apps.
       </h1>
       <p class="hero-lede" data-reveal data-delay="2">
-        Agenda, Vélô, lieux, météo et alertes : tout ce qui compte aujourd’hui dans la Ville rose,
-        en lecture seule. Gratuit, sans compte, sans pub.
+        Ce soir, un Vélô, la météo, une alerte métro : tout au même endroit.
+        Gratuit, sans compte, sans pub.
       </p>
       <div class="hero-actions" data-reveal data-delay="3">
-        <a routerLink="/explorer" class="btn btn-primary">Explorer Toulouse</a>
-        <a href="#pourquoi" class="btn btn-ghost">Pourquoi TouRose</a>
+        <a
+          routerLink="/evenements"
+          [queryParams]="{ when: 'weekend' }"
+          class="btn btn-primary"
+        >
+          {{ primaryCtaLabel() }}
+        </a>
+        <a routerLink="/carte" [queryParams]="{ layer: 'velo' }" class="btn btn-ghost">
+          Trouver un Vélô
+        </a>
       </div>
     </div>
 
-    <a class="scroll-hint" href="#pourquoi" aria-label="Défiler vers le contenu">
+    <a class="scroll-hint" href="#live" aria-label="Défiler vers le contenu">
       <span></span>
     </a>
+  </section>
+
+  <section id="live" class="live-strip" aria-label="Données en direct">
+    <div class="live-strip-inner" data-reveal>
+      @if (statsLoading()) {
+        <div class="live-stat live-stat--skeleton" aria-hidden="true">
+          <span class="skeleton-bar skeleton-bar--sm"></span>
+          <span class="skeleton-bar skeleton-bar--lg"></span>
+        </div>
+        <div class="live-stat live-stat--skeleton" aria-hidden="true">
+          <span class="skeleton-bar skeleton-bar--sm"></span>
+          <span class="skeleton-bar skeleton-bar--lg"></span>
+        </div>
+        <div class="live-stat live-stat--skeleton" aria-hidden="true">
+          <span class="skeleton-bar skeleton-bar--sm"></span>
+          <span class="skeleton-bar skeleton-bar--lg"></span>
+        </div>
+      } @else {
+        <a class="live-stat" routerLink="/evenements" [queryParams]="{ when: 'weekend' }">
+          <span class="live-label">Ce week-end</span>
+          <span class="live-value">
+            <strong>{{ weekendEventCount() }}</strong>
+            <span>{{ weekendEventCount() <= 1 ? 'événement' : 'événements' }}</span>
+          </span>
+        </a>
+        <a class="live-stat" routerLink="/carte" [queryParams]="{ layer: 'velo' }">
+          <span class="live-label">Vélô maintenant</span>
+          <span class="live-value">
+            <strong>{{ bikesAvailableTotal() }}</strong>
+            <span>vélos dispo</span>
+          </span>
+        </a>
+        <a class="live-stat" routerLink="/meteo">
+          <span class="live-label">Dehors</span>
+          @if (currentWeather(); as weather) {
+            <span class="live-value">
+              <strong>{{ weather.temperature | number: '1.0-0' }}°</strong>
+              <span>{{ weather.weatherLabel }}</span>
+            </span>
+          } @else {
+            <span class="live-value"><strong>—</strong><span>Météo indisponible</span></span>
+          }
+        </a>
+      }
+    </div>
   </section>
 
   <section id="pourquoi" class="problem" aria-labelledby="problem-title">
@@ -67,13 +120,100 @@
     </div>
   </section>
 
+  <section id="apercu" class="proof" aria-labelledby="proof-title">
+    <div class="proof-layout">
+      <div class="proof-copy" data-reveal>
+        <p class="eyebrow">Aperçu live</p>
+        <h2 id="proof-title">Voilà à quoi ressemble TouRose</h2>
+        <p>
+          Pas une maquette marketing figée — un extrait de l’app, avec les données d’aujourd’hui.
+          Ouvre-la en un clic quand tu es prêt.
+        </p>
+        <a routerLink="/explorer" class="btn btn-primary">Ouvrir l’app</a>
+      </div>
+
+      <div class="proof-device" data-reveal data-delay="1" aria-label="Aperçu de l’interface TouRose">
+        <div class="device-chrome">
+          <span class="device-dot"></span>
+          <span class="device-dot"></span>
+          <span class="device-dot"></span>
+          <span class="device-url">tourose.app/explorer</span>
+        </div>
+        <div class="device-screen">
+          <p class="device-kicker">Toulouse, maintenant</p>
+          <div class="device-pulse">
+            <div class="device-tile">
+              <span>Vélô</span>
+              @if (highlightStation(); as station) {
+                <strong>{{ station.bikesAvailable }}</strong>
+                <em>{{ station.name }}</em>
+              } @else if (statsLoading()) {
+                <strong>…</strong>
+                <em>Chargement</em>
+              } @else {
+                <strong>—</strong>
+                <em>Indisponible</em>
+              }
+            </div>
+            <div class="device-tile">
+              <span>Météo</span>
+              @if (currentWeather(); as weather) {
+                <strong>{{ weather.temperature | number: '1.0-0' }}°</strong>
+                <em>{{ weather.weatherLabel }}</em>
+              } @else {
+                <strong>—</strong>
+                <em>Indisponible</em>
+              }
+            </div>
+            <div class="device-tile">
+              <span>Agenda</span>
+              <strong>{{ todayEventCount() }}</strong>
+              <em>aujourd’hui</em>
+            </div>
+          </div>
+
+          <div class="device-events">
+            <div class="device-events-head">
+              <strong>À ne pas manquer</strong>
+              <span>Week-end · {{ weekendEventCount() }}</span>
+            </div>
+            @if (previewEvents().length > 0) {
+              @for (event of previewEvents(); track event.eventId) {
+                <article class="device-event">
+                  <div class="device-event-media">
+                    @if (event.imageUrl) {
+                      <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
+                    }
+                    @if (event.startsOn) {
+                      <span class="device-date">
+                        <strong>{{ event.startsOn | date: 'd' }}</strong>
+                        {{ event.startsOn | date: 'MMM' }}
+                      </span>
+                    }
+                  </div>
+                  <div class="device-event-body">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.venueName || event.city || 'Toulouse' }}</p>
+                  </div>
+                </article>
+              }
+            } @else if (statsLoading()) {
+              <p class="device-empty">Chargement de l’agenda…</p>
+            } @else {
+              <p class="device-empty">Aucun événement photo pour l’instant — ouvre l’agenda complet.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="sell" aria-labelledby="sell-title">
     <header class="section-intro" data-reveal>
       <p class="eyebrow">La promesse</p>
       <h2 id="sell-title">Un compagnon de ville, pas un site touristique</h2>
       <p>
-        Pas de catalogue géant. Juste ce qu’il te faut pour ce soir, demain, ou ce week-end —
-        avec des données publiques que tu peux vérifier.
+        Pas de catalogue géant. Juste ce qu’il te faut pour ce soir, demain, ou ce week-end.
       </p>
     </header>
 
@@ -116,10 +256,10 @@
   <section id="confiance" class="trust" aria-labelledby="trust-title">
     <div class="trust-inner" data-reveal>
       <p class="eyebrow eyebrow--light">Confiance</p>
-      <h2 id="trust-title">Open data, affichée telle quelle</h2>
+      <h2 id="trust-title">Des infos de la ville, sans boîte noire</h2>
       <p>
         OpenAgenda · JCDecaux · Tisséo · Open-Meteo · Atmo Occitanie · Toulouse Métropole.
-        Pas de boîte noire : des sources publiques, mises à jour, en lecture seule.
+        Sources publiques, mises à jour, affichées telles quelles.
       </p>
       <ul class="trust-list">
         <li>Sans inscription</li>
@@ -133,7 +273,7 @@
     <div class="story-inner" data-reveal>
       <p class="eyebrow">L’histoire derrière TouRose</p>
       <h2 id="story-title">Une rose pour elle — et pour toute la Ville rose</h2>
-      <p class="story-byline">Raphaël Rakotonaivo · développeur fullstack</p>
+      <p class="story-byline">Raphaël Rakotonaivo · fullstack · Angular</p>
       <div class="story-body">
         <p>
           Après nos études à La Réunion, ma copine a voulu démarrer à Toulouse.
@@ -150,11 +290,6 @@
           et comme une rose pour elle. Un outil né d’une personne, pensé pour servir aussi
           tous ceux qui vivent ou arrivent ici.
         </p>
-        <p>
-          En parallèle, c’était l’occasion d’apprendre Angular — une techno nouvelle pour moi,
-          alors que je suis développeur fullstack de métier. Un projet utile, personnel,
-          et un vrai terrain d’apprentissage.
-        </p>
       </div>
       <div class="story-actions">
         <a routerLink="/explorer" class="btn btn-primary">Essayer TouRose</a>
@@ -165,11 +300,17 @@
 
   <section class="climax" aria-labelledby="climax-title">
     <div class="climax-inner" data-reveal>
-      <h2 id="climax-title">Prêt à regarder Toulouse autrement&nbsp;?</h2>
-      <p>Ouvre l’app et commence par ce soir, la carte, ou le ciel.</p>
+      <h2 id="climax-title">Prêt pour ce soir à Toulouse&nbsp;?</h2>
+      <p>Agenda, Vélô ou météo — choisis ta porte d’entrée.</p>
       <div class="hero-actions">
-        <a routerLink="/explorer" class="btn btn-primary">Explorer Toulouse</a>
-        <a routerLink="/evenements" class="btn btn-secondary">Voir l’agenda</a>
+        <a
+          routerLink="/evenements"
+          [queryParams]="{ when: 'weekend' }"
+          class="btn btn-primary"
+        >
+          {{ primaryCtaLabel() }}
+        </a>
+        <a routerLink="/explorer" class="btn btn-secondary">Ouvrir l’app</a>
       </div>
     </div>
   </section>
