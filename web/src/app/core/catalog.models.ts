@@ -142,11 +142,13 @@ export interface CultureEvent {
   canonicalUrl?: string | null;
   registrationUrl?: string | null;
   onlineAccessLink?: string | null;
+  links?: string[];
   status?: string | null;
   attendanceMode?: string | null;
   age?: string | null;
   conditions?: string | null;
   accessibility?: string | null;
+  imageCredits?: string | null;
   provider?: 'ods' | 'openagenda';
   imageUrl?: string | null;
   imageUrlLarge?: string | null;

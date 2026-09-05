@@ -22,10 +22,14 @@ const POLL_MS = 60 * 60_000;
 const STALE_AFTER_MS = 12 * 60 * 60_000;
 const PAGE_SIZE = 100;
 const MAX_PAGES = 5;
-const MAX_AGENDAS = 20;
-const MAX_EVENTS_PER_AGENDA = 40;
-const FETCH_TIMEOUT_MS = 20_000;
-const OPENAGENDA_CONCURRENCY = 2;
+/** OpenAgenda agendas listing page size (API max 100). */
+const AGENDA_PAGE_SIZE = 100;
+/** OpenAgenda events page size (API max 300). */
+const EVENTS_PAGE_SIZE = 300;
+/** Soft ceiling so a runaway sync cannot blow memory; network is ~4k upcoming. */
+const MAX_OPENAGENDA_EVENTS = 6000;
+const FETCH_TIMEOUT_MS = 25_000;
+const OPENAGENDA_CONCURRENCY = 4;
 
 @Injectable()
 export class EventsService implements OnModuleInit {
@@ -132,14 +136,20 @@ export class EventsService implements OnModuleInit {
   }
 
   private mergeEvents(events: CultureEventDto[]): CultureEventDto[] {
-    const seen = new Set<string>();
+    const seenIds = new Set<string>();
+    const seenSoftKeys = new Set<string>();
     const merged: CultureEventDto[] = [];
     for (const event of events) {
-      const key = `${event.title.toLowerCase()}|${event.startsOn ?? ''}|${event.venueName ?? ''}`;
-      if (seen.has(key)) {
+      if (seenIds.has(event.eventId)) {
         continue;
       }
-      seen.add(key);
+      const softKey = `${event.title.toLowerCase()}|${event.startsOn ?? ''}|${event.venueName ?? ''}`;
+      // OpenAgenda UIDs are authoritative; only soft-dedupe ODS against already kept rows.
+      if (event.provider === 'ods' && seenSoftKeys.has(softKey)) {
+        continue;
+      }
+      seenIds.add(event.eventId);
+      seenSoftKeys.add(softKey);
       merged.push(event);
     }
     return merged.sort((left, right) =>
@@ -172,24 +182,26 @@ export class EventsService implements OnModuleInit {
   ): Promise<CultureEventDto[]> {
     const agendas = await this.listToulouseAgendas(apiKey);
     this.logger.log(`OpenAgenda agendas listed (${agendas.length})`);
-    const selected = agendas.slice(0, MAX_AGENDAS);
-    const events: CultureEventDto[] = [];
+    const chunks: CultureEventDto[][] = Array.from(
+      { length: agendas.length },
+      () => [],
+    );
     let cursor = 0;
 
     const worker = async (): Promise<void> => {
-      while (cursor < selected.length) {
+      while (cursor < agendas.length) {
         const index = cursor;
         cursor += 1;
-        const agenda = selected[index];
+        const agenda = agendas[index];
         try {
-          const agendaEvents = await this.listAgendaUpcomingEvents(
+          chunks[index] = await this.listAgendaUpcomingEvents(
             apiKey,
             agenda.uid,
           );
-          events.push(...agendaEvents);
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           this.logger.warn(`OpenAgenda agenda ${agenda.uid} failed: ${message}`);
+          chunks[index] = [];
         }
       }
     };
@@ -197,54 +209,122 @@ export class EventsService implements OnModuleInit {
     await Promise.all(
       Array.from({ length: OPENAGENDA_CONCURRENCY }, () => worker()),
     );
-    return events;
+
+    const events = chunks.flat();
+    if (events.length > MAX_OPENAGENDA_EVENTS) {
+      this.logger.warn(
+        `OpenAgenda capped at ${MAX_OPENAGENDA_EVENTS} of ${events.length} events`,
+      );
+    }
+    this.logger.log(
+      `OpenAgenda events fetched (${Math.min(events.length, MAX_OPENAGENDA_EVENTS)})`,
+    );
+    return events.slice(0, MAX_OPENAGENDA_EVENTS);
   }
 
   private async listToulouseAgendas(
     apiKey: string,
   ): Promise<OpenAgendaAgenda[]> {
-    const params = new URLSearchParams({
-      key: apiKey,
-      network: TOULOUSE_NETWORK_ID,
-      size: String(MAX_AGENDAS),
-    });
-    const payload = await this.fetchJson<OpenAgendaAgendasResponse>(
-      `${OPENAGENDA_API}/agendas?${params.toString()}`,
-    );
-    return payload.agendas ?? [];
+    const agendas: OpenAgendaAgenda[] = [];
+    let after: Array<string | number> | null = null;
+    let pages = 0;
+
+    while (pages < 20) {
+      pages += 1;
+      const params = new URLSearchParams({
+        key: apiKey,
+        network: TOULOUSE_NETWORK_ID,
+        size: String(AGENDA_PAGE_SIZE),
+      });
+      if (after?.length) {
+        for (const value of after) {
+          params.append('after[]', String(value));
+        }
+      }
+      const payload = await this.fetchJson<OpenAgendaAgendasResponse>(
+        `${OPENAGENDA_API}/agendas?${params.toString()}`,
+      );
+      const batch = payload.agendas ?? [];
+      if (batch.length === 0) {
+        break;
+      }
+      agendas.push(...batch);
+      const nextAfter = payload.after ?? null;
+      if (
+        !nextAfter ||
+        nextAfter.length === 0 ||
+        agendas.length >= (payload.total ?? Number.POSITIVE_INFINITY)
+      ) {
+        break;
+      }
+      after = nextAfter;
+    }
+
+    return agendas;
   }
 
   private async listAgendaUpcomingEvents(
     apiKey: string,
     agendaUid: number,
   ): Promise<CultureEventDto[]> {
-    const params = new URLSearchParams({
-      key: apiKey,
-      size: String(Math.min(MAX_EVENTS_PER_AGENDA, 100)),
-      monolingual: 'fr',
-      // Keep list payload light — detailed longDescription is fetched on demand later if needed.
-      sort: 'timings.asc',
-    });
-    const query = `${params.toString()}&relative[]=upcoming&relative[]=current`;
-    const payload = await this.fetchJson<OpenAgendaEventsResponse>(
-      `${OPENAGENDA_API}/agendas/${agendaUid}/events?${query}`,
-    );
+    const mapped: CultureEventDto[] = [];
     const today = this.parisToday();
-    return (payload.events ?? [])
-      .map((event) => {
+    let after: string[] | null = null;
+    let pages = 0;
+
+    while (pages < 40) {
+      pages += 1;
+      const params = new URLSearchParams({
+        key: apiKey,
+        size: String(EVENTS_PAGE_SIZE),
+        monolingual: 'fr',
+        detailed: '1',
+        longDescriptionFormat: 'HTML',
+        sort: 'timings.asc',
+      });
+      const queryParts = [
+        params.toString(),
+        'relative[]=upcoming',
+        'relative[]=current',
+      ];
+      if (after?.length) {
+        for (const value of after) {
+          queryParts.push(`after[]=${encodeURIComponent(value)}`);
+        }
+      }
+      const payload = await this.fetchJson<OpenAgendaEventsResponse>(
+        `${OPENAGENDA_API}/agendas/${agendaUid}/events?${queryParts.join('&')}`,
+      );
+      const batch = payload.events ?? [];
+      if (batch.length === 0) {
+        break;
+      }
+
+      for (const event of batch) {
         try {
-          return this.mapOpenAgendaEvent(event);
+          const cultureEvent = this.mapOpenAgendaEvent(event);
+          if (
+            cultureEvent &&
+            this.isUpcomingOrOngoing(cultureEvent, today)
+          ) {
+            mapped.push(cultureEvent);
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           this.logger.debug(
             `OpenAgenda event map failed (${event.uid}): ${message}`,
           );
-          return null;
         }
-      })
-      .filter((event): event is CultureEventDto => event !== null)
-      .filter((event) => this.isUpcomingOrOngoing(event, today))
-      .slice(0, MAX_EVENTS_PER_AGENDA);
+      }
+
+      const nextAfter = payload.after ?? null;
+      if (!nextAfter || nextAfter.length === 0) {
+        break;
+      }
+      after = nextAfter.map(String);
+    }
+
+    return mapped;
   }
 
   private mapOpenAgendaEvent(event: OpenAgendaEvent): CultureEventDto | null {
@@ -277,6 +357,8 @@ export class EventsService implements OnModuleInit {
       }),
     );
     const keywords = this.keywordList(event.keywords);
+    const ticketUrl = this.openAgendaTicketUrl(event);
+    const relatedLinks = this.openAgendaLinks(event);
     return {
       eventId: `oa-${event.uid}`,
       title,
@@ -305,16 +387,18 @@ export class EventsService implements OnModuleInit {
       keywords,
       latitude,
       longitude,
-      bookingUrl: event.registrationUrl || event.canonicalUrl || null,
+      bookingUrl: ticketUrl,
       canonicalUrl: event.canonicalUrl ?? null,
-      registrationUrl: event.registrationUrl ?? null,
-      onlineAccessLink: event.onlineAccessLink ?? null,
-      status: event.status != null ? String(event.status) : null,
+      registrationUrl: ticketUrl,
+      onlineAccessLink: event.onlineAccessLink || null,
+      links: relatedLinks,
+      status: this.statusLabel(event.status),
       attendanceMode:
         event.attendanceMode != null ? String(event.attendanceMode) : null,
       age: this.ageText(event.age),
       conditions: this.localizedText(event.conditions) || null,
       accessibility: this.accessibilityText(event.accessibility),
+      imageCredits: this.localizedText(event.imageCredits) || null,
       provider: 'openagenda',
       imageUrl: openAgendaImages.thumb,
       imageUrlLarge: openAgendaImages.large,
@@ -367,17 +451,75 @@ export class EventsService implements OnModuleInit {
       canonicalUrl: null,
       registrationUrl: record.reservation_site_internet?.trim() || null,
       onlineAccessLink: null,
+      links: [],
       status: null,
       attendanceMode: null,
       age: null,
       conditions: null,
       accessibility: null,
+      imageCredits: null,
       provider: 'ods',
       imageUrl: null,
       imageUrlLarge: null,
       imageSource: null,
       updatedAt: null,
     };
+  }
+
+  private openAgendaTicketUrl(event: OpenAgendaEvent): string | null {
+    if (event.registrationUrl?.trim()) {
+      return event.registrationUrl.trim();
+    }
+    for (const entry of event.registration ?? []) {
+      const value = entry.value?.trim();
+      if (!value) {
+        continue;
+      }
+      if (
+        entry.type === 'link' ||
+        entry.type === 'email' ||
+        value.startsWith('http')
+      ) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  private openAgendaLinks(event: OpenAgendaEvent): string[] {
+    const links: string[] = [];
+    const seen = new Set<string>();
+    const push = (value: string | null | undefined): void => {
+      const trimmed = value?.trim();
+      if (!trimmed || seen.has(trimmed)) {
+        return;
+      }
+      seen.add(trimmed);
+      links.push(trimmed);
+    };
+    for (const entry of event.links ?? []) {
+      push(entry.link);
+    }
+    push(event.onlineAccessLink);
+    return links;
+  }
+
+  private statusLabel(value: unknown): string | null {
+    if (value == null || value === '') {
+      return null;
+    }
+    const code = String(value);
+    const labels: Record<string, string> = {
+      '1': 'Programmé',
+      '2': 'Reporté',
+      '3': 'Complet',
+      '4': 'Annulé',
+      programmed: 'Programmé',
+      rescheduled: 'Reporté',
+      full: 'Complet',
+      cancelled: 'Annulé',
+    };
+    return labels[code] ?? labels[code.toLowerCase()] ?? null;
   }
 
   private keywordList(value: unknown): string[] {
@@ -466,11 +608,14 @@ export class EventsService implements OnModuleInit {
       return match?.filename ? `${base}${match.filename}` : null;
     };
 
-    // OpenAgenda CDN (img.openagenda.com): prefer thumb for grids (~200px),
-    // base (~700px) for detail, never the multi‑MB "full" asset in lists.
-    const thumb = variantFile('thumbnail') ?? (image.filename ? `${base}${image.filename}` : null);
+    // OpenAgenda CDN: thumb for grids, base (~700) preferred for detail,
+    // full only as last resort (often multi‑MB).
+    const thumb =
+      variantFile('thumbnail') ??
+      (image.filename ? `${base}${image.filename}` : null);
     const large =
       (image.filename ? `${base}${image.filename}` : null) ??
+      variantFile('full') ??
       variantFile('thumbnail');
 
     return { thumb, large };

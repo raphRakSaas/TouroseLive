@@ -93,6 +93,9 @@
 
     <p class="meta">
       {{ filteredEvents().length }} événement(s)
+      @if (visibleEvents().length < filteredEvents().length) {
+        · affichage {{ visibleEvents().length }}
+      }
       @if (filteredEvents().length !== payload.data.length) {
         · sur {{ payload.data.length }}
       }
@@ -118,7 +121,7 @@
       </div>
     } @else {
       <ul class="listing-grid">
-        @for (event of filteredEvents(); track event.eventId) {
+        @for (event of visibleEvents(); track event.eventId) {
           <li>
             <a class="listing-card" [routerLink]="['/evenements', event.eventId]">
               <div class="listing-media" [class.listing-media--quiet]="!event.imageUrl">
@@ -157,6 +160,12 @@
           </li>
         }
       </ul>
+
+      @if (visibleEvents().length < filteredEvents().length) {
+        <button type="button" class="cta secondary more" (click)="showMore()">
+          Voir plus
+        </button>
+      }
     }
 
     <p class="trust-strip">

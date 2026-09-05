@@ -28,6 +28,7 @@ export class EventsPage implements OnInit {
   protected readonly cityFilter = signal<string>('all');
   protected readonly photoFilter = signal<PhotoFilter>('all');
   protected readonly skeletonCardSlots = [1, 2, 3, 4, 5, 6];
+  protected readonly visibleCount = signal(48);
 
   protected readonly cityOptions = computed(() => {
     const cities = new Set<string>();
@@ -117,6 +118,10 @@ export class EventsPage implements OnInit {
     });
   });
 
+  protected readonly visibleEvents = computed(() =>
+    this.filteredEvents().slice(0, this.visibleCount()),
+  );
+
   ngOnInit(): void {
     const whenParam = this.route.snapshot.queryParamMap.get('when');
     if (this.isWhenFilter(whenParam)) {
@@ -129,26 +134,19 @@ export class EventsPage implements OnInit {
     });
   }
 
-  protected onSearchInput(value: string): void {
-    this.searchQuery.set(value);
-  }
-
-  protected onSortChange(value: string): void {
-    if (value === 'date-asc' || value === 'date-desc' || value === 'title-asc') {
-      this.sortMode.set(value);
-    }
-  }
-
   protected setWhenFilter(value: WhenFilter): void {
     this.whenFilter.set(value);
+    this.visibleCount.set(48);
   }
 
   protected setCityFilter(value: string): void {
     this.cityFilter.set(value);
+    this.visibleCount.set(48);
   }
 
   protected setPhotoFilter(value: PhotoFilter): void {
     this.photoFilter.set(value);
+    this.visibleCount.set(48);
   }
 
   protected clearFilters(): void {
@@ -157,6 +155,23 @@ export class EventsPage implements OnInit {
     this.whenFilter.set('all');
     this.cityFilter.set('all');
     this.photoFilter.set('all');
+    this.visibleCount.set(48);
+  }
+
+  protected showMore(): void {
+    this.visibleCount.update((count) => count + 48);
+  }
+
+  protected onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    this.visibleCount.set(48);
+  }
+
+  protected onSortChange(value: string): void {
+    if (value === 'date-asc' || value === 'date-desc' || value === 'title-asc') {
+      this.sortMode.set(value);
+      this.visibleCount.set(48);
+    }
   }
 
   protected hasActiveFilters(): boolean {

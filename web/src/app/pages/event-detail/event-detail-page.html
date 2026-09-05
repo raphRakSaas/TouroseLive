@@ -6,18 +6,48 @@
   }
 
   @if (catalog()?.data; as event) {
-    <div class="hero-media">
-      @if (event.imageUrlLarge || event.imageUrl) {
+    <div class="hero-media" [class.hero-media--gallery]="galleryImages().length > 1">
+      @if (galleryImages().length > 0) {
         <img
-          [src]="event.imageUrlLarge || event.imageUrl"
+          [src]="galleryImages()[galleryIndex()]"
           [alt]="event.title"
           loading="eager"
           decoding="async"
         />
+        @if (galleryImages().length > 1) {
+          <div class="gallery-controls">
+            <button type="button" class="gallery-nav" (click)="showPrevImage()" aria-label="Image précédente">
+              ‹
+            </button>
+            <p class="gallery-count" aria-live="polite">
+              {{ galleryIndex() + 1 }} / {{ galleryImages().length }}
+            </p>
+            <button type="button" class="gallery-nav" (click)="showNextImage()" aria-label="Image suivante">
+              ›
+            </button>
+          </div>
+          <div class="gallery-dots" role="tablist" aria-label="Images">
+            @for (imageUrl of galleryImages(); track imageUrl; let index = $index) {
+              <button
+                type="button"
+                class="gallery-dot"
+                role="tab"
+                [class.active]="galleryIndex() === index"
+                [attr.aria-selected]="galleryIndex() === index"
+                [attr.aria-label]="'Image ' + (index + 1)"
+                (click)="selectImage(index)"
+              ></button>
+            }
+          </div>
+        }
       } @else {
         <div class="media-fallback media-fallback--quiet" aria-hidden="true"></div>
       }
     </div>
+
+    @if (event.imageCredits) {
+      <p class="image-credits">Crédit photo · {{ event.imageCredits }}</p>
+    }
 
     <header class="page-header">
       <p class="meta">
@@ -41,6 +71,20 @@
       </p>
     </header>
 
+    <div class="actions actions--top">
+      @if (ticketUrl(); as url) {
+        <a class="cta" [href]="url" target="_blank" rel="noreferrer">Réserver / billetterie</a>
+      }
+      @if (mapsUrl(event); as url) {
+        <a class="cta secondary" [href]="url" target="_blank" rel="noreferrer">Y aller</a>
+      }
+      @if (event.canonicalUrl) {
+        <a class="cta secondary" [href]="event.canonicalUrl" target="_blank" rel="noreferrer">
+          Voir sur OpenAgenda
+        </a>
+      }
+    </div>
+
     @if (event.summary) {
       <p class="summary">{{ event.summary }}</p>
     }
@@ -55,23 +99,14 @@
     <section class="block">
       <h2>Informations</h2>
       <dl class="info">
-        @if (event.type) {
-          <div><dt>Type</dt><dd>{{ event.type }}</dd></div>
-        }
-        @if (event.category) {
-          <div><dt>Catégorie</dt><dd>{{ event.category }}</dd></div>
-        }
-        @if (event.theme) {
-          <div><dt>Thème</dt><dd>{{ event.theme }}</dd></div>
-        }
-        @if (attendanceLabel(event.attendanceMode); as attendance) {
-          <div><dt>Participation</dt><dd>{{ attendance }}</dd></div>
+        @if (event.conditions) {
+          <div><dt>Tarifs / conditions</dt><dd>{{ event.conditions }}</dd></div>
         }
         @if (event.age) {
           <div><dt>Public</dt><dd>{{ event.age }}</dd></div>
         }
-        @if (event.conditions) {
-          <div><dt>Conditions</dt><dd>{{ event.conditions }}</dd></div>
+        @if (attendanceLabel(event.attendanceMode); as attendance) {
+          <div><dt>Participation</dt><dd>{{ attendance }}</dd></div>
         }
         @if (event.accessibility) {
           <div><dt>Accessibilité</dt><dd>{{ event.accessibility }}</dd></div>
@@ -79,18 +114,43 @@
         @if (event.status) {
           <div><dt>Statut</dt><dd>{{ event.status }}</dd></div>
         }
+        @if (event.category) {
+          <div><dt>Catégorie</dt><dd>{{ event.category }}</dd></div>
+        }
+        @if (event.theme) {
+          <div><dt>Thème</dt><dd>{{ event.theme }}</dd></div>
+        }
         @if (event.postalCode || event.district || event.department) {
           <div>
             <dt>Localisation</dt>
             <dd>
-              {{ event.district }}
-              {{ event.postalCode }}
-              {{ event.department }}
+              @if (event.district) {
+                {{ event.district }}
+              }
+              @if (event.postalCode) {
+                {{ event.postalCode }}
+              }
+              @if (event.department) {
+                {{ event.department }}
+              }
             </dd>
           </div>
         }
       </dl>
     </section>
+
+    @if (usefulLinks().length) {
+      <section class="block">
+        <h2>Liens utiles</h2>
+        <ul class="link-list">
+          @for (link of usefulLinks(); track link) {
+            <li>
+              <a [href]="link" target="_blank" rel="noreferrer">{{ linkLabel(link) }}</a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
 
     @if (event.keywords?.length) {
       <section class="block">
@@ -120,16 +180,16 @@
     }
 
     <div class="actions">
-      @if (event.registrationUrl || event.bookingUrl; as url) {
-        <a class="cta" [href]="url" target="_blank" rel="noreferrer">Réserver / infos</a>
+      @if (ticketUrl(); as url) {
+        <a class="cta" [href]="url" target="_blank" rel="noreferrer">Réserver / billetterie</a>
+      }
+      @if (mapsUrl(event); as url) {
+        <a class="cta secondary" [href]="url" target="_blank" rel="noreferrer">Y aller</a>
       }
       @if (event.canonicalUrl) {
         <a class="cta secondary" [href]="event.canonicalUrl" target="_blank" rel="noreferrer">
           Voir sur OpenAgenda
         </a>
-      }
-      @if (mapsUrl(event); as url) {
-        <a class="cta secondary" [href]="url" target="_blank" rel="noreferrer">Y aller</a>
       }
     </div>
   }

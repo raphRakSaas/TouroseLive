@@ -104,7 +104,7 @@ export class MapPage implements OnDestroy, OnInit {
   protected readonly placeKindFilter = signal<PlaceKindFilter>('all');
   protected readonly veloQuickFilter = signal<VeloQuickFilter>('all');
   protected readonly parkingQuickFilter = signal<ParkingQuickFilter>('all');
-  protected readonly eventQuickFilter = signal<EventQuickFilter>('all');
+  protected readonly eventQuickFilter = signal<EventQuickFilter>('week');
   protected readonly searchQuery = signal('');
   protected readonly selection = signal<MapSelection | null>(null);
   protected readonly filtersOpen = signal(false);
@@ -494,7 +494,9 @@ export class MapPage implements OnDestroy, OnInit {
     if (layer !== 'parking') {
       this.parkingQuickFilter.set('all');
     }
-    if (layer !== 'events') {
+    if (layer === 'events') {
+      this.eventQuickFilter.set('week');
+    } else {
       this.eventQuickFilter.set('all');
     }
     void this.router.navigate([], {

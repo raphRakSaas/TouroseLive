@@ -40,11 +40,14 @@ export interface CultureEventDto {
   canonicalUrl: string | null;
   registrationUrl: string | null;
   onlineAccessLink: string | null;
+  /** Extra useful links from OpenAgenda (site, infos pratiques…). */
+  links: string[];
   status: string | null;
   attendanceMode: string | null;
   age: string | null;
   conditions: string | null;
   accessibility: string | null;
+  imageCredits: string | null;
   provider: EventProvider;
   imageUrl: string | null;
   /** Larger OpenAgenda CDN asset for detail pages (base / full). */
@@ -98,6 +101,7 @@ export interface OpenAgendaAgenda {
 export interface OpenAgendaAgendasResponse {
   total?: number;
   agendas?: OpenAgendaAgenda[];
+  after?: Array<string | number> | null;
 }
 
 export interface OpenAgendaTiming {
@@ -140,13 +144,16 @@ export interface OpenAgendaEvent {
   lastTiming?: OpenAgendaTiming;
   canonicalUrl?: string;
   registrationUrl?: string;
+  registration?: Array<{ type?: string; value?: string }>;
+  links?: Array<{ link?: string; label?: string | Record<string, string> }>;
   onlineAccessLink?: string;
   status?: string | number;
   attendanceMode?: string | number;
-  age?: string | Record<string, string>;
+  age?: string | Record<string, string> | { min?: number; max?: number };
   conditions?: string | Record<string, string>;
   accessibility?: string | Record<string, string> | unknown;
   image?: OpenAgendaImage | null;
+  imageCredits?: string | Record<string, string> | null;
   updatedAt?: number | string;
 }
 
