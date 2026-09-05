@@ -161,10 +161,10 @@
   }
 
   <p class="trust-strip">
-    <span>Sources · Open-Meteo · Atmo Occitanie</span>
+    <span class="trust-strip__sources">Open-Meteo · Atmo</span>
     @if (catalog()?.fetchedAt; as fetchedAt) {
-      <span>Mise à jour {{ fetchedAt | date: 'HH:mm' }}</span>
+      <span>Maj. {{ fetchedAt | date: 'HH:mm' }}</span>
     }
-    <span>Sans compte · lecture seule</span>
+    <span>Sans compte</span>
   </p>
 </section>

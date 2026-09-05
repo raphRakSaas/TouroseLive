@@ -20,23 +20,6 @@
       />
     </a>
 
-    <nav class="cat-strip" aria-label="Catégories">
-      @for (category of categories; track category.id) {
-        <a
-          class="cat-item"
-          [routerLink]="category.link"
-          [queryParams]="category.queryParams ?? null"
-          [class.active]="isCategoryActive(category)"
-          (click)="closeMenu()"
-        >
-          <span class="cat-icon">
-            <img [src]="category.icon" [alt]="" />
-          </span>
-          <span class="cat-label">{{ category.title }}</span>
-        </a>
-      }
-    </nav>
-
     <button
       type="button"
       class="menu-btn"
@@ -48,16 +31,32 @@
       <span class="burger" aria-hidden="true">
         <i></i><i></i><i></i>
       </span>
-      <span class="avatar" aria-hidden="true">
-        <img src="/brand/tourose-logo-mark.png" alt="" width="28" height="28" />
-      </span>
     </button>
   </header>
+
+  <nav class="cat-strip" aria-label="Catégories">
+    @for (category of categories; track category.id) {
+      <a
+        class="cat-item"
+        [class.cat-item--desktop-only]="category.hideOnMobile"
+        [routerLink]="category.link"
+        [queryParams]="category.queryParams"
+        [class.active]="isCategoryActive(category)"
+        (click)="closeMenu()"
+      >
+        <span class="cat-icon">
+          <img [src]="category.icon" [alt]="" />
+        </span>
+        <span class="cat-label">{{ category.title }}</span>
+      </a>
+    }
+  </nav>
 
   @if (menuOpen()) {
     <button type="button" class="scrim" aria-label="Fermer le menu" (click)="closeMenu()"></button>
     <aside id="site-menu" class="drawer" role="dialog" aria-label="Menu">
       <nav aria-label="Liens secondaires">
+        <a routerLink="/carte" [queryParams]="{ layer: 'velo' }" (click)="closeMenu()">Vélô</a>
         <a routerLink="/" (click)="closeMenu()">Site marketing</a>
         <a routerLink="/alertes" (click)="closeMenu()">Alertes Tisséo</a>
         <a routerLink="/onboarding" [queryParams]="{ replay: '1' }" (click)="closeMenu()">Revoir l’intro</a>

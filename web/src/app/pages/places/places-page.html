@@ -84,11 +84,11 @@
     }
 
     <p class="trust-strip">
-      <span>Sources · Toulouse Métropole · Wikimedia · OpenStreetMap</span>
+      <span class="trust-strip__sources">Open data Toulouse</span>
       @if (payload.fetchedAt) {
-        <span>Mise à jour {{ payload.fetchedAt | date: 'HH:mm' }}</span>
+        <span>Maj. {{ payload.fetchedAt | date: 'HH:mm' }}</span>
       }
-      <span>Sans compte · lecture seule</span>
+      <span>Sans compte</span>
     </p>
   }
 </section>

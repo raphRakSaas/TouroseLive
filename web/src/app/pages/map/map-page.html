@@ -12,145 +12,147 @@
     <p class="banner">{{ loadError() }}</p>
   }
 
-  <div class="map-controls" [class.filters-open]="filtersOpen()">
-    <div class="controls-search" role="search">
-      <label class="sr-only" for="map-search">Rechercher sur la carte</label>
-      <input
-        id="map-search"
-        type="search"
-        name="mapSearch"
-        placeholder="Station, parking, événement, lieu…"
-        [value]="searchQuery()"
-        (input)="onSearchInput($any($event.target).value)"
-        autocomplete="off"
-      />
-      @if (searchQuery()) {
-        <button type="button" class="clear-search" (click)="clearSearch()" aria-label="Effacer la recherche">
-          ×
+  <div class="map-shell">
+    <div class="map-controls" [class.filters-open]="filtersOpen()">
+      <div class="controls-search" role="search">
+        <label class="sr-only" for="map-search">Rechercher sur la carte</label>
+        <input
+          id="map-search"
+          type="search"
+          name="mapSearch"
+          placeholder="Station, parking, lieu…"
+          [value]="searchQuery()"
+          (input)="onSearchInput($any($event.target).value)"
+          autocomplete="off"
+        />
+        @if (searchQuery()) {
+          <button type="button" class="clear-search" (click)="clearSearch()" aria-label="Effacer la recherche">
+            ×
+          </button>
+        }
+        @if (searchHits().length) {
+          <ul class="search-results" role="listbox">
+            @for (hit of searchHits(); track hit.id) {
+              <li>
+                <button type="button" (click)="selectHit(hit)">
+                  <span class="hit-type" [attr.data-type]="hit.type">{{ typeLabel(hit.type) }}</span>
+                  <strong>{{ hit.label }}</strong>
+                  <span class="hit-sub">{{ hit.sub }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        } @else if (searchQuery().trim().length >= 2) {
+          <div class="search-results empty-results">
+            Aucun résultat — essaie un autre nom ou change de couche.
+          </div>
+        }
+      </div>
+
+      <div class="layer-row" role="group" aria-label="Couches de la carte">
+        <button type="button" [class.active]="mapLayer() === 'events'" (click)="setLayer('events')">
+          <span class="dot events" aria-hidden="true"></span>
+          Événements
+          <span class="count">{{ mappedEvents().length }}</span>
         </button>
-      }
-      @if (searchHits().length) {
-        <ul class="search-results" role="listbox">
-          @for (hit of searchHits(); track hit.id) {
-            <li>
-              <button type="button" (click)="selectHit(hit)">
-                <span class="hit-type" [attr.data-type]="hit.type">{{ typeLabel(hit.type) }}</span>
-                <strong>{{ hit.label }}</strong>
-                <span class="hit-sub">{{ hit.sub }}</span>
-              </button>
-            </li>
+        <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">
+          <span class="dot velo" aria-hidden="true"></span>
+          Vélô
+          @if (veloCatalog(); as velo) {
+            <span class="count">{{ velo.data.length }}</span>
           }
-        </ul>
-      } @else if (searchQuery().trim().length >= 2) {
-        <div class="search-results empty-results">
-          Aucun résultat — essaie un autre nom ou change de couche.
-        </div>
-      }
-    </div>
+        </button>
+        <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">
+          <span class="dot parking" aria-hidden="true"></span>
+          Parkings
+          @if (parkingCatalog(); as parking) {
+            <span class="count">{{ parking.data.length }}</span>
+          }
+        </button>
+        <button type="button" [class.active]="mapLayer() === 'places'" (click)="setLayer('places')">
+          <span class="dot places" aria-hidden="true"></span>
+          Lieux
+          <span class="count">{{ mappedPlaces().length }}</span>
+        </button>
+      </div>
 
-    <div class="layer-row" role="group" aria-label="Couches de la carte">
-      <button type="button" [class.active]="mapLayer() === 'events'" (click)="setLayer('events')">
-        <span class="dot events" aria-hidden="true"></span>
-        Événements
-        <span class="count">{{ mappedEvents().length }}</span>
-      </button>
-      <button type="button" [class.active]="mapLayer() === 'velo'" (click)="setLayer('velo')">
-        <span class="dot velo" aria-hidden="true"></span>
-        Vélô
-        @if (veloCatalog(); as velo) {
-          <span class="count">{{ velo.data.length }}</span>
-        }
-      </button>
-      <button type="button" [class.active]="mapLayer() === 'parking'" (click)="setLayer('parking')">
-        <span class="dot parking" aria-hidden="true"></span>
-        Parkings
-        @if (parkingCatalog(); as parking) {
-          <span class="count">{{ parking.data.length }}</span>
-        }
-      </button>
-      <button type="button" [class.active]="mapLayer() === 'places'" (click)="setLayer('places')">
-        <span class="dot places" aria-hidden="true"></span>
-        Lieux
-        <span class="count">{{ mappedPlaces().length }}</span>
-      </button>
-    </div>
+      <div class="filters-bar">
+        <button
+          type="button"
+          class="filters-toggle"
+          [attr.aria-expanded]="filtersOpen()"
+          (click)="toggleFilters()"
+        >
+          Filtres
+          <span aria-hidden="true">{{ filtersOpen() ? '▴' : '▾' }}</span>
+        </button>
+        <p class="controls-meta" aria-live="polite">
+          <span>{{ markerCount() }} point{{ markerCount() > 1 ? 's' : '' }}</span>
+          @if (mapLayer() === 'velo') {
+            <span>· {{ pulse().bikes }} vélos dispo</span>
+          }
+          @if (mapLayer() === 'parking') {
+            <span>· {{ pulse().freeParkings }} gratuits</span>
+          }
+        </p>
+      </div>
 
-    <div class="filters-bar">
-      <button
-        type="button"
-        class="filters-toggle"
-        [attr.aria-expanded]="filtersOpen()"
-        (click)="toggleFilters()"
-      >
-        Filtres
-        <span aria-hidden="true">{{ filtersOpen() ? '▴' : '▾' }}</span>
-      </button>
-      <p class="controls-meta" aria-live="polite">
-        <span>{{ markerCount() }} point{{ markerCount() > 1 ? 's' : '' }}</span>
+      <div class="filters-panel" [hidden]="!filtersOpen()">
         @if (mapLayer() === 'velo') {
-          <span>· {{ pulse().bikes }} vélos dispo</span>
+          <div class="quick-row" role="group" aria-label="Filtres Vélô">
+            <button type="button" [class.active]="veloQuickFilter() === 'all'" (click)="setVeloQuick('all')">Tous</button>
+            <button type="button" [class.active]="veloQuickFilter() === 'low-bikes'" (click)="setVeloQuick('low-bikes')">Peu de vélos</button>
+            <button type="button" [class.active]="veloQuickFilter() === 'electrical'" (click)="setVeloQuick('electrical')">Élec.</button>
+            <button type="button" [class.active]="veloQuickFilter() === 'free-docks'" (click)="setVeloQuick('free-docks')">Places libres</button>
+            <button type="button" [class.active]="veloQuickFilter() === 'can-return'" (click)="setVeloQuick('can-return')">Dépôt possible</button>
+          </div>
         }
         @if (mapLayer() === 'parking') {
-          <span>· {{ pulse().freeParkings }} gratuits</span>
+          <div class="quick-row" role="group" aria-label="Filtres parkings">
+            <button type="button" [class.active]="parkingQuickFilter() === 'all'" (click)="setParkingQuick('all')">Tous</button>
+            <button type="button" [class.active]="parkingQuickFilter() === 'free'" (click)="setParkingQuick('free')">Gratuits</button>
+          </div>
         }
-      </p>
+        @if (mapLayer() === 'events') {
+          <div class="quick-row" role="group" aria-label="Filtres événements">
+            <button type="button" [class.active]="eventQuickFilter() === 'all'" (click)="setEventQuick('all')">Tous</button>
+            <button type="button" [class.active]="eventQuickFilter() === 'week'" (click)="setEventQuick('week')">7 jours</button>
+            <button type="button" [class.active]="eventQuickFilter() === 'photo'" (click)="setEventQuick('photo')">Avec photo</button>
+          </div>
+        }
+        @if (mapLayer() === 'places') {
+          <div class="quick-row place-kinds" role="group" aria-label="Types de lieux">
+            @for (kind of placeKinds; track kind.id) {
+              <button
+                type="button"
+                [class.active]="placeKindFilter() === kind.id"
+                (click)="setPlaceKind(kind.id)"
+              >
+                {{ kind.label }}
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
 
-    <div class="filters-panel" [hidden]="!filtersOpen()">
-      @if (mapLayer() === 'velo') {
-        <div class="quick-row" role="group" aria-label="Filtres Vélô">
-          <button type="button" [class.active]="veloQuickFilter() === 'all'" (click)="setVeloQuick('all')">Tous</button>
-          <button type="button" [class.active]="veloQuickFilter() === 'low-bikes'" (click)="setVeloQuick('low-bikes')">Peu de vélos</button>
-          <button type="button" [class.active]="veloQuickFilter() === 'electrical'" (click)="setVeloQuick('electrical')">Élec.</button>
-          <button type="button" [class.active]="veloQuickFilter() === 'free-docks'" (click)="setVeloQuick('free-docks')">Places libres</button>
-          <button type="button" [class.active]="veloQuickFilter() === 'can-return'" (click)="setVeloQuick('can-return')">Dépôt possible</button>
-        </div>
-      }
-      @if (mapLayer() === 'parking') {
-        <div class="quick-row" role="group" aria-label="Filtres parkings">
-          <button type="button" [class.active]="parkingQuickFilter() === 'all'" (click)="setParkingQuick('all')">Tous</button>
-          <button type="button" [class.active]="parkingQuickFilter() === 'free'" (click)="setParkingQuick('free')">Gratuits</button>
-        </div>
-      }
-      @if (mapLayer() === 'events') {
-        <div class="quick-row" role="group" aria-label="Filtres événements">
-          <button type="button" [class.active]="eventQuickFilter() === 'all'" (click)="setEventQuick('all')">Tous</button>
-          <button type="button" [class.active]="eventQuickFilter() === 'week'" (click)="setEventQuick('week')">7 jours</button>
-          <button type="button" [class.active]="eventQuickFilter() === 'photo'" (click)="setEventQuick('photo')">Avec photo</button>
-        </div>
-      }
-      @if (mapLayer() === 'places') {
-        <div class="quick-row place-kinds" role="group" aria-label="Types de lieux">
-          @for (kind of placeKinds; track kind.id) {
-            <button
-              type="button"
-              [class.active]="placeKindFilter() === kind.id"
-              (click)="setPlaceKind(kind.id)"
-            >
-              {{ kind.label }}
-            </button>
-          }
-        </div>
+    <div class="map-stage">
+      <div #mapHost class="map" role="application" aria-label="Carte interactive de Toulouse"></div>
+
+      <button
+        type="button"
+        class="locate-btn"
+        (click)="locateMe()"
+        [disabled]="locating()"
+      >
+        <span class="locate-icon" aria-hidden="true">◎</span>
+        <span>{{ locating() ? 'Localisation…' : 'Me localiser' }}</span>
+      </button>
+
+      @if (locateError()) {
+        <p class="locate-banner">{{ locateError() }}</p>
       }
     </div>
-  </div>
-
-  <div class="map-stage">
-    <div #mapHost class="map" role="application" aria-label="Carte interactive de Toulouse"></div>
-
-    <button
-      type="button"
-      class="locate-btn"
-      (click)="locateMe()"
-      [disabled]="locating()"
-    >
-      <span class="locate-icon" aria-hidden="true">◎</span>
-      <span>{{ locating() ? 'Localisation…' : 'Me localiser' }}</span>
-    </button>
-
-    @if (locateError()) {
-      <p class="locate-banner">{{ locateError() }}</p>
-    }
   </div>
 
   @if (selection(); as selected) {
@@ -428,10 +430,10 @@
   </section>
 
   <p class="trust-strip">
-    <span>Sources · JCDecaux · Toulouse Métropole · OpenAgenda · OpenStreetMap</span>
+    <span class="trust-strip__sources">Open data · OSM</span>
     @if (trustUpdatedAt(); as updatedAt) {
-      <span>Mise à jour {{ updatedAt | date: 'HH:mm' }}</span>
+      <span>Maj. {{ updatedAt | date: 'HH:mm' }}</span>
     }
-    <span>Sans compte · lecture seule</span>
+    <span>Sans compte</span>
   </p>
 </section>

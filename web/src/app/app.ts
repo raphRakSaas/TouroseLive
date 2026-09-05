@@ -35,6 +35,7 @@ export class App {
       link: '/explorer',
       exact: true,
       icon: '/icons/cat-explorer.png',
+      hideOnMobile: false,
     },
     {
       id: 'events',
@@ -42,6 +43,7 @@ export class App {
       link: '/evenements',
       exact: false,
       icon: '/icons/cat-events.png',
+      hideOnMobile: false,
     },
     {
       id: 'places',
@@ -49,22 +51,25 @@ export class App {
       link: '/lieux',
       exact: false,
       icon: '/icons/cat-places.png',
+      hideOnMobile: false,
     },
     {
       id: 'bike',
       title: 'Vélô',
       link: '/carte',
-      queryParams: { layer: 'velo' },
+      queryParams: { layer: 'velo' } as Record<string, string> | null,
       exact: false,
       icon: '/icons/cat-bike.png',
+      hideOnMobile: true,
     },
     {
       id: 'map',
       title: 'Carte',
       link: '/carte',
-      queryParams: { layer: 'events' },
+      queryParams: null as Record<string, string> | null,
       exact: false,
       icon: '/icons/cat-map.png',
+      hideOnMobile: false,
     },
     {
       id: 'weather',
@@ -72,6 +77,7 @@ export class App {
       link: '/meteo',
       exact: false,
       icon: '/icons/cat-weather.png',
+      hideOnMobile: false,
     },
   ];
 
@@ -99,16 +105,31 @@ export class App {
 
   protected isCategoryActive(category: (typeof this.categories)[number]): boolean {
     const urlTree = this.router.parseUrl(this.router.url);
-    const path = '/' + (urlTree.root.children['primary']?.segments.map((segment) => segment.path).join('/') ?? '');
+    const path =
+      '/' +
+      (urlTree.root.children['primary']?.segments
+        .map((segment) => segment.path)
+        .join('/') ?? '');
     if (category.id === 'bike') {
       return path === '/carte' && urlTree.queryParams['layer'] === 'velo';
     }
     if (category.id === 'map') {
-      return path === '/carte' && urlTree.queryParams['layer'] !== 'velo';
+      // On mobile Vélô is hidden: highlight Carte for every map layer.
+      if (path !== '/carte') {
+        return false;
+      }
+      if (this.isMobileNav()) {
+        return true;
+      }
+      return urlTree.queryParams['layer'] !== 'velo';
     }
     if (category.exact) {
       return path === category.link;
     }
     return path === category.link || path.startsWith(category.link + '/');
+  }
+
+  private isMobileNav(): boolean {
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
   }
 }

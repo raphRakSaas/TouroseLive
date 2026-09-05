@@ -2,11 +2,11 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: end;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px 16px;
-  padding: 10px 24px 0;
+  padding: 10px 24px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
@@ -43,8 +43,6 @@ main.shell-plain {
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
-  align-self: center;
-  margin-bottom: 10px;
   line-height: 0;
 }
 
@@ -67,13 +65,19 @@ main.shell-plain {
 }
 
 .cat-strip {
+  position: sticky;
+  top: 60px;
+  z-index: 35;
   display: flex;
   justify-content: center;
   gap: 4px;
   overflow-x: auto;
-  padding: 0 4px;
+  padding: 0 24px;
   scrollbar-width: none;
   min-width: 0;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
 }
 
 .cat-strip::-webkit-scrollbar {
@@ -87,12 +91,15 @@ main.shell-plain {
   align-items: center;
   gap: 6px;
   min-width: 76px;
-  padding: 6px 8px 12px;
+  padding: 8px 8px 12px;
   text-decoration: none;
   color: var(--muted);
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    opacity 0.12s ease,
+    transform 0.12s ease;
 }
 
 .cat-item:hover,
@@ -102,6 +109,11 @@ main.shell-plain {
 
 .cat-item.active {
   border-bottom-color: var(--ink);
+}
+
+.cat-item:active {
+  opacity: 0.72;
+  transform: scale(0.96);
 }
 
 .cat-icon {
@@ -128,19 +140,28 @@ main.shell-plain {
 .menu-btn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   border: 1px solid var(--line);
   background: #fff;
   border-radius: 999px;
-  padding: 6px 8px 6px 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   cursor: pointer;
   box-shadow: var(--shadow-soft);
-  align-self: center;
-  margin-bottom: 12px;
+  transition:
+    box-shadow 0.15s ease,
+    background 0.15s ease,
+    transform 0.12s ease;
 }
 
 .menu-btn:hover {
   box-shadow: var(--shadow);
+}
+
+.menu-btn:active {
+  background: var(--bg-soft);
+  transform: scale(0.96);
 }
 
 .burger {
@@ -150,29 +171,10 @@ main.shell-plain {
 
 .burger i {
   display: block;
-  width: 14px;
+  width: 16px;
   height: 2px;
   background: var(--ink);
   border-radius: 2px;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: #fff;
-  border: 1px solid var(--line);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  flex: 0 0 auto;
-}
-
-.avatar img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  display: block;
 }
 
 .scrim {
@@ -186,7 +188,7 @@ main.shell-plain {
 
 .drawer {
   position: fixed;
-  top: 88px;
+  top: 72px;
   right: 20px;
   width: min(300px, calc(100vw - 32px));
   background: #fff;
@@ -255,83 +257,97 @@ main.shell-plain {
 
 @media (max-width: 900px) {
   .top {
-    grid-template-columns: auto auto;
-    grid-template-areas:
-      'brand menu'
-      'cats cats';
-    padding: 10px 12px 0;
-    padding-top: max(10px, env(safe-area-inset-top, 0px));
-    gap: 6px 10px;
-  }
-
-  .brand {
-    grid-area: brand;
-    margin-bottom: 4px;
+    padding: 8px 12px;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
   }
 
   .brand-logo--full {
-    height: 40px;
-    max-width: min(190px, 58vw);
+    height: 34px;
+    max-width: min(170px, 55vw);
   }
 
   .menu-btn {
-    grid-area: menu;
-    justify-self: end;
-    margin-bottom: 4px;
-    min-height: 44px;
-    min-width: 44px;
-    padding: 8px 10px 8px 14px;
-  }
-
-  .avatar {
-    width: 32px;
-    height: 32px;
-  }
-
-  .avatar img {
-    width: 22px;
-    height: 22px;
-  }
-
-  .cat-strip {
-    grid-area: cats;
-    justify-content: flex-start;
-    gap: 2px;
-    margin: 0 -12px;
-    padding: 0 12px 2px;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
-    /* Prefer vertical page scroll; horizontal only when gesture is clearly sideways */
-    touch-action: pan-x pan-y;
-  }
-
-  .cat-item {
-    min-width: 72px;
-    min-height: 68px;
-    padding: 8px 10px 10px;
-    scroll-snap-align: start;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .cat-icon {
     width: 44px;
     height: 44px;
   }
 
+  .cat-strip {
+    position: fixed;
+    top: auto;
+    /* Clear home indicator + extra air so the bar never hugs the screen edge */
+    bottom: max(16px, calc(12px + env(safe-area-inset-bottom, 0px)));
+    left: 14px;
+    right: 14px;
+    z-index: 42;
+    justify-content: space-around;
+    gap: 0;
+    margin: 0;
+    padding: 8px 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.12);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+
+  .cat-item--desktop-only {
+    display: none;
+  }
+
+  .cat-item {
+    flex: 1 1 0;
+    min-width: 56px;
+    max-width: 88px;
+    min-height: 56px;
+    padding: 6px 4px 4px;
+    border-bottom: 0;
+    border-top: 0;
+    gap: 3px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cat-item.active {
+    border-bottom-color: transparent;
+    color: var(--accent-ink);
+  }
+
+  .cat-item.active .cat-icon img {
+    filter: none;
+    opacity: 1;
+  }
+
+  .cat-item:not(.active) .cat-icon img {
+    opacity: 0.72;
+  }
+
+  .cat-item.active .cat-label {
+    color: var(--accent-ink);
+    font-weight: 700;
+  }
+
+  .cat-icon {
+    width: 28px;
+    height: 28px;
+  }
+
   .cat-icon img {
-    width: 40px;
-    height: 40px;
+    width: 26px;
+    height: 26px;
   }
 
   .cat-label {
     font-size: 0.72rem;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
   }
 
   .drawer {
     top: auto;
     right: 12px;
     left: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(100px + env(safe-area-inset-bottom, 0px));
     width: auto;
     max-height: min(70vh, 520px);
     overflow: auto;
@@ -346,18 +362,23 @@ main.shell-plain {
     font-size: 1rem;
   }
 
+  .drawer a:active {
+    background: var(--bg-soft);
+  }
+
   .foot {
-    padding: 16px 14px calc(20px + env(safe-area-inset-bottom, 0px));
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
-  .cat-item {
-    min-width: 68px;
+  .brand-logo--full {
+    display: none;
   }
 
-  .brand-logo--full {
-    height: 40px;
-    max-width: min(180px, 56vw);
+  .brand-logo--mark {
+    display: block;
+    height: 36px;
+    width: 36px;
   }
 }

@@ -2,9 +2,7 @@
   <header class="home-intro">
     <p class="home-kicker">TouRose · Ville rose</p>
     <h1>Toulouse, maintenant</h1>
-    <p class="lede">
-      Sans compte, sans pub — événements, Vélô, lieux et météo via l’open data.
-    </p>
+    <p class="lede">Événements, Vélô, météo — sans compte ni pub.</p>
   </header>
 
   <div class="search" role="search">
@@ -13,7 +11,7 @@
       id="home-search"
       name="homeSearch"
       type="search"
-      placeholder="Rechercher un événement, un lieu, une station Vélô…"
+      placeholder="Événement, lieu, Vélô…"
       [value]="searchQuery()"
       (input)="onSearchInput($any($event.target).value)"
       autocomplete="off"
@@ -50,29 +48,6 @@
     }
   </div>
 
-  <div class="intent-row" role="group" aria-label="Par où commencer">
-    <a
-      class="intent-chip"
-      routerLink="/evenements"
-      [queryParams]="{ when: 'today' }"
-    >
-      <span class="intent-label">Ce soir</span>
-      <span class="intent-sub">Agenda du jour</span>
-    </a>
-    <a
-      class="intent-chip"
-      routerLink="/carte"
-      [queryParams]="{ layer: 'velo' }"
-    >
-      <span class="intent-label">Bouger</span>
-      <span class="intent-sub">Vélô & carte</span>
-    </a>
-    <a class="intent-chip" routerLink="/meteo">
-      <span class="intent-label">Respirer</span>
-      <span class="intent-sub">Météo & air</span>
-    </a>
-  </div>
-
   <div class="pulse" aria-label="Aperçu du jour à Toulouse">
     @if (pulseLoading()) {
       @for (slot of skeletonPulseSlots; track slot) {
@@ -106,15 +81,21 @@
           @if (tisseo.status === 'unavailable') {
             <strong>—</strong>
             <span class="pulse-meta">Alertes indisponibles</span>
+          } @else if (severeAlertCount() > 0) {
+            <span class="pulse-value pulse-value--warn">
+              <strong>{{ severeAlertCount() }}</strong>
+              <span class="pulse-unit">{{ severeAlertCount() <= 1 ? 'forte' : 'fortes' }}</span>
+            </span>
+            <span class="pulse-meta">
+              {{ tisseo.data.length }} au total
+            </span>
           } @else {
             <span class="pulse-value">
               <strong>{{ tisseo.data.length }}</strong>
               <span class="pulse-unit">{{ tisseo.data.length <= 1 ? 'alerte' : 'alertes' }}</span>
             </span>
             <span class="pulse-meta">
-              @if (severeAlertCount() > 0) {
-                {{ severeAlertCount() }} fortes
-              } @else if (tisseo.data.length === 0) {
+              @if (tisseo.data.length === 0) {
                 Aucune alerte
               } @else {
                 En cours
@@ -147,7 +128,7 @@
   </div>
 
   @if (!eventsLoading() && spotlightEvents().length > 0) {
-    <div class="section-head">
+    <div class="section-head section-head--tight">
       <h2>À ne pas manquer</h2>
       <a routerLink="/evenements" [queryParams]="{ when: 'weekend' }">Week-end</a>
     </div>
@@ -185,6 +166,29 @@
       }
     </ul>
   }
+
+  <div class="intent-row intent-row--desktop" role="group" aria-label="Par où commencer">
+    <a
+      class="intent-chip"
+      routerLink="/evenements"
+      [queryParams]="{ when: 'today' }"
+    >
+      <span class="intent-label">Ce soir</span>
+      <span class="intent-sub">Agenda du jour</span>
+    </a>
+    <a
+      class="intent-chip"
+      routerLink="/carte"
+      [queryParams]="{ layer: 'velo' }"
+    >
+      <span class="intent-label">Bouger</span>
+      <span class="intent-sub">Vélô & carte</span>
+    </a>
+    <a class="intent-chip intent-chip--secondary" routerLink="/meteo">
+      <span class="intent-label">Respirer</span>
+      <span class="intent-sub">Météo & air</span>
+    </a>
+  </div>
 
   <div class="section-head">
     <h2>Événements populaires · Toulouse</h2>
@@ -305,10 +309,10 @@
   }
 
   <p class="trust-strip">
-    <span>Sources · OpenAgenda · Wikimedia · JCDecaux · Tisséo · Open-Meteo · Atmo · Toulouse Métropole</span>
+    <span class="trust-strip__sources">Open data Toulouse</span>
     @if (trustUpdatedAt(); as updatedAt) {
-      <span>Mise à jour {{ updatedAt | date: 'HH:mm' }}</span>
+      <span>Maj. {{ updatedAt | date: 'HH:mm' }}</span>
     }
-    <span>Sans compte · lecture seule</span>
+    <span>Sans compte</span>
   </p>
 </section>

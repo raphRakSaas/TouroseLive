@@ -58,6 +58,11 @@
   transform: translateY(-1px);
 }
 
+.intent-chip:active {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
 .intent-label {
   font-size: 0.98rem;
   font-weight: 700;
@@ -312,6 +317,10 @@
   color: var(--muted);
 }
 
+.pulse-value--warn strong {
+  color: var(--warn);
+}
+
 .pulse-meta {
   color: var(--muted);
   font-size: 0.82rem;
@@ -391,20 +400,29 @@
 }
 
 @media (max-width: 720px) {
-  .intent-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    margin-bottom: 16px;
+  .home-intro {
+    margin-bottom: 4px;
+    text-align: left;
   }
 
-  .spotlight-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
+  .home-kicker {
+    margin-bottom: 4px;
+    font-size: 0.7rem;
+  }
+
+  .home-intro h1 {
+    margin-bottom: 4px;
+    font-size: 1.55rem;
+  }
+
+  .home-intro .lede {
+    font-size: 0.92rem;
+    max-width: none;
   }
 
   .search {
     max-width: none;
-    margin: 4px 0 20px;
+    margin: 8px 0 12px;
   }
 
   .search input {
@@ -431,12 +449,12 @@
   .pulse {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin: 4px 0;
+    margin: 0 0 12px;
   }
 
   .pulse-item {
-    min-height: 88px;
-    padding: 12px;
+    min-height: 78px;
+    padding: 10px 12px;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -445,7 +463,52 @@
   }
 
   .pulse-item strong {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
+  }
+
+  .intent-row--desktop {
+    display: none;
+  }
+
+  .section-head {
+    margin: 22px 0 12px;
+    padding-inline: 0;
+    align-items: baseline;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .section-head--tight {
+    margin-top: 10px;
+  }
+
+  .spotlight-grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    margin: 0 0 8px;
+    padding: 0 0 4px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .spotlight-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .spotlight-grid > li {
+    flex: 0 0 min(78vw, 280px);
+    scroll-snap-align: start;
+  }
+
+  .spotlight-kicker {
+    display: none;
+  }
+
+  .spotlight-body h3 {
+    font-size: 0.98rem;
   }
 }
 
@@ -468,7 +531,14 @@
     animation: none;
   }
 
-  .listing-media img {
+  .listing-media img,
+  .intent-chip,
+  .spotlight-media img {
     transition: none;
+  }
+
+  .intent-chip:hover,
+  .intent-chip:active {
+    transform: none;
   }
 }

@@ -18,7 +18,7 @@
           id="events-search"
           type="search"
           name="eventsSearch"
-          placeholder="Rechercher un titre, lieu, ville…"
+          placeholder="Titre, lieu, ville…"
           [value]="searchQuery()"
           (input)="onSearchInput($any($event.target).value)"
           autocomplete="off"
@@ -148,11 +148,11 @@
     }
 
     <p class="trust-strip">
-      <span>Sources · OpenAgenda · Toulouse Métropole</span>
+      <span class="trust-strip__sources">OpenAgenda</span>
       @if (payload.fetchedAt) {
-        <span>Mise à jour {{ payload.fetchedAt | date: 'HH:mm' }}</span>
+        <span>Maj. {{ payload.fetchedAt | date: 'HH:mm' }}</span>
       }
-      <span>Sans compte · lecture seule</span>
+      <span>Sans compte</span>
     </p>
   }
 </section>
