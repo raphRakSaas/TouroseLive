@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import {
   afterNextRender,
   Component,
@@ -22,7 +22,7 @@ import { WeatherApi } from '../../core/weather-api';
 
 @Component({
   selector: 'app-landing-page',
-  imports: [RouterLink, DatePipe, DecimalPipe],
+  imports: [RouterLink, DecimalPipe],
   templateUrl: './landing-page.html',
   styleUrl: './landing-page.scss',
 })
@@ -72,29 +72,9 @@ export class LandingPage implements OnInit, OnDestroy {
     ),
   );
 
-  protected readonly highlightStation = computed(() => {
-    const stations = this.veloCatalog()?.data ?? [];
-    if (stations.length === 0) {
-      return null;
-    }
-    return [...stations].sort(
-      (left, right) => right.bikesAvailable - left.bikesAvailable,
-    )[0];
-  });
-
   protected readonly currentWeather = computed(
     () => this.weatherCatalog()?.data?.current ?? null,
   );
-
-  protected readonly previewEvents = computed(() => {
-    const today = this.parisToday();
-    return (this.eventsCatalog()?.data ?? [])
-      .filter((event) => {
-        const end = event.endsOn ?? event.startsOn ?? '';
-        return Boolean(end) && end >= today && Boolean(event.imageUrl);
-      })
-      .slice(0, 2);
-  });
 
   protected readonly primaryCtaLabel = computed(() => {
     const weekendCount = this.weekendEventCount();
@@ -110,6 +90,30 @@ export class LandingPage implements OnInit, OnDestroy {
     }
     return 'Explorer Toulouse';
   });
+
+  protected readonly productShots = [
+    {
+      id: 'explorer',
+      src: '/marketing/screens/explorer.jpg',
+      alt: 'Écran Explorer TouRose — pulse du jour et événements',
+      label: 'Explorer',
+      caption: 'Le pulse de Toulouse en un coup d’œil',
+    },
+    {
+      id: 'events',
+      src: '/marketing/screens/events.jpg',
+      alt: 'Écran Événements TouRose — filtres et agenda',
+      label: 'Événements',
+      caption: 'Ce soir, demain, le week-end',
+    },
+    {
+      id: 'map',
+      src: '/marketing/screens/map.jpg',
+      alt: 'Écran Carte TouRose — stations Vélô',
+      label: 'Carte · Vélô',
+      caption: 'Une couche à la fois, des vélos tout de suite',
+    },
+  ] as const;
 
   protected readonly pillars = [
     {

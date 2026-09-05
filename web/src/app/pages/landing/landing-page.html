@@ -121,90 +121,37 @@
   </section>
 
   <section id="apercu" class="proof" aria-labelledby="proof-title">
-    <div class="proof-layout">
-      <div class="proof-copy" data-reveal>
-        <p class="eyebrow">Aperçu live</p>
-        <h2 id="proof-title">Voilà à quoi ressemble TouRose</h2>
-        <p>
-          Pas une maquette marketing figée — un extrait de l’app, avec les données d’aujourd’hui.
-          Ouvre-la en un clic quand tu es prêt.
-        </p>
-        <a routerLink="/explorer" class="btn btn-primary">Ouvrir l’app</a>
-      </div>
+    <div class="proof-intro" data-reveal>
+      <p class="eyebrow">Aperçu réel</p>
+      <h2 id="proof-title">Voilà à quoi ressemble TouRose</h2>
+      <p>
+        Trois captures de l’app — scrolle pour les découvrir une par une.
+      </p>
+    </div>
 
-      <div class="proof-device" data-reveal data-delay="1" aria-label="Aperçu de l’interface TouRose">
-        <div class="device-chrome">
-          <span class="device-dot"></span>
-          <span class="device-dot"></span>
-          <span class="device-dot"></span>
-          <span class="device-url">tourose.app/explorer</span>
-        </div>
-        <div class="device-screen">
-          <p class="device-kicker">Toulouse, maintenant</p>
-          <div class="device-pulse">
-            <div class="device-tile">
-              <span>Vélô</span>
-              @if (highlightStation(); as station) {
-                <strong>{{ station.bikesAvailable }}</strong>
-                <em>{{ station.name }}</em>
-              } @else if (statsLoading()) {
-                <strong>…</strong>
-                <em>Chargement</em>
-              } @else {
-                <strong>—</strong>
-                <em>Indisponible</em>
-              }
-            </div>
-            <div class="device-tile">
-              <span>Météo</span>
-              @if (currentWeather(); as weather) {
-                <strong>{{ weather.temperature | number: '1.0-0' }}°</strong>
-                <em>{{ weather.weatherLabel }}</em>
-              } @else {
-                <strong>—</strong>
-                <em>Indisponible</em>
-              }
-            </div>
-            <div class="device-tile">
-              <span>Agenda</span>
-              <strong>{{ todayEventCount() }}</strong>
-              <em>aujourd’hui</em>
-            </div>
+    <div class="shots-rail" aria-label="Captures d’écran TouRose">
+      @for (shot of productShots; track shot.id; let index = $index) {
+        <figure class="shot-card" [style.--shot-index]="index">
+          <div class="shot-frame">
+            <img
+              [src]="shot.src"
+              [alt]="shot.alt"
+              width="1600"
+              height="1025"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
+          <figcaption>
+            <span class="shot-label">{{ shot.label }}</span>
+            <span class="shot-caption">{{ shot.caption }}</span>
+          </figcaption>
+        </figure>
+      }
+    </div>
 
-          <div class="device-events">
-            <div class="device-events-head">
-              <strong>À ne pas manquer</strong>
-              <span>Week-end · {{ weekendEventCount() }}</span>
-            </div>
-            @if (previewEvents().length > 0) {
-              @for (event of previewEvents(); track event.eventId) {
-                <article class="device-event">
-                  <div class="device-event-media">
-                    @if (event.imageUrl) {
-                      <img [src]="event.imageUrl" [alt]="event.title" loading="lazy" />
-                    }
-                    @if (event.startsOn) {
-                      <span class="device-date">
-                        <strong>{{ event.startsOn | date: 'd' }}</strong>
-                        {{ event.startsOn | date: 'MMM' }}
-                      </span>
-                    }
-                  </div>
-                  <div class="device-event-body">
-                    <h3>{{ event.title }}</h3>
-                    <p>{{ event.venueName || event.city || 'Toulouse' }}</p>
-                  </div>
-                </article>
-              }
-            } @else if (statsLoading()) {
-              <p class="device-empty">Chargement de l’agenda…</p>
-            } @else {
-              <p class="device-empty">Aucun événement photo pour l’instant — ouvre l’agenda complet.</p>
-            }
-          </div>
-        </div>
-      </div>
+    <div class="proof-cta" data-reveal>
+      <a routerLink="/explorer" class="btn btn-primary">Ouvrir l’app</a>
     </div>
   </section>
 
