@@ -152,7 +152,16 @@
       <button type="button" class="panel-close" (click)="clearSelection()" aria-label="Fermer">×</button>
 
       @if (selected.type === 'velo') {
-        <div class="detail-grid">
+        <div class="detail-grid has-media">
+          <div class="panel-media panel-media--map">
+            <img
+              [src]="locationPreview(selected.station.latitude, selected.station.longitude)"
+              [alt]="'Carte autour de ' + selected.station.name"
+              loading="lazy"
+              class="is-loaded"
+            />
+            <span class="map-pin" aria-hidden="true"></span>
+          </div>
           <div class="detail-copy">
             <p class="panel-kicker">
               <span class="dot velo" aria-hidden="true"></span> Station Vélô
@@ -241,7 +250,16 @@
       }
 
       @if (selected.type === 'parking') {
-        <div class="detail-grid">
+        <div class="detail-grid has-media">
+          <div class="panel-media panel-media--map">
+            <img
+              [src]="locationPreview(selected.lot.latitude, selected.lot.longitude, 15)"
+              [alt]="'Carte autour de ' + selected.lot.name"
+              loading="lazy"
+              class="is-loaded"
+            />
+            <span class="map-pin map-pin--parking" aria-hidden="true"></span>
+          </div>
           <div class="detail-copy">
             <p class="panel-kicker">
               <span class="dot parking" aria-hidden="true"></span> Parking
@@ -378,9 +396,16 @@
         @for (item of railItems(); track item.id) {
           <article class="pill" [class.selected]="isSelected(item.payload)">
             <button type="button" class="pill-hit" (click)="selectFromRail(item.payload)">
-              <div class="pill-media" [class.pill-media--tone]="!item.imageUrl">
+              <div class="pill-media" [class.pill-media--tone]="!item.imageUrl" [class.pill-media--map]="!!item.imageUrl && (item.payload.type === 'velo' || item.payload.type === 'parking')">
                 @if (item.imageUrl) {
                   <img [src]="item.imageUrl" [alt]="item.title" loading="lazy" class="is-loaded" />
+                  @if (item.payload.type === 'velo' || item.payload.type === 'parking') {
+                    <span
+                      class="map-pin"
+                      [class.map-pin--parking]="item.payload.type === 'parking'"
+                      aria-hidden="true"
+                    ></span>
+                  }
                 } @else {
                   <div class="media-fallback" [style.background]="item.tone + '22'" aria-hidden="true"></div>
                 }

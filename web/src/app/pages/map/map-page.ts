@@ -32,6 +32,7 @@ import { EventsApi } from '../../core/events-api';
 import { ParkingApi } from '../../core/parking-api';
 import { PlacesApi } from '../../core/places-api';
 import { VeloApi } from '../../core/velo-api';
+import { mapPreviewUrl } from '../../core/map-preview';
 import {
   veloCanReturn,
   veloOccupiedDocks,
@@ -339,7 +340,7 @@ export class MapPage implements OnDestroy {
           id: station.stationId,
           title: station.name,
           meta: `${station.bikesAvailable} vélos · ${station.docksAvailable} places`,
-          imageUrl: null as string | null,
+          imageUrl: mapPreviewUrl(station.latitude, station.longitude, 16),
           tone: this.markerTone(station),
           payload: { type: 'velo' as const, station },
         }));
@@ -354,7 +355,7 @@ export class MapPage implements OnDestroy {
           meta: lot.isFree
             ? `Gratuit · ${lot.capacity ?? '—'} places`
             : `${lot.capacity ?? '—'} places · ${lot.city ?? 'Toulouse'}`,
-          imageUrl: null as string | null,
+          imageUrl: mapPreviewUrl(lot.latitude, lot.longitude, 15),
           tone: '#222222',
           payload: { type: 'parking' as const, lot },
         }));
@@ -560,6 +561,14 @@ export class MapPage implements OnDestroy {
 
   protected veloReportedLabel(station: VeloStation): string | null {
     return veloReportedAgo(station.lastReportedAt);
+  }
+
+  protected locationPreview(
+    latitude: number,
+    longitude: number,
+    zoom = 16,
+  ): string {
+    return mapPreviewUrl(latitude, longitude, zoom);
   }
 
   protected placeKindLabel(kind: PlaceKind): string {

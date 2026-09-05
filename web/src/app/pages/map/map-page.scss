@@ -390,6 +390,45 @@
   opacity: 1;
 }
 
+.panel-media--map img {
+  filter: saturate(0.92) contrast(1.02);
+}
+
+.map-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -18px 0 0 -7px;
+  border-radius: 50% 50% 50% 0;
+  background: #e8527a;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.map-pin::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.map-pin--parking {
+  background: #222222;
+}
+
+.pill-media--map .map-pin {
+  width: 12px;
+  height: 12px;
+  margin: -16px 0 0 -6px;
+}
+
+.pill-media--map .map-pin::after {
+  inset: 2.5px;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
