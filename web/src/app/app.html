@@ -1,8 +1,8 @@
 <a class="skip-link" href="#main-content">Aller au contenu</a>
 
-@if (!isOnboarding()) {
+@if (!isPlainShell()) {
   <header class="top">
-    <a routerLink="/" class="brand" (click)="closeMenu()" aria-label="TouRose — accueil">
+    <a [routerLink]="brandHomeLink()" class="brand" (click)="closeMenu()" aria-label="TouRose — explorer">
       <img
         class="brand-logo brand-logo--full"
         src="/brand/tourose-logo-full.png"
@@ -58,6 +58,7 @@
     <button type="button" class="scrim" aria-label="Fermer le menu" (click)="closeMenu()"></button>
     <aside id="site-menu" class="drawer" role="dialog" aria-label="Menu">
       <nav aria-label="Liens secondaires">
+        <a routerLink="/" (click)="closeMenu()">Site marketing</a>
         <a routerLink="/alertes" (click)="closeMenu()">Alertes Tisséo</a>
         <a routerLink="/onboarding" [queryParams]="{ replay: '1' }" (click)="closeMenu()">Revoir l’intro</a>
         <a routerLink="/legal" (click)="closeMenu()">Confidentialité & utilisation</a>
@@ -67,11 +68,11 @@
   }
 }
 
-<main id="main-content" [class.shell-plain]="isOnboarding()">
+<main id="main-content" [class.shell-plain]="isPlainShell()">
   <router-outlet />
 </main>
 
-@if (!isOnboarding()) {
+@if (!isPlainShell()) {
   <footer class="foot">
     <p>
       <img
@@ -83,6 +84,7 @@
         aria-hidden="true"
       />
       TouRose · open data Toulouse · lecture seule
+      · <a routerLink="/">Site</a>
     </p>
   </footer>
 }

@@ -1,0 +1,189 @@
+<div class="landing">
+  <header class="landing-nav" data-reveal data-reveal-nav>
+    <a routerLink="/" class="landing-brand" aria-label="TouRose">
+      <img
+        class="landing-brand-mark"
+        src="/brand/tourose-logo-mark.png"
+        alt=""
+        width="40"
+        height="40"
+        aria-hidden="true"
+      />
+      <span class="landing-brand-word" aria-hidden="true">
+        <span class="tou">Tou</span><span class="rose">Rose</span>
+      </span>
+    </a>
+    <nav class="landing-nav-links" aria-label="Navigation marketing">
+      <a href="#pourquoi">Pourquoi</a>
+      <a href="#fonctionnalites">Découvrir</a>
+      <a href="#histoire">L’histoire</a>
+      <a routerLink="/explorer" class="nav-cta">Ouvrir l’app</a>
+    </nav>
+  </header>
+
+  <section class="hero" aria-label="Présentation TouRose">
+    <div class="hero-media" aria-hidden="true">
+      <img
+        src="/marketing/hero-capitole.jpg"
+        alt=""
+        width="1920"
+        height="1280"
+        fetchpriority="high"
+        decoding="async"
+      />
+      <div class="hero-veil"></div>
+    </div>
+
+    <div class="hero-copy">
+      <p class="hero-kicker" data-reveal data-delay="0">Compagnon open data · Toulouse</p>
+      <h1 data-reveal data-delay="1">
+        Toulouse, maintenant —<br />
+        sans ouvrir dix apps.
+      </h1>
+      <p class="hero-lede" data-reveal data-delay="2">
+        Agenda, Vélô, lieux, météo et alertes : tout ce qui compte aujourd’hui dans la Ville rose,
+        en lecture seule. Gratuit, sans compte, sans pub.
+      </p>
+      <div class="hero-actions" data-reveal data-delay="3">
+        <a routerLink="/explorer" class="btn btn-primary">Explorer Toulouse</a>
+        <a href="#pourquoi" class="btn btn-ghost">Pourquoi TouRose</a>
+      </div>
+    </div>
+
+    <a class="scroll-hint" href="#pourquoi" aria-label="Défiler vers le contenu">
+      <span></span>
+    </a>
+  </section>
+
+  <section id="pourquoi" class="problem" aria-labelledby="problem-title">
+    <div class="problem-inner" data-reveal>
+      <p class="eyebrow">Le problème</p>
+      <h2 id="problem-title">La ville vit partout… sauf au même endroit</h2>
+      <p>
+        Un onglet pour l’agenda, un autre pour Vélô, un troisième pour la météo, encore un pour Tisséo.
+        Au moment de sortir, tu as déjà perdu l’élan. TouRose regroupe le pulse de Toulouse —
+        pour décider vite, pas pour scroller une heure.
+      </p>
+    </div>
+  </section>
+
+  <section class="sell" aria-labelledby="sell-title">
+    <header class="section-intro" data-reveal>
+      <p class="eyebrow">La promesse</p>
+      <h2 id="sell-title">Un compagnon de ville, pas un site touristique</h2>
+      <p>
+        Pas de catalogue géant. Juste ce qu’il te faut pour ce soir, demain, ou ce week-end —
+        avec des données publiques que tu peux vérifier.
+      </p>
+    </header>
+
+    <ul class="sell-grid">
+      @for (point of sellingPoints; track point.title; let index = $index) {
+        <li data-reveal [attr.data-delay]="index">
+          <h3>{{ point.title }}</h3>
+          <p>{{ point.text }}</p>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section id="fonctionnalites" class="pillars" aria-labelledby="pillars-title">
+    <header class="section-intro" data-reveal>
+      <p class="eyebrow">Dans l’app</p>
+      <h2 id="pillars-title">Trois façons d’entrer dans Toulouse</h2>
+      <p>Choisis ton rythme — l’app suit.</p>
+    </header>
+
+    @for (pillar of pillars; track pillar.title; let index = $index) {
+      <article
+        class="pillar"
+        [class.pillar--flip]="index % 2 === 1"
+        data-reveal
+        [attr.data-delay]="index % 2"
+      >
+        <div class="pillar-visual">
+          <img [src]="pillar.image" [alt]="pillar.alt" loading="lazy" decoding="async" />
+        </div>
+        <div class="pillar-copy">
+          <h3>{{ pillar.title }}</h3>
+          <p>{{ pillar.text }}</p>
+          <a [routerLink]="pillar.link" class="text-link">{{ pillar.cta }}</a>
+        </div>
+      </article>
+    }
+  </section>
+
+  <section id="confiance" class="trust" aria-labelledby="trust-title">
+    <div class="trust-inner" data-reveal>
+      <p class="eyebrow eyebrow--light">Confiance</p>
+      <h2 id="trust-title">Open data, affichée telle quelle</h2>
+      <p>
+        OpenAgenda · JCDecaux · Tisséo · Open-Meteo · Atmo Occitanie · Toulouse Métropole.
+        Pas de boîte noire : des sources publiques, mises à jour, en lecture seule.
+      </p>
+      <ul class="trust-list">
+        <li>Sans inscription</li>
+        <li>Sans publicité</li>
+        <li>Sans tracking marketing</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="histoire" class="story" aria-labelledby="story-title">
+    <div class="story-inner" data-reveal>
+      <p class="eyebrow">L’histoire derrière TouRose</p>
+      <h2 id="story-title">Une rose pour elle — et pour toute la Ville rose</h2>
+      <p class="story-byline">Raphaël Rakotonaivo · développeur fullstack</p>
+      <div class="story-body">
+        <p>
+          Après nos études à La Réunion, ma copine a voulu démarrer à Toulouse.
+          Moi, je ne pouvais pas la suivre tout de suite : le travail me retenait.
+          Elle allait découvrir la ville seule — métro, Vélô, sorties, le rythme du quotidien.
+        </p>
+        <p>
+          J’ai créé TouRose pour qu’elle ait un compagnon de ville sous la main :
+          savoir s’il y a un souci sur le réseau, où prendre un vélo, quoi faire ce soir.
+          Et pour nous deux, plus tard : un endroit clair pour choisir où on ira ensemble.
+        </p>
+        <p>
+          <strong>Tou</strong> comme Toulouse. <strong>Rose</strong> comme la Ville rose —
+          et comme une rose pour elle. Un outil né d’une personne, pensé pour servir aussi
+          tous ceux qui vivent ou arrivent ici.
+        </p>
+        <p>
+          En parallèle, c’était l’occasion d’apprendre Angular — une techno nouvelle pour moi,
+          alors que je suis développeur fullstack de métier. Un projet utile, personnel,
+          et un vrai terrain d’apprentissage.
+        </p>
+      </div>
+      <div class="story-actions">
+        <a routerLink="/explorer" class="btn btn-primary">Essayer TouRose</a>
+        <a routerLink="/dons" class="text-link">Soutenir le projet</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="climax" aria-labelledby="climax-title">
+    <div class="climax-inner" data-reveal>
+      <h2 id="climax-title">Prêt à regarder Toulouse autrement&nbsp;?</h2>
+      <p>Ouvre l’app et commence par ce soir, la carte, ou le ciel.</p>
+      <div class="hero-actions">
+        <a routerLink="/explorer" class="btn btn-primary">Explorer Toulouse</a>
+        <a routerLink="/evenements" class="btn btn-secondary">Voir l’agenda</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-foot">
+    <div class="landing-foot-brand">
+      <img src="/brand/tourose-logo-mark.png" alt="" width="28" height="28" aria-hidden="true" />
+      <span>TouRose · Raphaël Rakotonaivo</span>
+    </div>
+    <nav aria-label="Pied de page">
+      <a href="#histoire">L’histoire</a>
+      <a routerLink="/legal">Confidentialité</a>
+      <a routerLink="/dons">Offrir un café</a>
+      <a routerLink="/explorer">Ouvrir l’app</a>
+    </nav>
+  </footer>
+</div>

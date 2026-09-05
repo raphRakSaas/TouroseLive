@@ -232,7 +232,18 @@ main.shell-plain {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.foot a {
+  color: var(--accent-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.foot a:hover {
+  text-decoration: underline;
 }
 
 .foot-mark {

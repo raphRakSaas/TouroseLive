@@ -19,20 +19,20 @@ export class App {
 
   protected readonly menuOpen = signal(false);
 
-  protected readonly isOnboarding = toSignal(
+  protected readonly isPlainShell = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => event.urlAfterRedirects.startsWith('/onboarding')),
-      startWith(this.router.url.startsWith('/onboarding')),
+      map((event) => this.isPlainShellUrl(event.urlAfterRedirects)),
+      startWith(this.isPlainShellUrl(this.router.url)),
     ),
-    { initialValue: this.router.url.startsWith('/onboarding') },
+    { initialValue: this.isPlainShellUrl(this.router.url) },
   );
 
   protected readonly categories = [
     {
       id: 'explorer',
       title: 'Explorer',
-      link: '/',
+      link: '/explorer',
       exact: true,
       icon: '/icons/cat-explorer.png',
     },
@@ -86,6 +86,15 @@ export class App {
 
   protected closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  protected brandHomeLink(): string {
+    return this.isPlainShell() ? '/' : '/explorer';
+  }
+
+  private isPlainShellUrl(url: string): boolean {
+    const path = url.split('?')[0];
+    return path === '/' || path.startsWith('/onboarding');
   }
 
   protected isCategoryActive(category: (typeof this.categories)[number]): boolean {

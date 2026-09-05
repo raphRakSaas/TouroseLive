@@ -5,6 +5,7 @@ import { DonatePage } from './pages/donate/donate-page';
 import { EventDetailPage } from './pages/event-detail/event-detail-page';
 import { EventsPage } from './pages/events/events-page';
 import { HomePage } from './pages/home/home-page';
+import { LandingPage } from './pages/landing/landing-page';
 import { LegalPage } from './pages/legal/legal-page';
 import { MapPage } from './pages/map/map-page';
 import {
@@ -25,8 +26,9 @@ const redirectToOnboardingIfNeeded: CanActivateFn = () => {
 };
 
 export const routes: Routes = [
+  { path: '', component: LandingPage },
   {
-    path: '',
+    path: 'explorer',
     component: HomePage,
     canActivate: [redirectToOnboardingIfNeeded],
   },

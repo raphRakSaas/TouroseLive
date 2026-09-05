@@ -57,7 +57,7 @@ export class OnboardingPage implements OnInit {
   ngOnInit(): void {
     const isReplay = this.route.snapshot.queryParamMap.get('replay') === '1';
     if (!isReplay && this.hasCompletedOnboarding()) {
-      void this.router.navigateByUrl('/');
+      void this.router.navigateByUrl('/explorer');
     }
   }
 
@@ -91,7 +91,7 @@ export class OnboardingPage implements OnInit {
     } catch {
       // Ignore private mode / blocked storage.
     }
-    void this.router.navigateByUrl('/');
+    void this.router.navigateByUrl('/explorer');
   }
 
   private hasCompletedOnboarding(): boolean {
