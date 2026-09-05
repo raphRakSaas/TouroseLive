@@ -10,7 +10,21 @@
     <p class="banner">{{ loadError() }}</p>
   }
 
-  @if (catalog(); as payload) {
+  @if (!catalog() && !loadError()) {
+    <ul class="listing-grid" aria-busy="true" aria-label="Chargement des événements">
+      @for (slot of skeletonCardSlots; track slot) {
+        <li>
+          <div class="listing-card listing-card--skeleton">
+            <div class="listing-media skeleton-block"></div>
+            <div class="listing-body">
+              <span class="skeleton-line skeleton-line--md"></span>
+              <span class="skeleton-line skeleton-line--sm"></span>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (catalog(); as payload) {
     <div class="toolbar">
       <div class="search" role="search">
         <label class="sr-only" for="events-search">Rechercher un événement</label>
@@ -93,9 +107,7 @@
 
     @if (payload.openAgendaConfigured === false) {
       <p class="hint">
-        OpenAgenda n’est pas configuré. Ajoute
-        <code>OPENAGENDA_PUBLIC_KEY</code> dans <code>api/.env</code>
-        (<a href="https://openagenda.com/settings/apiKey" target="_blank" rel="noreferrer">clé gratuite</a>).
+        L’agenda est temporairement incomplet. Réessaie plus tard — les autres sections restent disponibles.
       </p>
     }
 

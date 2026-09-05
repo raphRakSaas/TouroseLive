@@ -40,7 +40,7 @@
         @if (searchStatus() === 'loading') {
           Chargement de l’index de recherche…
         } @else if (searchStatus() === 'empty-catalog') {
-          Impossible de charger les données de recherche. Vérifie que l’API tourne.
+  Impossible de charger la recherche pour le moment. Réessaie dans un instant.
         } @else {
           Aucun résultat pour « {{ searchQuery() }} »
         }
@@ -150,7 +150,7 @@
                 />
               }
               @if (event.startsOn) {
-                <span class="badge badge--date">
+                <span class="badge badge--date" aria-label="Date {{ event.startsOn | date: 'd MMMM y' }}">
                   <strong>{{ event.startsOn | date: 'd' }}</strong>
                   <span>{{ event.startsOn | date: 'MMM' }}</span>
                 </span>
@@ -233,7 +233,7 @@
                 />
               }
               @if (event.startsOn) {
-                <span class="badge badge--date">
+                <span class="badge badge--date" aria-label="Date {{ event.startsOn | date: 'd MMMM y' }}">
                   <strong>{{ event.startsOn | date: 'd' }}</strong>
                   <span>{{ event.startsOn | date: 'MMM' }}</span>
                 </span>

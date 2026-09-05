@@ -27,6 +27,7 @@ export class EventsPage implements OnInit {
   protected readonly whenFilter = signal<WhenFilter>('all');
   protected readonly cityFilter = signal<string>('all');
   protected readonly photoFilter = signal<PhotoFilter>('all');
+  protected readonly skeletonCardSlots = [1, 2, 3, 4, 5, 6];
 
   protected readonly cityOptions = computed(() => {
     const cities = new Set<string>();

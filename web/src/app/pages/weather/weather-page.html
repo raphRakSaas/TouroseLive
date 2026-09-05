@@ -23,7 +23,16 @@
     <p class="banner">{{ loadError() }}</p>
   }
 
-  @if (catalog()?.data; as forecast) {
+  @if (!catalog() && !loadError()) {
+    <div class="hero-weather hero-weather--skeleton" aria-busy="true" aria-label="Chargement météo">
+      <div class="hero-copy">
+        <span class="skeleton-line skeleton-line--xs"></span>
+        <span class="skeleton-line skeleton-line--lg"></span>
+        <span class="skeleton-line skeleton-line--sm"></span>
+        <span class="skeleton-line skeleton-line--md"></span>
+      </div>
+    </div>
+  } @else if (catalog()?.data; as forecast) {
     <article class="hero-weather" [attr.data-sky]="skyTone()">
       <div class="hero-copy">
         <p class="kicker">{{ forecast.district.name }}</p>

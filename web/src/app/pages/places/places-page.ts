@@ -32,6 +32,7 @@ export class PlacesPage implements OnInit, OnDestroy {
   protected readonly catalog = signal<CatalogResponse<Place[]> | null>(null);
   protected readonly loadError = signal<string | null>(null);
   protected readonly visibleCount = signal(24);
+  protected readonly skeletonCardSlots = [1, 2, 3, 4, 5, 6];
 
   protected readonly orderedPlaces = computed(() => {
     const places = [...(this.catalog()?.data ?? [])];

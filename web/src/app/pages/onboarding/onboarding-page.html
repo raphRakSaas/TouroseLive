@@ -8,7 +8,11 @@
     />
   </div>
 
-  <div class="onboarding-panel">
+    <div
+      class="onboarding-panel"
+      role="tabpanel"
+      [attr.aria-label]="currentStep().title"
+    >
     <div class="progress" role="tablist" aria-label="Étapes">
       @for (step of steps; track step.id; let index = $index) {
         <button

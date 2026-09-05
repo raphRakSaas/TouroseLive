@@ -17,6 +17,7 @@ export class AlertsPage implements OnInit {
     null,
   );
   protected readonly loadError = signal<string | null>(null);
+  protected readonly skeletonSlots = [1, 2, 3];
 
   ngOnInit(): void {
     this.tisseoApi.listAlerts().subscribe({

@@ -6,11 +6,11 @@
   }
 
   @if (catalog()?.data; as place) {
-    <div class="hero-media">
+    <div class="hero-media" [class.hero-media--quiet]="!place.imageUrl">
       @if (place.imageUrl) {
         <img [src]="place.imageUrl" [alt]="place.name" />
       } @else {
-        <div class="media-fallback">{{ place.name.charAt(0) }}</div>
+        <div class="media-fallback media-fallback--quiet" aria-hidden="true"></div>
       }
     </div>
 

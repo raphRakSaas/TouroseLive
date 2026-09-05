@@ -1,5 +1,5 @@
 <section class="page narrow">
-  <a routerLink="/explorer" class="back">Retour</a>
+  <a routerLink="/explorer" class="back">Retour à l’accueil</a>
 
   <header class="page-header">
     <h1>Alertes Tisséo</h1>
@@ -12,7 +12,17 @@
     <p class="banner">{{ loadError() }}</p>
   }
 
-  @if (catalog()?.data; as alerts) {
+  @if (!catalog() && !loadError()) {
+    <ul class="alert-skeleton" aria-busy="true" aria-label="Chargement des alertes">
+      @for (slot of skeletonSlots; track slot) {
+        <li>
+          <span class="skeleton-line skeleton-line--xs"></span>
+          <span class="skeleton-line skeleton-line--md"></span>
+          <span class="skeleton-line skeleton-line--sm"></span>
+        </li>
+      }
+    </ul>
+  } @else if (catalog()?.data; as alerts) {
     @if (alerts.length === 0) {
       <div class="empty-block">
         <p class="empty">Aucune alerte en cours pour le moment.</p>

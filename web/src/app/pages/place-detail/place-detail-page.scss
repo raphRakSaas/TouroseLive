@@ -19,12 +19,16 @@
 .hero-media .media-fallback {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 3rem;
-  font-weight: 700;
-  color: #bbb;
-  background: #eee;
+}
+
+.hero-media .media-fallback--quiet {
+  color: transparent;
+  background:
+    linear-gradient(145deg, #f6f6f6 0%, #efefef 55%, #ececec 100%);
+}
+
+.hero-media--quiet {
+  background: #f4f4f4;
 }
 
 .block {

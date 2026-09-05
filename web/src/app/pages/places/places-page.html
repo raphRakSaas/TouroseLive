@@ -22,7 +22,21 @@
     <p class="banner">{{ loadError() }}</p>
   }
 
-  @if (catalog(); as payload) {
+  @if (!catalog() && !loadError()) {
+    <ul class="listing-grid" aria-busy="true" aria-label="Chargement des lieux">
+      @for (slot of skeletonCardSlots; track slot) {
+        <li>
+          <div class="listing-card listing-card--skeleton">
+            <div class="listing-media skeleton-block"></div>
+            <div class="listing-body">
+              <span class="skeleton-line skeleton-line--md"></span>
+              <span class="skeleton-line skeleton-line--sm"></span>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (catalog(); as payload) {
     <p class="meta">
       {{ payload.data.length }} lieu(x) · affichage {{ visiblePlaces().length }}
       @if (payload.fetchedAt) {

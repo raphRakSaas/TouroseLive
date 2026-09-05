@@ -54,7 +54,13 @@
 
   @if (menuOpen()) {
     <button type="button" class="scrim" aria-label="Fermer le menu" (click)="closeMenu()"></button>
-    <aside id="site-menu" class="drawer" role="dialog" aria-label="Menu">
+    <aside
+      id="site-menu"
+      class="drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu"
+    >
       <nav aria-label="Liens secondaires">
         <a routerLink="/carte" [queryParams]="{ layer: 'velo' }" (click)="closeMenu()">Vélô</a>
         <a routerLink="/" (click)="closeMenu()">Site marketing</a>

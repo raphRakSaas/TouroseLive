@@ -1,5 +1,5 @@
 <section class="page narrow">
-  <a routerLink="/explorer" class="back">Retour</a>
+  <a routerLink="/carte" [queryParams]="{ layer: 'velo' }" class="back">Retour à la carte</a>
 
   @if (loadError()) {
     <p class="banner">{{ loadError() }}</p>

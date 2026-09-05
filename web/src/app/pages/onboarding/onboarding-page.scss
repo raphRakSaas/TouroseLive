@@ -42,24 +42,37 @@
 
 .progress {
   display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 18px -10px;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   border: 0;
   padding: 0;
-  background: var(--line);
+  background: transparent;
   cursor: pointer;
+  position: relative;
+  display: grid;
+  place-items: center;
+  transition: background 180ms ease;
+}
+
+.dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
   transition:
     width 180ms ease,
     background 180ms ease;
 }
 
-.dot.active {
+.dot.active::after {
   width: 28px;
   background: var(--accent);
 }
@@ -161,7 +174,8 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot {
+  .dot,
+  .dot::after {
     transition: none;
   }
 }

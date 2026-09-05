@@ -1,5 +1,5 @@
 <section class="page narrow">
-  <a routerLink="/explorer" class="back">Retour</a>
+  <a routerLink="/explorer" class="back">Retour à l’accueil</a>
   <header class="page-header">
     <h1>Offrir un café au développeur</h1>
     <p class="lede">
@@ -14,14 +14,14 @@
         <p class="amount">{{ tier.amount }}</p>
         <h2>{{ tier.title }}</h2>
         <p>{{ tier.text }}</p>
-        <button type="button" class="cta" disabled title="Paiement bientôt branché">
-          Bientôt disponible
+        <button type="button" class="cta" disabled aria-disabled="true">
+          Paiement bientôt
         </button>
       </li>
     }
   </ul>
 
   <p class="meta">
-    Le paiement réel (Ko-fi / Stripe) n’est pas encore branché — la page est prête, le terminal de paiement arrive bientôt.
+    Merci d’avance — le paiement arrive bientôt. En attendant, partager TouRose aide déjà beaucoup.
   </p>
 </section>

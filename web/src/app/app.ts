@@ -1,4 +1,10 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   NavigationEnd,
   Router,
@@ -16,6 +22,8 @@ import { filter, map, startWith } from 'rxjs';
 })
 export class App {
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private menuTrigger: HTMLElement | null = null;
 
   protected readonly menuOpen = signal(false);
 
@@ -81,17 +89,83 @@ export class App {
     },
   ];
 
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.menuOpen.set(false);
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (!this.menuOpen()) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeMenu();
+      return;
+    }
+
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const focusables = this.drawerFocusables();
+    if (focusables.length === 0) {
+      return;
+    }
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   protected toggleMenu(): void {
-    this.menuOpen.update((open) => !open);
+    if (this.menuOpen()) {
+      this.closeMenu();
+      return;
+    }
+    this.openMenu();
   }
 
   protected closeMenu(): void {
+    if (!this.menuOpen()) {
+      return;
+    }
     this.menuOpen.set(false);
+    queueMicrotask(() => {
+      this.menuTrigger?.focus();
+      this.menuTrigger = null;
+    });
+  }
+
+  private openMenu(): void {
+    this.menuTrigger = document.activeElement as HTMLElement | null;
+    this.menuOpen.set(true);
+    queueMicrotask(() => {
+      const firstLink = this.drawerFocusables()[0];
+      firstLink?.focus();
+    });
+  }
+
+  private drawerFocusables(): HTMLElement[] {
+    const drawer = this.host.nativeElement.querySelector('#site-menu');
+    if (!drawer) {
+      return [];
+    }
+    const nodes = drawer.querySelectorAll(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    return Array.from(nodes).filter(
+      (node): node is HTMLElement =>
+        node instanceof HTMLElement && !node.hasAttribute('disabled'),
+    );
   }
 
   protected brandHomeLink(): string {
@@ -126,7 +200,7 @@ export class App {
     if (category.exact) {
       return path === category.link;
     }
-    return path === category.link || path.startsWith(category.link + '/');
+    return path === category.link || path.startsWith(`${category.link}/`);
   }
 
   private isMobileNav(): boolean {

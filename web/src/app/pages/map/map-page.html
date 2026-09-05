@@ -139,12 +139,13 @@
     <div class="map-stage">
       <div #mapHost class="map" role="application" aria-label="Carte interactive de Toulouse"></div>
 
-      <button
-        type="button"
-        class="locate-btn"
-        (click)="locateMe()"
-        [disabled]="locating()"
-      >
+    <button
+      type="button"
+      class="locate-btn"
+      (click)="locateMe()"
+      [disabled]="locating()"
+      [attr.aria-label]="locating() ? 'Localisation en cours' : 'Me localiser'"
+    >
         <span class="locate-icon" aria-hidden="true">◎</span>
         <span>{{ locating() ? 'Localisation…' : 'Me localiser' }}</span>
       </button>
