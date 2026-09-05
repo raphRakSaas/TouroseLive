@@ -69,7 +69,28 @@ export function weatherIconFromPrecip(
   return 'clear';
 }
 
-export function weatherSkyTone(kind: WeatherIconKind): string {
+export function weatherSkyTone(
+  kind: WeatherIconKind,
+  isDay = true,
+): string {
+  if (!isDay) {
+    switch (kind) {
+      case 'clear':
+      case 'mainly-clear':
+      case 'partly-cloudy':
+        return 'night';
+      case 'overcast':
+      case 'fog':
+        return 'night-soft';
+      case 'drizzle':
+      case 'rain':
+      case 'showers':
+      case 'thunder':
+        return 'cool';
+      case 'snow':
+        return 'frost';
+    }
+  }
   switch (kind) {
     case 'clear':
     case 'mainly-clear':
@@ -102,16 +123,35 @@ export function weatherSkyTone(kind: WeatherIconKind): string {
     >
       @switch (kind()) {
         @case ('clear') {
-          <circle class="sun-core" cx="32" cy="32" r="11" />
-          <g class="sun-rays" stroke-linecap="round">
-            <path d="M32 8v6M32 50v6M8 32h6M50 32h6M14.5 14.5l4.2 4.2M45.3 45.3l4.2 4.2M14.5 49.5l4.2-4.2M45.3 18.7l4.2-4.2" />
-          </g>
+          @if (isDay()) {
+            <circle class="sun-core" cx="32" cy="32" r="11" />
+            <g class="sun-rays" stroke-linecap="round">
+              <path d="M32 8v6M32 50v6M8 32h6M50 32h6M14.5 14.5l4.2 4.2M45.3 45.3l4.2 4.2M14.5 49.5l4.2-4.2M45.3 18.7l4.2-4.2" />
+            </g>
+          } @else {
+            <g class="stars">
+              <circle cx="14" cy="16" r="1.4" />
+              <circle cx="50" cy="14" r="1.1" />
+              <circle cx="46" cy="48" r="1.2" />
+            </g>
+            <path
+              class="moon-core"
+              d="M38 12c-8.8 0-16 7.2-16 16s7.2 16 16 16c2.6 0 5-.6 7.2-1.7A14 14 0 1 1 38 12Z"
+            />
+          }
         }
         @case ('mainly-clear') {
-          <circle class="sun-core" cx="38" cy="24" r="9" />
-          <g class="sun-rays" stroke-linecap="round">
-            <path d="M38 8v4M52 24h4M47.9 14.1l2.8-2.8M47.9 33.9l2.8 2.8" />
-          </g>
+          @if (isDay()) {
+            <circle class="sun-core" cx="38" cy="24" r="9" />
+            <g class="sun-rays" stroke-linecap="round">
+              <path d="M38 8v4M52 24h4M47.9 14.1l2.8-2.8M47.9 33.9l2.8 2.8" />
+            </g>
+          } @else {
+            <path
+              class="moon-core"
+              d="M44 10c-6.6 0-12 5.4-12 12s5.4 12 12 12c2 0 3.8-.5 5.5-1.3A10.5 10.5 0 1 1 44 10Z"
+            />
+          }
           <path
             class="cloud-fill"
             d="M18 44c-5.5 0-10-3.8-10-8.5S12.5 27 18 27c1.1-4.8 5.4-8 10.5-8 4.6 0 8.5 2.6 10 6.5 1-.3 2-.5 3.1-.5 5 0 9 3.6 9 8s-4 9-9 9H18Z"
@@ -122,10 +162,17 @@ export function weatherSkyTone(kind: WeatherIconKind): string {
           />
         }
         @case ('partly-cloudy') {
-          <circle class="sun-core" cx="42" cy="22" r="8" />
-          <g class="sun-rays" stroke-linecap="round">
-            <path d="M42 8v3.5M54 22h3.5M50.5 13.5l2.5-2.5" />
-          </g>
+          @if (isDay()) {
+            <circle class="sun-core" cx="42" cy="22" r="8" />
+            <g class="sun-rays" stroke-linecap="round">
+              <path d="M42 8v3.5M54 22h3.5M50.5 13.5l2.5-2.5" />
+            </g>
+          } @else {
+            <path
+              class="moon-core"
+              d="M48 10c-5.5 0-10 4.5-10 10s4.5 10 10 10c1.6 0 3.1-.4 4.5-1.1A8.5 8.5 0 1 1 48 10Z"
+            />
+          }
           <path
             class="cloud-fill"
             d="M16 46c-6 0-11-4.2-11-9.5S10 27 16 27c1.2-5.2 5.8-9 11.4-9 5.2 0 9.6 3.1 11.1 7.5 1.1-.4 2.3-.6 3.5-.6 5.8 0 10.5 4.2 10.5 9.3S47.8 46 42 46H16Z"
@@ -186,7 +233,14 @@ export function weatherSkyTone(kind: WeatherIconKind): string {
           </g>
         }
         @case ('showers') {
-          <circle class="sun-core" cx="46" cy="16" r="6" />
+          @if (isDay()) {
+            <circle class="sun-core" cx="46" cy="16" r="6" />
+          } @else {
+            <path
+              class="moon-core"
+              d="M50 8c-4.4 0-8 3.6-8 8s3.6 8 8 8c1.3 0 2.5-.3 3.6-.9A7 7 0 1 1 50 8Z"
+            />
+          }
           <path
             class="cloud-fill"
             d="M14 30c-5.2 0-9.5-3.5-9.5-7.8S8.8 14.4 14 14.4c1-4.4 4.9-7.4 9.5-7.4 4.2 0 7.7 2.4 9.1 5.9.9-.3 1.8-.4 2.8-.4 4.6 0 8.3 3.2 8.3 7.2S40 30 35.4 30H14Z"
@@ -255,6 +309,16 @@ export function weatherSkyTone(kind: WeatherIconKind): string {
         stroke-width: 2.4;
       }
 
+      .moon-core {
+        fill: #e8edf5;
+        stroke: #9aa8bc;
+        stroke-width: 1.4;
+      }
+
+      .stars {
+        fill: #c5d0e0;
+      }
+
       .cloud-fill {
         fill: #f2f4f7;
       }
@@ -296,6 +360,7 @@ export function weatherSkyTone(kind: WeatherIconKind): string {
 })
 export class WeatherIcon {
   readonly kind = input.required<WeatherIconKind>();
+  readonly isDay = input(true);
   readonly decorative = input(true);
   readonly label = input('Météo');
 }

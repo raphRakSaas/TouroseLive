@@ -32,10 +32,16 @@ import { EventsApi } from '../../core/events-api';
 import { ParkingApi } from '../../core/parking-api';
 import { PlacesApi } from '../../core/places-api';
 import { VeloApi } from '../../core/velo-api';
+import {
+  veloCanReturn,
+  veloOccupiedDocks,
+  veloOccupancyRatio,
+  veloReportedAgo,
+} from '../../core/velo-station.utils';
 
 type MapLayer = 'velo' | 'parking' | 'events' | 'places';
 type PlaceKindFilter = PlaceKind | 'all';
-type VeloQuickFilter = 'all' | 'low-bikes' | 'free-docks';
+type VeloQuickFilter = 'all' | 'low-bikes' | 'free-docks' | 'electrical' | 'can-return';
 type ParkingQuickFilter = 'all' | 'free';
 type EventQuickFilter = 'all' | 'week' | 'photo';
 
@@ -137,7 +143,19 @@ export class MapPage implements OnDestroy {
         (station) => station.isRenting && station.bikesAvailable > 0 && station.bikesAvailable < 5,
       );
     } else if (quick === 'free-docks') {
-      stations = stations.filter((station) => station.docksAvailable >= 5);
+      stations = stations.filter(
+        (station) =>
+          (station.isReturning !== false) && station.docksAvailable >= 5,
+      );
+    } else if (quick === 'electrical') {
+      stations = stations.filter(
+        (station) => station.isRenting && station.electricalBikes > 0,
+      );
+    } else if (quick === 'can-return') {
+      stations = stations.filter(
+        (station) =>
+          station.isReturning !== false && station.docksAvailable > 0,
+      );
     }
     return stations;
   });
@@ -525,6 +543,23 @@ export class MapPage implements OnDestroy {
       return '#008a05';
     }
     return '#c13515';
+  }
+
+  protected veloCanReturn(station: VeloStation): boolean {
+    return veloCanReturn(station);
+  }
+
+  protected veloOccupied(station: VeloStation): number | null {
+    return veloOccupiedDocks(station);
+  }
+
+  protected veloOccupancyPercent(station: VeloStation): number | null {
+    const ratio = veloOccupancyRatio(station);
+    return ratio === null ? null : Math.round(ratio * 100);
+  }
+
+  protected veloReportedLabel(station: VeloStation): string | null {
+    return veloReportedAgo(station.lastReportedAt);
   }
 
   protected placeKindLabel(kind: PlaceKind): string {

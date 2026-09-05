@@ -11,6 +11,7 @@ export interface WeatherHourlyDto {
   time: string;
   temperature: number;
   precipitationProbability: number | null;
+  isDay: boolean;
 }
 
 export interface WeatherDailyDto {
@@ -19,6 +20,8 @@ export interface WeatherDailyDto {
   weatherLabel: string;
   temperatureMin: number;
   temperatureMax: number;
+  sunrise: string | null;
+  sunset: string | null;
 }
 
 export interface WeatherCurrentDto {
@@ -27,6 +30,7 @@ export interface WeatherCurrentDto {
   weatherCode: number;
   weatherLabel: string;
   observedAt: string;
+  isDay: boolean;
 }
 
 export interface WeatherForecastDto {
@@ -54,16 +58,20 @@ export interface OpenMeteoForecastResponse {
     temperature_2m: number;
     apparent_temperature: number;
     weather_code: number;
+    is_day: number;
   };
   hourly: {
     time: string[];
     temperature_2m: number[];
     precipitation_probability: Array<number | null>;
+    is_day: number[];
   };
   daily: {
     time: string[];
     weather_code: number[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
+    sunrise: string[];
+    sunset: string[];
   };
 }

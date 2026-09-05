@@ -11,7 +11,10 @@ export interface VeloStation {
   docksAvailable: number;
   electricalBikes: number;
   mechanicalBikes: number;
+  bikesDisabled: number;
+  docksDisabled: number;
   isRenting: boolean;
+  isReturning: boolean;
   isInstalled: boolean;
   lastReportedAt: string;
 }
@@ -45,6 +48,7 @@ export interface WeatherHourly {
   time: string;
   temperature: number;
   precipitationProbability: number | null;
+  isDay: boolean;
 }
 
 export interface WeatherDaily {
@@ -53,6 +57,8 @@ export interface WeatherDaily {
   weatherLabel: string;
   temperatureMin: number;
   temperatureMax: number;
+  sunrise: string | null;
+  sunset: string | null;
 }
 
 export interface WeatherCurrent {
@@ -61,6 +67,7 @@ export interface WeatherCurrent {
   weatherCode: number;
   weatherLabel: string;
   observedAt: string;
+  isDay: boolean;
 }
 
 export interface WeatherForecast {

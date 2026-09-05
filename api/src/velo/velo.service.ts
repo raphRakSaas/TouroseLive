@@ -125,7 +125,10 @@ export class VeloService implements OnModuleInit {
       docksAvailable: status.num_docks_available,
       electricalBikes,
       mechanicalBikes,
+      bikesDisabled: status.num_vehicles_disabled ?? 0,
+      docksDisabled: status.num_docks_disabled ?? 0,
       isRenting: status.is_renting && status.is_installed,
+      isReturning: status.is_returning && status.is_installed,
       isInstalled: status.is_installed,
       lastReportedAt: status.last_reported,
     };

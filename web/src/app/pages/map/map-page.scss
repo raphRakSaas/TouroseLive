@@ -417,6 +417,96 @@
   letter-spacing: -0.02em;
 }
 
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.status-chips li {
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.status-chips li.on {
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--line));
+  background: color-mix(in srgb, var(--ok) 12%, #fff);
+  color: var(--ok);
+}
+
+.status-chips li.off {
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--line));
+  background: color-mix(in srgb, var(--warn) 10%, #fff);
+  color: var(--warn);
+}
+
+.status-chips li.muted {
+  color: var(--muted);
+}
+
+.occupancy {
+  margin: 12px 0 4px;
+  max-width: 320px;
+}
+
+.occupancy-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.occupancy-head strong {
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.occupancy-pct {
+  margin-left: 6px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.occupancy-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.occupancy-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e8527a, #f08a5a);
+}
+
+.disabled-note {
+  margin: 8px 0 0;
+  color: var(--warn);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.panel-fresh {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .panel-actions {
   display: flex;
   flex-wrap: wrap;

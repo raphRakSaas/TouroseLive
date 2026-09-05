@@ -30,7 +30,10 @@
         <div class="hero-temp-row">
           <p class="temp">{{ forecast.current.temperature | number: '1.0-0' }}°</p>
           <div class="hero-icon" aria-hidden="true">
-            <app-weather-icon [kind]="currentIcon()" />
+            <app-weather-icon
+              [kind]="currentIcon()"
+              [isDay]="forecast.current.isDay"
+            />
           </div>
         </div>
         <p class="label">{{ forecast.current.weatherLabel }}</p>
@@ -40,6 +43,12 @@
             · maj. {{ catalog()?.fetchedAt | date: 'HH:mm' }}
           }
         </p>
+        @if (todaySun(); as sun) {
+          <p class="sun-times">
+            Lever {{ sun.sunrise | date: 'HH:mm' }}
+            · Coucher {{ sun.sunset | date: 'HH:mm' }}
+          </p>
+        }
       </div>
     </article>
   }
@@ -106,7 +115,10 @@
           <article class="hour-card">
             <span class="hour-time">{{ hour.time | date: 'HH:mm' }}</span>
             <div class="hour-icon" aria-hidden="true">
-              <app-weather-icon [kind]="iconForHour(hour.precipitationProbability)" />
+              <app-weather-icon
+                [kind]="iconForHour(hour.precipitationProbability)"
+                [isDay]="hour.isDay !== false"
+              />
             </div>
             <strong class="hour-temp">{{ hour.temperature | number: '1.0-0' }}°</strong>
             <span class="hour-rain">

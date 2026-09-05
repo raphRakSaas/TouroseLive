@@ -1,11 +1,19 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogResponse, VeloStation } from '../../core/catalog.models';
 import { VeloApi } from '../../core/velo-api';
+import {
+  veloCanRent,
+  veloCanReturn,
+  veloOccupiedDocks,
+  veloOccupancyRatio,
+  veloReportedAgo,
+} from '../../core/velo-station.utils';
 
 @Component({
   selector: 'app-station-page',
-  imports: [RouterLink],
+  imports: [DatePipe, RouterLink],
   templateUrl: './station-page.html',
   styleUrl: './station-page.scss',
 })
@@ -35,5 +43,26 @@ export class StationPage implements OnInit {
 
   protected mapsUrl(station: VeloStation): string {
     return `https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`;
+  }
+
+  protected canRent(station: VeloStation): boolean {
+    return veloCanRent(station);
+  }
+
+  protected canReturn(station: VeloStation): boolean {
+    return veloCanReturn(station);
+  }
+
+  protected occupiedDocks(station: VeloStation): number | null {
+    return veloOccupiedDocks(station);
+  }
+
+  protected occupancyPercent(station: VeloStation): number | null {
+    const ratio = veloOccupancyRatio(station);
+    return ratio === null ? null : Math.round(ratio * 100);
+  }
+
+  protected reportedAgo(station: VeloStation): string | null {
+    return veloReportedAgo(station.lastReportedAt);
   }
 }

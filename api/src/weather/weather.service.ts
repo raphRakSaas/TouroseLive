@@ -164,9 +164,11 @@ export class WeatherService {
       latitude: String(district.latitude),
       longitude: String(district.longitude),
       timezone: 'Europe/Paris',
-      current: 'temperature_2m,apparent_temperature,weather_code',
-      hourly: 'temperature_2m,precipitation_probability',
-      daily: 'weather_code,temperature_2m_max,temperature_2m_min',
+      current:
+        'temperature_2m,apparent_temperature,weather_code,is_day',
+      hourly: 'temperature_2m,precipitation_probability,is_day',
+      daily:
+        'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset',
       forecast_days: '5',
     });
     const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
@@ -177,14 +179,16 @@ export class WeatherService {
       throw new Error(`${url} → HTTP ${response.status}`);
     }
     const payload = (await response.json()) as OpenMeteoForecastResponse;
+    const isDay = payload.current.is_day === 1;
     return {
       district,
       current: {
         temperature: payload.current.temperature_2m,
         apparentTemperature: payload.current.apparent_temperature,
         weatherCode: payload.current.weather_code,
-        weatherLabel: this.weatherLabel(payload.current.weather_code),
+        weatherLabel: this.weatherLabel(payload.current.weather_code, isDay),
         observedAt: payload.current.time,
+        isDay,
       },
       hourly: this.mapHourly(payload),
       daily: this.mapDaily(payload),
@@ -205,6 +209,7 @@ export class WeatherService {
         temperature: payload.hourly.temperature_2m[index],
         precipitationProbability:
           payload.hourly.precipitation_probability[index] ?? null,
+        isDay: (payload.hourly.is_day?.[index] ?? 1) === 1,
       });
       if (rows.length >= 24) {
         break;
@@ -217,13 +222,26 @@ export class WeatherService {
     return payload.daily.time.map((date, index) => ({
       date,
       weatherCode: payload.daily.weather_code[index],
-      weatherLabel: this.weatherLabel(payload.daily.weather_code[index]),
+      weatherLabel: this.weatherLabel(payload.daily.weather_code[index], true),
       temperatureMin: payload.daily.temperature_2m_min[index],
       temperatureMax: payload.daily.temperature_2m_max[index],
+      sunrise: payload.daily.sunrise?.[index] ?? null,
+      sunset: payload.daily.sunset?.[index] ?? null,
     }));
   }
 
-  private weatherLabel(code: number): string {
+  private weatherLabel(code: number, isDay: boolean): string {
+    if (!isDay) {
+      if (code === 0) {
+        return 'Nuit claire';
+      }
+      if (code === 1) {
+        return 'Nuit plutôt dégagée';
+      }
+      if (code === 2) {
+        return 'Nuit partiellement nuageuse';
+      }
+    }
     return WEATHER_LABELS[code] ?? `Code météo ${code}`;
   }
 }

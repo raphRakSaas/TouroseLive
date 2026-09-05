@@ -9,10 +9,45 @@
     <header class="page-header">
       <h1>{{ station.name }}</h1>
       <p class="lede">
-        {{ station.address || 'Adresse non renseignée' }} ·
-        {{ station.isRenting ? 'En service' : 'Hors service' }}
+        {{ station.address || 'Adresse non renseignée' }}
       </p>
+      <ul class="status-chips" aria-label="État de la station">
+        <li [class.on]="station.isRenting" [class.off]="!station.isRenting">
+          {{ station.isRenting ? 'Location ouverte' : 'Location fermée' }}
+        </li>
+        <li [class.on]="station.isReturning !== false" [class.off]="station.isReturning === false">
+          {{ station.isReturning === false ? 'Dépôt fermé' : 'Dépôt ouvert' }}
+        </li>
+        <li [class.on]="canRent(station)" [class.muted]="!canRent(station)">
+          {{ canRent(station) ? 'Vélo à prendre' : 'Aucun vélo' }}
+        </li>
+        <li [class.on]="canReturn(station)" [class.muted]="!canReturn(station)">
+          {{ canReturn(station) ? 'Place pour déposer' : 'Pas de place' }}
+        </li>
+      </ul>
     </header>
+
+    @if (station.capacity; as capacity) {
+      @let occupied = occupiedDocks(station);
+      @let percent = occupancyPercent(station);
+      <div class="occupancy" aria-label="Occupation des bornes">
+        <div class="occupancy-head">
+          <span>Occupation</span>
+          <strong>
+            {{ occupied ?? '—' }} / {{ capacity }}
+            @if (percent !== null) {
+              <span class="occupancy-pct">{{ percent }}%</span>
+            }
+          </strong>
+        </div>
+        <div class="occupancy-track" aria-hidden="true">
+          <span
+            class="occupancy-fill"
+            [style.width.%]="percent ?? 0"
+          ></span>
+        </div>
+      </div>
+    }
 
     <dl class="stat-grid">
       <div class="stat">
@@ -33,7 +68,30 @@
       </div>
     </dl>
 
+    @if ((station.bikesDisabled ?? 0) > 0 || (station.docksDisabled ?? 0) > 0) {
+      <p class="disabled-note">
+        @if ((station.bikesDisabled ?? 0) > 0) {
+          <span>{{ station.bikesDisabled }} vélo{{ station.bikesDisabled > 1 ? 's' : '' }} hors service</span>
+        }
+        @if ((station.bikesDisabled ?? 0) > 0 && (station.docksDisabled ?? 0) > 0) {
+          <span aria-hidden="true"> · </span>
+        }
+        @if ((station.docksDisabled ?? 0) > 0) {
+          <span>{{ station.docksDisabled }} borne{{ station.docksDisabled > 1 ? 's' : '' }} hors service</span>
+        }
+      </p>
+    }
+
     <a class="cta" [href]="mapsUrl(station)" target="_blank" rel="noreferrer">Y aller</a>
-    <p class="source">JCDecaux / VélôToulouse</p>
+
+    <p class="source">
+      JCDecaux / VélôToulouse
+      @if (reportedAgo(station); as ago) {
+        · maj. station {{ ago }}
+      }
+      @if (catalog()?.fetchedAt) {
+        · sync {{ catalog()?.fetchedAt | date: 'HH:mm' }}
+      }
+    </p>
   }
 </section>

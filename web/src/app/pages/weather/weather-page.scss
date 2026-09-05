@@ -66,6 +66,41 @@
     linear-gradient(165deg, #f2f6fa 0%, #f7f7f7 55%, #ffffff 100%);
 }
 
+.hero-weather[data-sky='night'] {
+  background:
+    radial-gradient(ellipse 70% 55% at 82% 18%, rgba(120, 140, 190, 0.35), transparent 55%),
+    linear-gradient(165deg, #1b2433 0%, #2a3344 48%, #3a4456 100%);
+  border-color: #2f3a4c;
+  color: #f4f6f8;
+}
+
+.hero-weather[data-sky='night'] .kicker,
+.hero-weather[data-sky='night'] .meta,
+.hero-weather[data-sky='night'] .sun-times {
+  color: rgba(244, 246, 248, 0.72);
+}
+
+.hero-weather[data-sky='night-soft'] {
+  background:
+    radial-gradient(ellipse 70% 55% at 82% 18%, rgba(100, 120, 150, 0.28), transparent 55%),
+    linear-gradient(165deg, #222833 0%, #303846 50%, #3d4656 100%);
+  border-color: #323b4a;
+  color: #f4f6f8;
+}
+
+.hero-weather[data-sky='night-soft'] .kicker,
+.hero-weather[data-sky='night-soft'] .meta,
+.hero-weather[data-sky='night-soft'] .sun-times {
+  color: rgba(244, 246, 248, 0.72);
+}
+
+.sun-times {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .kicker {
   margin: 0;
   font-size: 0.8rem;

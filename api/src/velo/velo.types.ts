@@ -51,7 +51,10 @@ export interface VeloStationDto {
   docksAvailable: number;
   electricalBikes: number;
   mechanicalBikes: number;
+  bikesDisabled: number;
+  docksDisabled: number;
   isRenting: boolean;
+  isReturning: boolean;
   isInstalled: boolean;
   lastReportedAt: string;
 }

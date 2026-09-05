@@ -79,7 +79,9 @@
       <div class="quick-row" role="group" aria-label="Filtres Vélô">
         <button type="button" [class.active]="veloQuickFilter() === 'all'" (click)="setVeloQuick('all')">Tous</button>
         <button type="button" [class.active]="veloQuickFilter() === 'low-bikes'" (click)="setVeloQuick('low-bikes')">Peu de vélos</button>
+        <button type="button" [class.active]="veloQuickFilter() === 'electrical'" (click)="setVeloQuick('electrical')">Élec.</button>
         <button type="button" [class.active]="veloQuickFilter() === 'free-docks'" (click)="setVeloQuick('free-docks')">Places libres</button>
+        <button type="button" [class.active]="veloQuickFilter() === 'can-return'" (click)="setVeloQuick('can-return')">Dépôt possible</button>
       </div>
     }
     @if (mapLayer() === 'parking') {
@@ -159,6 +161,38 @@
             @if (selected.station.address) {
               <p class="panel-loc">{{ selected.station.address }}</p>
             }
+            <ul class="status-chips" aria-label="État de la station">
+              <li [class.on]="selected.station.isRenting" [class.off]="!selected.station.isRenting">
+                {{ selected.station.isRenting ? 'Location' : 'Fermée' }}
+              </li>
+              <li
+                [class.on]="selected.station.isReturning !== false"
+                [class.off]="selected.station.isReturning === false"
+              >
+                {{ selected.station.isReturning === false ? 'Dépôt fermé' : 'Dépôt' }}
+              </li>
+              <li [class.on]="veloCanReturn(selected.station)" [class.muted]="!veloCanReturn(selected.station)">
+                {{ veloCanReturn(selected.station) ? 'Place libre' : 'Plein' }}
+              </li>
+            </ul>
+            @if (selected.station.capacity; as capacity) {
+              @let occupied = veloOccupied(selected.station);
+              @let percent = veloOccupancyPercent(selected.station);
+              <div class="occupancy" aria-label="Occupation des bornes">
+                <div class="occupancy-head">
+                  <span>Occupation</span>
+                  <strong>
+                    {{ occupied ?? '—' }} / {{ capacity }}
+                    @if (percent !== null) {
+                      <span class="occupancy-pct">{{ percent }}%</span>
+                    }
+                  </strong>
+                </div>
+                <div class="occupancy-track" aria-hidden="true">
+                  <span class="occupancy-fill" [style.width.%]="percent ?? 0"></span>
+                </div>
+              </div>
+            }
             <div class="stat-grid">
               <div>
                 <span>Vélos</span>
@@ -177,6 +211,22 @@
                 <strong>{{ selected.station.mechanicalBikes }}</strong>
               </div>
             </div>
+            @if ((selected.station.bikesDisabled ?? 0) > 0 || (selected.station.docksDisabled ?? 0) > 0) {
+              <p class="disabled-note">
+                @if ((selected.station.bikesDisabled ?? 0) > 0) {
+                  <span>{{ selected.station.bikesDisabled }} hors service</span>
+                }
+                @if ((selected.station.bikesDisabled ?? 0) > 0 && (selected.station.docksDisabled ?? 0) > 0) {
+                  <span aria-hidden="true"> · </span>
+                }
+                @if ((selected.station.docksDisabled ?? 0) > 0) {
+                  <span>{{ selected.station.docksDisabled }} borne(s) HS</span>
+                }
+              </p>
+            }
+            @if (veloReportedLabel(selected.station); as ago) {
+              <p class="panel-fresh">Maj. station {{ ago }}</p>
+            }
             <div class="panel-actions">
               <a class="cta" [routerLink]="['/velo', selected.station.stationId]">Fiche station</a>
               <a

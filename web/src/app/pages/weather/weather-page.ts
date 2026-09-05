@@ -40,13 +40,24 @@ export class WeatherPage implements OnInit {
   protected readonly selectedDistrictId = signal('capitole');
 
   protected readonly skyTone = computed(() => {
-    const code = this.catalog()?.data?.current.weatherCode;
-    return weatherSkyTone(weatherIconKind(code));
+    const current = this.catalog()?.data?.current;
+    return weatherSkyTone(
+      weatherIconKind(current?.weatherCode),
+      current?.isDay ?? true,
+    );
   });
 
   protected readonly currentIcon = computed(() =>
     weatherIconKind(this.catalog()?.data?.current.weatherCode),
   );
+
+  protected readonly todaySun = computed(() => {
+    const today = this.catalog()?.data?.daily?.[0];
+    if (!today?.sunrise || !today?.sunset) {
+      return null;
+    }
+    return { sunrise: today.sunrise, sunset: today.sunset };
+  });
 
   protected readonly airLevels = [
     { code: 1, label: 'Bon' },
