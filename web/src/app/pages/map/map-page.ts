@@ -7,10 +7,11 @@ import {
   inject,
   NgZone,
   OnDestroy,
+  OnInit,
   signal,
   viewChild,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   circleMarker,
   CircleMarker,
@@ -32,6 +33,7 @@ import { EventsApi } from '../../core/events-api';
 import { ParkingApi } from '../../core/parking-api';
 import { PlacesApi } from '../../core/places-api';
 import { VeloApi } from '../../core/velo-api';
+import { frenchTitleCase } from '../../core/french-title-case';
 import { mapPreviewUrl } from '../../core/map-preview';
 import {
   veloCanReturn,
@@ -68,12 +70,14 @@ type SearchHit = {
   templateUrl: './map-page.html',
   styleUrl: './map-page.scss',
 })
-export class MapPage implements OnDestroy {
+export class MapPage implements OnDestroy, OnInit {
   private readonly veloApi = inject(VeloApi);
   private readonly parkingApi = inject(ParkingApi);
   private readonly eventsApi = inject(EventsApi);
   private readonly placesApi = inject(PlacesApi);
   private readonly zone = inject(NgZone);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private leafletMap: LeafletMap | null = null;
   private markerLayer: LayerGroup | null = null;
   private readonly mapHost = viewChild<ElementRef<HTMLDivElement>>('mapHost');
@@ -103,6 +107,7 @@ export class MapPage implements OnDestroy {
   protected readonly eventQuickFilter = signal<EventQuickFilter>('all');
   protected readonly searchQuery = signal('');
   protected readonly selection = signal<MapSelection | null>(null);
+  protected readonly filtersOpen = signal(false);
 
   protected readonly placeKinds: Array<{ id: PlaceKindFilter; label: string }> =
     [
@@ -249,7 +254,7 @@ export class MapPage implements OnDestroy {
       hits.push({
         id: `velo-${station.stationId}`,
         type: 'velo',
-        label: station.name,
+        label: frenchTitleCase(station.name),
         sub: `${station.bikesAvailable} vélos · ${station.docksAvailable} places`,
         latitude: station.latitude,
         longitude: station.longitude,
@@ -319,7 +324,7 @@ export class MapPage implements OnDestroy {
   protected readonly railTitle = computed(() => {
     switch (this.mapLayer()) {
       case 'velo':
-        return 'Stations à surveiller';
+        return 'Stations utiles';
       case 'parking':
         return 'Parkings utiles';
       case 'places':
@@ -332,18 +337,40 @@ export class MapPage implements OnDestroy {
   protected readonly railItems = computed(() => {
     const layer = this.mapLayer();
     if (layer === 'velo') {
-      return [...(this.veloCatalog()?.data ?? [])]
-        .filter((station) => station.isRenting)
-        .sort((left, right) => left.bikesAvailable - right.bikesAvailable)
+      const stations = [...(this.veloCatalog()?.data ?? [])].filter(
+        (station) => station.isRenting,
+      );
+      const scored = stations
+        .map((station) => {
+          let score = 0;
+          if (station.electricalBikes > 0) {
+            score += 4;
+          }
+          if (station.bikesAvailable > 0 && station.bikesAvailable < 5) {
+            score += 3;
+          }
+          if (station.bikesAvailable >= 5) {
+            score += 2;
+          }
+          if (station.isReturning !== false && station.docksAvailable > 0) {
+            score += 2;
+          }
+          if (station.bikesAvailable === 0) {
+            score -= 1;
+          }
+          return { station, score };
+        })
+        .sort((left, right) => right.score - left.score || left.station.name.localeCompare(right.station.name, 'fr'))
         .slice(0, 16)
-        .map((station) => ({
+        .map(({ station }) => ({
           id: station.stationId,
-          title: station.name,
+          title: frenchTitleCase(station.name),
           meta: `${station.bikesAvailable} vélos · ${station.docksAvailable} places`,
           imageUrl: mapPreviewUrl(station.latitude, station.longitude, 16),
           tone: this.markerTone(station),
           payload: { type: 'velo' as const, station },
         }));
+      return scored;
     }
     if (layer === 'parking') {
       return [...(this.parkingCatalog()?.data ?? [])]
@@ -351,7 +378,7 @@ export class MapPage implements OnDestroy {
         .slice(0, 16)
         .map((lot) => ({
           id: lot.parkingId,
-          title: lot.name,
+          title: frenchTitleCase(lot.name),
           meta: lot.isFree
             ? `Gratuit · ${lot.capacity ?? '—'} places`
             : `${lot.capacity ?? '—'} places · ${lot.city ?? 'Toulouse'}`,
@@ -430,6 +457,13 @@ export class MapPage implements OnDestroy {
     });
   }
 
+  ngOnInit(): void {
+    const layerParam = this.route.snapshot.queryParamMap.get('layer');
+    if (this.isMapLayer(layerParam)) {
+      this.mapLayer.set(layerParam);
+    }
+  }
+
   ngOnDestroy(): void {
     this.clearMap();
   }
@@ -437,6 +471,7 @@ export class MapPage implements OnDestroy {
   protected setLayer(layer: MapLayer): void {
     this.mapLayer.set(layer);
     this.selection.set(null);
+    this.filtersOpen.set(false);
     if (layer !== 'places') {
       this.placeKindFilter.set('all');
     }
@@ -449,6 +484,29 @@ export class MapPage implements OnDestroy {
     if (layer !== 'events') {
       this.eventQuickFilter.set('all');
     }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { layer },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected toggleFilters(): void {
+    this.filtersOpen.update((open) => !open);
+  }
+
+  protected stationTitle(name: string): string {
+    return frenchTitleCase(name);
+  }
+
+  private isMapLayer(value: string | null): value is MapLayer {
+    return (
+      value === 'velo' ||
+      value === 'parking' ||
+      value === 'events' ||
+      value === 'places'
+    );
   }
 
   protected setPlaceKind(kind: PlaceKindFilter): void {

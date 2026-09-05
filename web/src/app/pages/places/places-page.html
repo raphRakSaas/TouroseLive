@@ -30,45 +30,52 @@
       }
     </p>
 
-    <ul class="listing-grid">
-      @for (place of visiblePlaces(); track place.placeId) {
-        <li>
-          <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
-            <div
-              class="listing-media"
-              [class.listing-media--quiet]="!place.imageUrl"
-            >
+    @if (visiblePlaces().length === 0) {
+      <div class="empty-block">
+        <p class="empty">Aucun lieu pour ce filtre.</p>
+        <a routerLink="/evenements" class="cta">Voir les événements</a>
+      </div>
+    } @else {
+      <ul class="listing-grid">
+        @for (place of visiblePlaces(); track place.placeId) {
+          <li>
+            <a class="listing-card" [routerLink]="['/lieux', place.placeId]">
               <div
-                class="media-fallback"
-                [class.media-fallback--quiet]="!place.imageUrl"
-                aria-hidden="true"
-              ></div>
-              @if (place.imageUrl) {
-                <img
-                  [src]="place.imageUrl"
-                  [alt]="place.name"
-                  [attr.loading]="$index < 6 ? 'eager' : 'lazy'"
-                  decoding="async"
-                  width="400"
-                  height="400"
-                  class="is-loaded"
-                />
-              }
-              <span class="badge">{{ kindLabel(place.kind) }}</span>
-            </div>
-            <div class="listing-body">
-              <h3>{{ place.name }}</h3>
-              <p class="loc">
-                {{ place.address || place.city || 'Toulouse' }}
-              </p>
-              @if (place.protection) {
-                <p class="sub">{{ place.protection }}</p>
-              }
-            </div>
-          </a>
-        </li>
-      }
-    </ul>
+                class="listing-media"
+                [class.listing-media--quiet]="!place.imageUrl"
+              >
+                <div
+                  class="media-fallback"
+                  [class.media-fallback--quiet]="!place.imageUrl"
+                  aria-hidden="true"
+                ></div>
+                @if (place.imageUrl) {
+                  <img
+                    [src]="place.imageUrl"
+                    [alt]="place.name"
+                    [attr.loading]="$index < 6 ? 'eager' : 'lazy'"
+                    decoding="async"
+                    width="400"
+                    height="400"
+                    class="is-loaded"
+                  />
+                }
+                <span class="badge">{{ kindLabel(place.kind) }}</span>
+              </div>
+              <div class="listing-body">
+                <h3>{{ place.name }}</h3>
+                <p class="loc">
+                  {{ place.address || place.city || 'Toulouse' }}
+                </p>
+                @if (place.protection) {
+                  <p class="sub">{{ place.protection }}</p>
+                }
+              </div>
+            </a>
+          </li>
+        }
+      </ul>
+    }
 
     @if (visiblePlaces().length < payload.data.length) {
       <button type="button" class="cta secondary more" (click)="showMore()">

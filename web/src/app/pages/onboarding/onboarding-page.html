@@ -1,0 +1,45 @@
+<section class="onboarding" aria-labelledby="onboarding-title">
+  <div class="onboarding-media">
+    <img
+      [src]="currentStep().image"
+      [alt]="currentStep().imageAlt"
+      width="1200"
+      height="800"
+    />
+  </div>
+
+  <div class="onboarding-panel">
+    <div class="progress" role="tablist" aria-label="Étapes">
+      @for (step of steps; track step.id; let index = $index) {
+        <button
+          type="button"
+          class="dot"
+          role="tab"
+          [class.active]="stepIndex() === index"
+          [attr.aria-selected]="stepIndex() === index"
+          [attr.aria-label]="'Étape ' + (index + 1) + ' : ' + step.title"
+          (click)="stepIndex.set(index)"
+        ></button>
+      }
+    </div>
+
+    <p class="kicker">Bienvenue sur TouRose</p>
+    <h1 id="onboarding-title">{{ currentStep().title }}</h1>
+    <p class="body">{{ currentStep().body }}</p>
+
+    <div class="actions">
+      @if (stepIndex() > 0) {
+        <button type="button" class="ghost" (click)="back()">Retour</button>
+      } @else {
+        <button type="button" class="ghost" (click)="skip()">Passer</button>
+      }
+      <button type="button" class="primary" (click)="next()">
+        {{ isLastStep() ? 'Explorer Toulouse' : 'Continuer' }}
+      </button>
+    </div>
+
+    <p class="footnote">
+      <button type="button" class="text-link" (click)="finish()">Aller à l’accueil</button>
+    </p>
+  </div>
+</section>

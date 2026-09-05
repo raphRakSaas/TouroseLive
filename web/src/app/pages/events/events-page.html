@@ -94,7 +94,10 @@
     }
 
     @if (filteredEvents().length === 0) {
-      <p class="empty">Aucun événement à venir pour ces critères.</p>
+      <div class="empty-block">
+        <p class="empty">Aucun événement à venir pour ces critères.</p>
+        <a routerLink="/lieux" class="cta">Voir les lieux</a>
+      </div>
     } @else {
       <ul class="listing-grid">
         @for (event of filteredEvents(); track event.eventId) {

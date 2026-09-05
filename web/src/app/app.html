@@ -1,88 +1,88 @@
-<header class="top">
-  <a routerLink="/" class="brand" (click)="closeMenu()" aria-label="TouRose — accueil">
-    <img
-      class="brand-logo brand-logo--full"
-      src="/brand/tourose-logo-full.png"
-      alt="TouRose"
-      width="140"
-      height="30"
-    />
-    <img
-      class="brand-logo brand-logo--mark"
-      src="/brand/tourose-logo-mark.png"
-      alt=""
-      width="36"
-      height="36"
-      aria-hidden="true"
-    />
-  </a>
+<a class="skip-link" href="#main-content">Aller au contenu</a>
 
-  <nav class="cat-strip" aria-label="Catégories">
-    @for (category of categories; track category.id) {
-      <a
-        class="cat-item"
-        [routerLink]="category.link"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: category.exact }"
-        (click)="closeMenu()"
-      >
-        <span class="cat-icon">
-          <img [src]="category.icon" [alt]="" />
-        </span>
-        <span class="cat-label">{{ category.title }}</span>
-      </a>
-    }
-  </nav>
+@if (!isOnboarding()) {
+  <header class="top">
+    <a routerLink="/" class="brand" (click)="closeMenu()" aria-label="TouRose — accueil">
+      <img
+        class="brand-logo brand-logo--full"
+        src="/brand/tourose-logo-full.png"
+        alt="TouRose"
+        width="140"
+        height="30"
+      />
+      <img
+        class="brand-logo brand-logo--mark"
+        src="/brand/tourose-logo-mark.png"
+        alt=""
+        width="36"
+        height="36"
+        aria-hidden="true"
+      />
+    </a>
 
-  <button
-    type="button"
-    class="menu-btn"
-    [attr.aria-expanded]="menuOpen()"
-    aria-controls="site-menu"
-    aria-label="Menu"
-    (click)="toggleMenu()"
-  >
-    <span class="burger" aria-hidden="true">
-      <i></i><i></i><i></i>
-    </span>
-    <span class="avatar" aria-hidden="true">
-      <img src="/brand/tourose-logo-mark.png" alt="" width="28" height="28" />
-    </span>
-  </button>
-</header>
-
-@if (menuOpen()) {
-  <button type="button" class="scrim" aria-label="Fermer le menu" (click)="closeMenu()"></button>
-  <aside id="site-menu" class="drawer" role="dialog" aria-label="Menu">
-    <nav>
-      <a routerLink="/" (click)="closeMenu()">Explorer</a>
-      <a routerLink="/evenements" (click)="closeMenu()">Événements</a>
-      <a routerLink="/lieux" (click)="closeMenu()">Lieux</a>
-      <a routerLink="/carte" (click)="closeMenu()">Carte</a>
-      <a routerLink="/meteo" (click)="closeMenu()">Météo & air</a>
+    <nav class="cat-strip" aria-label="Catégories">
+      @for (category of categories; track category.id) {
+        <a
+          class="cat-item"
+          [routerLink]="category.link"
+          [queryParams]="category.queryParams ?? null"
+          [class.active]="isCategoryActive(category)"
+          (click)="closeMenu()"
+        >
+          <span class="cat-icon">
+            <img [src]="category.icon" [alt]="" />
+          </span>
+          <span class="cat-label">{{ category.title }}</span>
+        </a>
+      }
     </nav>
-    <hr />
-    <nav>
-      <a routerLink="/legal" (click)="closeMenu()">Confidentialité & utilisation</a>
-      <a routerLink="/dons" (click)="closeMenu()">Offrir un café</a>
-    </nav>
-  </aside>
+
+    <button
+      type="button"
+      class="menu-btn"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="site-menu"
+      aria-label="Menu"
+      (click)="toggleMenu()"
+    >
+      <span class="burger" aria-hidden="true">
+        <i></i><i></i><i></i>
+      </span>
+      <span class="avatar" aria-hidden="true">
+        <img src="/brand/tourose-logo-mark.png" alt="" width="28" height="28" />
+      </span>
+    </button>
+  </header>
+
+  @if (menuOpen()) {
+    <button type="button" class="scrim" aria-label="Fermer le menu" (click)="closeMenu()"></button>
+    <aside id="site-menu" class="drawer" role="dialog" aria-label="Menu">
+      <nav aria-label="Liens secondaires">
+        <a routerLink="/alertes" (click)="closeMenu()">Alertes Tisséo</a>
+        <a routerLink="/onboarding" [queryParams]="{ replay: '1' }" (click)="closeMenu()">Revoir l’intro</a>
+        <a routerLink="/legal" (click)="closeMenu()">Confidentialité & utilisation</a>
+        <a routerLink="/dons" (click)="closeMenu()">Offrir un café</a>
+      </nav>
+    </aside>
+  }
 }
 
-<main>
+<main id="main-content" [class.shell-plain]="isOnboarding()">
   <router-outlet />
 </main>
 
-<footer class="foot">
-  <p>
-    <img
-      class="foot-mark"
-      src="/brand/tourose-logo-mark.png"
-      alt=""
-      width="18"
-      height="18"
-      aria-hidden="true"
-    />
-    TouRose · open data Toulouse · lecture seule
-  </p>
-</footer>
+@if (!isOnboarding()) {
+  <footer class="foot">
+    <p>
+      <img
+        class="foot-mark"
+        src="/brand/tourose-logo-mark.png"
+        alt=""
+        width="18"
+        height="18"
+        aria-hidden="true"
+      />
+      TouRose · open data Toulouse · lecture seule
+    </p>
+  </footer>
+}

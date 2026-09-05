@@ -1,19 +1,37 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterOutlet,
+} from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
+  private readonly router = inject(Router);
+
   protected readonly menuOpen = signal(false);
+
+  protected readonly isOnboarding = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects.startsWith('/onboarding')),
+      startWith(this.router.url.startsWith('/onboarding')),
+    ),
+    { initialValue: this.router.url.startsWith('/onboarding') },
+  );
 
   protected readonly categories = [
     {
       id: 'explorer',
-      title: 'Tout voir',
+      title: 'Explorer',
       link: '/',
       exact: true,
       icon: '/icons/cat-explorer.png',
@@ -36,6 +54,7 @@ export class App {
       id: 'bike',
       title: 'Vélô',
       link: '/carte',
+      queryParams: { layer: 'velo' },
       exact: false,
       icon: '/icons/cat-bike.png',
     },
@@ -43,6 +62,7 @@ export class App {
       id: 'map',
       title: 'Carte',
       link: '/carte',
+      queryParams: { layer: 'events' },
       exact: false,
       icon: '/icons/cat-map.png',
     },
@@ -66,5 +86,20 @@ export class App {
 
   protected closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  protected isCategoryActive(category: (typeof this.categories)[number]): boolean {
+    const urlTree = this.router.parseUrl(this.router.url);
+    const path = '/' + (urlTree.root.children['primary']?.segments.map((segment) => segment.path).join('/') ?? '');
+    if (category.id === 'bike') {
+      return path === '/carte' && urlTree.queryParams['layer'] === 'velo';
+    }
+    if (category.id === 'map') {
+      return path === '/carte' && urlTree.queryParams['layer'] !== 'velo';
+    }
+    if (category.exact) {
+      return path === category.link;
+    }
+    return path === category.link || path.startsWith(category.link + '/');
   }
 }

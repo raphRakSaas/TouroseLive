@@ -1,4 +1,11 @@
 <section class="page">
+  <header class="home-intro">
+    <h1>Explorer Toulouse</h1>
+    <p class="lede">
+      Événements, lieux, Vélô et météo — open data de la Ville rose, en lecture seule.
+    </p>
+  </header>
+
   <div class="search" role="search">
     <label class="sr-only" for="home-search">Rechercher</label>
     <input
@@ -67,7 +74,7 @@
 
       <a
         class="pulse-item"
-        routerLink="/carte"
+        routerLink="/alertes"
         [attr.aria-label]="tisseoAriaLabel()"
       >
         <span class="pulse-label">Tisséo</span>
@@ -135,7 +142,10 @@
       }
     </ul>
   } @else if (nextEvents().length === 0) {
-    <p class="empty">Aucun événement pour le moment.</p>
+    <div class="empty-block">
+      <p class="empty">Aucun événement à venir pour le moment.</p>
+      <a routerLink="/lieux" class="cta">Découvrir des lieux</a>
+    </div>
   } @else {
     <ul class="listing-grid">
       @for (event of nextEvents(); track event.eventId) {
@@ -191,7 +201,10 @@
       }
     </ul>
   } @else if (featuredPlaces().length === 0) {
-    <p class="empty">Aucun lieu pour le moment.</p>
+    <div class="empty-block">
+      <p class="empty">Aucun lieu à afficher pour le moment.</p>
+      <a routerLink="/evenements" class="cta">Voir les événements</a>
+    </div>
   } @else {
     <ul class="listing-grid">
       @for (place of featuredPlaces(); track place.placeId) {

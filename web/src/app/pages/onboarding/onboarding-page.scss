@@ -1,0 +1,167 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.onboarding {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: minmax(42vh, 52vh) 1fr;
+  background: var(--bg);
+}
+
+.onboarding-media {
+  position: relative;
+  overflow: hidden;
+  background: #1b2433;
+}
+
+.onboarding-media::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 28%;
+  background: linear-gradient(to top, var(--bg), transparent);
+  pointer-events: none;
+}
+
+.onboarding-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  display: block;
+}
+
+.onboarding-panel {
+  padding: 8px 24px 32px;
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.progress {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: var(--line);
+  cursor: pointer;
+  transition:
+    width 180ms ease,
+    background 180ms ease;
+}
+
+.dot.active {
+  width: 28px;
+  background: var(--accent);
+}
+
+.kicker {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+.body {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.primary,
+.ghost {
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary {
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary:hover {
+  filter: brightness(0.96);
+}
+
+.ghost {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+
+.ghost:hover {
+  border-color: var(--ink);
+}
+
+.footnote {
+  margin: 18px 0 0;
+  font-size: 0.85rem;
+}
+
+.text-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (min-width: 900px) {
+  .onboarding {
+    grid-template-rows: none;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: stretch;
+  }
+
+  .onboarding-media::after {
+    display: none;
+  }
+
+  .onboarding-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 40px;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    transition: none;
+  }
+}

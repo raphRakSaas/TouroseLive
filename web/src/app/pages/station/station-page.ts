@@ -10,6 +10,7 @@ import {
   veloOccupancyRatio,
   veloReportedAgo,
 } from '../../core/velo-station.utils';
+import { frenchTitleCase } from '../../core/french-title-case';
 
 @Component({
   selector: 'app-station-page',
@@ -64,5 +65,9 @@ export class StationPage implements OnInit {
 
   protected reportedAgo(station: VeloStation): string | null {
     return veloReportedAgo(station.lastReportedAt);
+  }
+
+  protected stationTitle(name: string): string {
+    return frenchTitleCase(name);
   }
 }

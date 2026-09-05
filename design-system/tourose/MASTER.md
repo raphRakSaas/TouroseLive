@@ -10,7 +10,7 @@ Light mode only. Photo-first cards. TouRose rose accent.
 | `--bg` | `#FFFFFF` | Page background |
 | `--bg-soft` | `#F7F7F7` | Soft sections |
 | `--ink` | `#222222` | Primary text |
-| `--muted` | `#717171` | Secondary text |
+| `--muted` | `#5C5C5C` | Secondary text |
 | `--line` | `#EBEBEB` | Borders / dividers |
 | `--accent` | `#E8527A` | TouRose rose (CTA, brand mark) |
 | `--accent-ink` | `#9B2C4A` | Accent on soft surfaces |

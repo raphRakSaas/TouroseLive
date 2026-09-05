@@ -7,7 +7,7 @@
 
   @if (catalog()?.data; as station) {
     <header class="page-header">
-      <h1>{{ station.name }}</h1>
+      <h1>{{ stationTitle(station.name) }}</h1>
       <p class="lede">
         {{ station.address || 'Adresse non renseignée' }}
       </p>

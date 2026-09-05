@@ -3,7 +3,7 @@
     <div>
       <h1>Carte</h1>
       <p class="lede">
-        Une couche à la fois — la carte reste lisible, le détail s’ouvre en dessous.
+        Une couche à la fois — le détail s’ouvre sous la carte.
       </p>
     </div>
   </header>
@@ -12,7 +12,7 @@
     <p class="banner">{{ loadError() }}</p>
   }
 
-  <div class="map-controls">
+  <div class="map-controls" [class.filters-open]="filtersOpen()">
     <div class="controls-search" role="search">
       <label class="sr-only" for="map-search">Rechercher sur la carte</label>
       <input
@@ -75,58 +75,64 @@
       </button>
     </div>
 
-    @if (mapLayer() === 'velo') {
-      <div class="quick-row" role="group" aria-label="Filtres Vélô">
-        <button type="button" [class.active]="veloQuickFilter() === 'all'" (click)="setVeloQuick('all')">Tous</button>
-        <button type="button" [class.active]="veloQuickFilter() === 'low-bikes'" (click)="setVeloQuick('low-bikes')">Peu de vélos</button>
-        <button type="button" [class.active]="veloQuickFilter() === 'electrical'" (click)="setVeloQuick('electrical')">Élec.</button>
-        <button type="button" [class.active]="veloQuickFilter() === 'free-docks'" (click)="setVeloQuick('free-docks')">Places libres</button>
-        <button type="button" [class.active]="veloQuickFilter() === 'can-return'" (click)="setVeloQuick('can-return')">Dépôt possible</button>
-      </div>
-    }
-    @if (mapLayer() === 'parking') {
-      <div class="quick-row" role="group" aria-label="Filtres parkings">
-        <button type="button" [class.active]="parkingQuickFilter() === 'all'" (click)="setParkingQuick('all')">Tous</button>
-        <button type="button" [class.active]="parkingQuickFilter() === 'free'" (click)="setParkingQuick('free')">Gratuits</button>
-      </div>
-    }
-    @if (mapLayer() === 'events') {
-      <div class="quick-row" role="group" aria-label="Filtres événements">
-        <button type="button" [class.active]="eventQuickFilter() === 'all'" (click)="setEventQuick('all')">Tous</button>
-        <button type="button" [class.active]="eventQuickFilter() === 'week'" (click)="setEventQuick('week')">7 jours</button>
-        <button type="button" [class.active]="eventQuickFilter() === 'photo'" (click)="setEventQuick('photo')">Avec photo</button>
-      </div>
-    }
-    @if (mapLayer() === 'places') {
-      <div class="quick-row place-kinds" role="group" aria-label="Types de lieux">
-        @for (kind of placeKinds; track kind.id) {
-          <button
-            type="button"
-            [class.active]="placeKindFilter() === kind.id"
-            (click)="setPlaceKind(kind.id)"
-          >
-            {{ kind.label }}
-          </button>
+    <div class="filters-bar">
+      <button
+        type="button"
+        class="filters-toggle"
+        [attr.aria-expanded]="filtersOpen()"
+        (click)="toggleFilters()"
+      >
+        Filtres
+        <span aria-hidden="true">{{ filtersOpen() ? '▴' : '▾' }}</span>
+      </button>
+      <p class="controls-meta" aria-live="polite">
+        <span>{{ markerCount() }} point{{ markerCount() > 1 ? 's' : '' }}</span>
+        @if (mapLayer() === 'velo') {
+          <span>· {{ pulse().bikes }} vélos dispo</span>
         }
-      </div>
-    }
+        @if (mapLayer() === 'parking') {
+          <span>· {{ pulse().freeParkings }} gratuits</span>
+        }
+      </p>
+    </div>
 
-    <p class="controls-meta" aria-live="polite">
-      <span>{{ markerCount() }} point{{ markerCount() > 1 ? 's' : '' }}</span>
+    <div class="filters-panel" [hidden]="!filtersOpen()">
       @if (mapLayer() === 'velo') {
-        <span>· {{ pulse().bikes }} vélos dispo</span>
-        <span>· {{ pulse().emptyStations }} stations vides</span>
+        <div class="quick-row" role="group" aria-label="Filtres Vélô">
+          <button type="button" [class.active]="veloQuickFilter() === 'all'" (click)="setVeloQuick('all')">Tous</button>
+          <button type="button" [class.active]="veloQuickFilter() === 'low-bikes'" (click)="setVeloQuick('low-bikes')">Peu de vélos</button>
+          <button type="button" [class.active]="veloQuickFilter() === 'electrical'" (click)="setVeloQuick('electrical')">Élec.</button>
+          <button type="button" [class.active]="veloQuickFilter() === 'free-docks'" (click)="setVeloQuick('free-docks')">Places libres</button>
+          <button type="button" [class.active]="veloQuickFilter() === 'can-return'" (click)="setVeloQuick('can-return')">Dépôt possible</button>
+        </div>
       }
       @if (mapLayer() === 'parking') {
-        <span>· {{ pulse().freeParkings }} gratuits</span>
+        <div class="quick-row" role="group" aria-label="Filtres parkings">
+          <button type="button" [class.active]="parkingQuickFilter() === 'all'" (click)="setParkingQuick('all')">Tous</button>
+          <button type="button" [class.active]="parkingQuickFilter() === 'free'" (click)="setParkingQuick('free')">Gratuits</button>
+        </div>
       }
       @if (mapLayer() === 'events') {
-        <span>· agenda à venir</span>
+        <div class="quick-row" role="group" aria-label="Filtres événements">
+          <button type="button" [class.active]="eventQuickFilter() === 'all'" (click)="setEventQuick('all')">Tous</button>
+          <button type="button" [class.active]="eventQuickFilter() === 'week'" (click)="setEventQuick('week')">7 jours</button>
+          <button type="button" [class.active]="eventQuickFilter() === 'photo'" (click)="setEventQuick('photo')">Avec photo</button>
+        </div>
       }
       @if (mapLayer() === 'places') {
-        <span>· culture &amp; patrimoine</span>
+        <div class="quick-row place-kinds" role="group" aria-label="Types de lieux">
+          @for (kind of placeKinds; track kind.id) {
+            <button
+              type="button"
+              [class.active]="placeKindFilter() === kind.id"
+              (click)="setPlaceKind(kind.id)"
+            >
+              {{ kind.label }}
+            </button>
+          }
+        </div>
       }
-    </p>
+    </div>
   </div>
 
   <div class="map-stage">
@@ -166,7 +172,7 @@
             <p class="panel-kicker">
               <span class="dot velo" aria-hidden="true"></span> Station Vélô
             </p>
-            <h2>{{ selected.station.name }}</h2>
+            <h2>{{ stationTitle(selected.station.name) }}</h2>
             @if (selected.station.address) {
               <p class="panel-loc">{{ selected.station.address }}</p>
             }
@@ -264,7 +270,7 @@
             <p class="panel-kicker">
               <span class="dot parking" aria-hidden="true"></span> Parking
             </p>
-            <h2>{{ selected.lot.name }}</h2>
+            <h2>{{ stationTitle(selected.lot.name) }}</h2>
             <p class="panel-loc">
               {{ selected.lot.address || selected.lot.city || 'Toulouse' }}
             </p>
