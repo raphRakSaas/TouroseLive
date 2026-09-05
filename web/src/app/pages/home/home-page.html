@@ -1,8 +1,9 @@
 <section class="page">
   <header class="home-intro">
-    <h1>Explorer Toulouse</h1>
+    <p class="home-kicker">TouRose · Ville rose</p>
+    <h1>Toulouse, maintenant</h1>
     <p class="lede">
-      Événements, lieux, Vélô et météo — open data de la Ville rose, en lecture seule.
+      Sans compte, sans pub — événements, Vélô, lieux et météo via l’open data.
     </p>
   </header>
 
@@ -49,6 +50,29 @@
     }
   </div>
 
+  <div class="intent-row" role="group" aria-label="Par où commencer">
+    <a
+      class="intent-chip"
+      routerLink="/evenements"
+      [queryParams]="{ when: 'today' }"
+    >
+      <span class="intent-label">Ce soir</span>
+      <span class="intent-sub">Agenda du jour</span>
+    </a>
+    <a
+      class="intent-chip"
+      routerLink="/carte"
+      [queryParams]="{ layer: 'velo' }"
+    >
+      <span class="intent-label">Bouger</span>
+      <span class="intent-sub">Vélô & carte</span>
+    </a>
+    <a class="intent-chip" routerLink="/meteo">
+      <span class="intent-label">Respirer</span>
+      <span class="intent-sub">Météo & air</span>
+    </a>
+  </div>
+
   <div class="pulse" aria-label="Aperçu du jour à Toulouse">
     @if (pulseLoading()) {
       @for (slot of skeletonPulseSlots; track slot) {
@@ -59,7 +83,7 @@
         </div>
       }
     } @else {
-      <a class="pulse-item" routerLink="/carte" [attr.aria-label]="veloAriaLabel()">
+      <a class="pulse-item" routerLink="/carte" [queryParams]="{ layer: 'velo' }" [attr.aria-label]="veloAriaLabel()">
         <span class="pulse-label">Vélô</span>
         @if (highlightStation(); as station) {
           <span class="pulse-value">
@@ -122,6 +146,46 @@
     }
   </div>
 
+  @if (!eventsLoading() && spotlightEvents().length > 0) {
+    <div class="section-head">
+      <h2>À ne pas manquer</h2>
+      <a routerLink="/evenements" [queryParams]="{ when: 'weekend' }">Week-end</a>
+    </div>
+    <ul class="spotlight-grid">
+      @for (event of spotlightEvents(); track event.eventId) {
+        <li>
+          <a class="spotlight-card" [routerLink]="['/evenements', event.eventId]">
+            <div class="spotlight-media" [class.listing-media--quiet]="!hasVisibleImage(event.imageUrl)">
+              <div class="media-fallback media-fallback--quiet" aria-hidden="true"></div>
+              @if (event.imageUrl && !isImageBroken(event.imageUrl)) {
+                <img
+                  [src]="event.imageUrl"
+                  [alt]="event.title"
+                  loading="eager"
+                  decoding="async"
+                  (load)="onImageLoad(event.imageUrl!)"
+                  (error)="onImageError(event.imageUrl!)"
+                  [class.is-loaded]="isImageLoaded(event.imageUrl)"
+                />
+              }
+              @if (event.startsOn) {
+                <span class="badge badge--date">
+                  <strong>{{ event.startsOn | date: 'd' }}</strong>
+                  <span>{{ event.startsOn | date: 'MMM' }}</span>
+                </span>
+              }
+            </div>
+            <div class="spotlight-body">
+              <p class="spotlight-kicker">À ne pas louper</p>
+              <h3>{{ event.title }}</h3>
+              <p>{{ event.venueName || event.city || 'Toulouse' }}</p>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
   <div class="section-head">
     <h2>Événements populaires · Toulouse</h2>
     <a routerLink="/evenements">Tout voir</a>
@@ -165,7 +229,10 @@
                 />
               }
               @if (event.startsOn) {
-                <span class="badge">{{ event.startsOn | date: 'd MMM' }}</span>
+                <span class="badge badge--date">
+                  <strong>{{ event.startsOn | date: 'd' }}</strong>
+                  <span>{{ event.startsOn | date: 'MMM' }}</span>
+                </span>
               }
             </div>
             <div class="listing-body">
@@ -237,7 +304,11 @@
     </ul>
   }
 
-  <p class="source">
-    Sources : OpenAgenda · Wikimedia · OpenStreetMap · JCDecaux · Tisséo · Open-Meteo · Atmo · Toulouse Métropole
+  <p class="trust-strip">
+    <span>Sources · OpenAgenda · Wikimedia · JCDecaux · Tisséo · Open-Meteo · Atmo · Toulouse Métropole</span>
+    @if (trustUpdatedAt(); as updatedAt) {
+      <span>Mise à jour {{ updatedAt | date: 'HH:mm' }}</span>
+    }
+    <span>Sans compte · lecture seule</span>
   </p>
 </section>

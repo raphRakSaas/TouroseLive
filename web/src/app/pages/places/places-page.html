@@ -83,8 +83,12 @@
       </button>
     }
 
-    <p class="source">
-      Toulouse Métropole Open Data · photos Wikimedia · tuiles OpenStreetMap
+    <p class="trust-strip">
+      <span>Sources · Toulouse Métropole · Wikimedia · OpenStreetMap</span>
+      @if (payload.fetchedAt) {
+        <span>Mise à jour {{ payload.fetchedAt | date: 'HH:mm' }}</span>
+      }
+      <span>Sans compte · lecture seule</span>
     </p>
   }
 </section>

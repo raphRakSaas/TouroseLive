@@ -4,26 +4,161 @@
   text-align: center;
 }
 
+.home-kicker {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
 .home-intro h1 {
   margin: 0 0 8px;
-  font-size: clamp(1.55rem, 3.5vw, 2rem);
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  font-size: clamp(1.7rem, 4vw, 2.25rem);
+  letter-spacing: -0.035em;
+  line-height: 1.12;
 }
 
 .home-intro .lede {
   margin: 0 auto;
-  max-width: 36rem;
+  max-width: 34rem;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 1.02rem;
   line-height: 1.5;
+}
+
+.intent-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 680px;
+  margin: 0 auto 22px;
+}
+
+.intent-chip {
+  display: grid;
+  gap: 2px;
+  padding: 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  text-decoration: none;
+  color: var(--ink);
+  min-height: 72px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.intent-chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.intent-label {
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.intent-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.spotlight-grid {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.spotlight-card {
+  display: grid;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.spotlight-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-soft);
+}
+
+.spotlight-media img,
+.spotlight-media .media-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.spotlight-media img {
+  object-fit: cover;
+  opacity: 0;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.spotlight-media img.is-loaded {
+  opacity: 1;
+}
+
+.spotlight-media .badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}
+
+.spotlight-card:hover .spotlight-media img.is-loaded {
+  transform: scale(1.03);
+}
+
+.spotlight-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.spotlight-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+.spotlight-body h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.spotlight-body p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
 }
 
 .search {
   position: relative;
   max-width: 680px;
   width: 100%;
-  margin: 8px auto 28px;
+  margin: 8px auto 16px;
 }
 
 .search input {
@@ -256,6 +391,17 @@
 }
 
 @media (max-width: 720px) {
+  .intent-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .spotlight-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
   .search {
     max-width: none;
     margin: 4px 0 20px;
@@ -300,6 +446,13 @@
 
   .pulse-item strong {
     font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 721px) {
+  .spotlight-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
   }
 }
 

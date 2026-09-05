@@ -214,6 +214,19 @@ export class MapPage implements OnDestroy, OnInit {
     });
   });
 
+  protected readonly trustUpdatedAt = computed(() => {
+    const stamps = [
+      this.veloCatalog()?.fetchedAt,
+      this.parkingCatalog()?.fetchedAt,
+      this.eventsCatalog()?.fetchedAt,
+      this.placesCatalog()?.fetchedAt,
+    ].filter((value): value is string => Boolean(value));
+    if (stamps.length === 0) {
+      return null;
+    }
+    return [...stamps].sort().at(-1) ?? null;
+  });
+
   protected readonly pulse = computed(() => {
     const stations = this.veloCatalog()?.data ?? [];
     const bikes = stations.reduce(

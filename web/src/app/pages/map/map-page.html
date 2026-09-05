@@ -426,4 +426,12 @@
       </div>
     }
   </section>
+
+  <p class="trust-strip">
+    <span>Sources · JCDecaux · Toulouse Métropole · OpenAgenda · OpenStreetMap</span>
+    @if (trustUpdatedAt(); as updatedAt) {
+      <span>Mise à jour {{ updatedAt | date: 'HH:mm' }}</span>
+    }
+    <span>Sans compte · lecture seule</span>
+  </p>
 </section>

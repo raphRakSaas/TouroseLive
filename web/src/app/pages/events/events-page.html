@@ -2,7 +2,7 @@
   <header class="page-header">
     <h1>Événements</h1>
     <p class="lede">
-      Agenda culturel Toulouse — uniquement les dates à venir.
+      Ce qu’il se passe à Toulouse — aujourd’hui, demain, ce week-end.
     </p>
   </header>
 
@@ -43,11 +43,17 @@
       <button type="button" [class.active]="whenFilter() === 'all'" (click)="setWhenFilter('all')">
         Tous
       </button>
+      <button type="button" [class.active]="whenFilter() === 'today'" (click)="setWhenFilter('today')">
+        Aujourd’hui
+      </button>
+      <button type="button" [class.active]="whenFilter() === 'tomorrow'" (click)="setWhenFilter('tomorrow')">
+        Demain
+      </button>
+      <button type="button" [class.active]="whenFilter() === 'weekend'" (click)="setWhenFilter('weekend')">
+        Week-end
+      </button>
       <button type="button" [class.active]="whenFilter() === 'week'" (click)="setWhenFilter('week')">
         7 jours
-      </button>
-      <button type="button" [class.active]="whenFilter() === 'month'" (click)="setWhenFilter('month')">
-        30 jours
       </button>
       <button
         type="button"
@@ -117,7 +123,10 @@
                   />
                 }
                 @if (event.startsOn) {
-                  <span class="badge">{{ event.startsOn | date: 'd MMM' }}</span>
+                  <span class="badge badge--date" aria-label="Date {{ event.startsOn | date: 'd MMMM y' }}">
+                    <strong>{{ event.startsOn | date: 'd' }}</strong>
+                    <span>{{ event.startsOn | date: 'MMM' }}</span>
+                  </span>
                 }
               </div>
               <div class="listing-body">
@@ -138,6 +147,12 @@
       </ul>
     }
 
-    <p class="source">OpenAgenda · Toulouse Métropole Open Data</p>
+    <p class="trust-strip">
+      <span>Sources · OpenAgenda · Toulouse Métropole</span>
+      @if (payload.fetchedAt) {
+        <span>Mise à jour {{ payload.fetchedAt | date: 'HH:mm' }}</span>
+      }
+      <span>Sans compte · lecture seule</span>
+    </p>
   }
 </section>

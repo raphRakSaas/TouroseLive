@@ -160,5 +160,11 @@
     </section>
   }
 
-  <p class="source">Open-Meteo · Atmo Occitanie</p>
+  <p class="trust-strip">
+    <span>Sources · Open-Meteo · Atmo Occitanie</span>
+    @if (catalog()?.fetchedAt; as fetchedAt) {
+      <span>Mise à jour {{ fetchedAt | date: 'HH:mm' }}</span>
+    }
+    <span>Sans compte · lecture seule</span>
+  </p>
 </section>

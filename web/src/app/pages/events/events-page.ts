@@ -1,11 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogResponse, CultureEvent } from '../../core/catalog.models';
 import { EventsApi } from '../../core/events-api';
 
 type EventSort = 'date-asc' | 'date-desc' | 'title-asc';
-type WhenFilter = 'all' | 'week' | 'month';
+type WhenFilter = 'all' | 'today' | 'tomorrow' | 'weekend' | 'week' | 'month';
 type PhotoFilter = 'all' | 'with-photo';
 
 @Component({
@@ -16,6 +16,7 @@ type PhotoFilter = 'all' | 'with-photo';
 })
 export class EventsPage implements OnInit {
   private readonly eventsApi = inject(EventsApi);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly catalog = signal<CatalogResponse<CultureEvent[]> | null>(
     null,
@@ -79,7 +80,17 @@ export class EventsPage implements OnInit {
       events = events.filter((event) => Boolean(event.imageUrl));
     }
 
-    if (when === 'week') {
+    if (when === 'today') {
+      events = events.filter((event) => this.eventOverlapsDay(event, today));
+    } else if (when === 'tomorrow') {
+      const tomorrow = this.addDays(today, 1);
+      events = events.filter((event) => this.eventOverlapsDay(event, tomorrow));
+    } else if (when === 'weekend') {
+      const weekend = this.parisWeekendRange(today);
+      events = events.filter((event) =>
+        this.eventOverlapsRange(event, weekend.start, weekend.end),
+      );
+    } else if (when === 'week') {
       events = events.filter((event) => {
         const start = event.startsOn ?? event.endsOn ?? '';
         return start !== '' && start <= weekLimit;
@@ -106,6 +117,11 @@ export class EventsPage implements OnInit {
   });
 
   ngOnInit(): void {
+    const whenParam = this.route.snapshot.queryParamMap.get('when');
+    if (this.isWhenFilter(whenParam)) {
+      this.whenFilter.set(whenParam);
+    }
+
     this.eventsApi.listEvents().subscribe({
       next: (payload) => this.catalog.set(payload),
       error: () => this.loadError.set('Agenda temporairement indisponible.'),
@@ -152,9 +168,52 @@ export class EventsPage implements OnInit {
     );
   }
 
+  private isWhenFilter(value: string | null): value is WhenFilter {
+    return (
+      value === 'all' ||
+      value === 'today' ||
+      value === 'tomorrow' ||
+      value === 'weekend' ||
+      value === 'week' ||
+      value === 'month'
+    );
+  }
+
   private isUpcomingOrOngoing(event: CultureEvent, today: string): boolean {
     const end = event.endsOn ?? event.startsOn ?? '';
     return Boolean(end) && end >= today;
+  }
+
+  private eventOverlapsDay(event: CultureEvent, day: string): boolean {
+    const start = event.startsOn ?? event.endsOn ?? '';
+    const end = event.endsOn ?? event.startsOn ?? '';
+    return Boolean(start) && start <= day && end >= day;
+  }
+
+  private eventOverlapsRange(
+    event: CultureEvent,
+    rangeStart: string,
+    rangeEnd: string,
+  ): boolean {
+    const start = event.startsOn ?? event.endsOn ?? '';
+    const end = event.endsOn ?? event.startsOn ?? '';
+    return Boolean(start) && start <= rangeEnd && end >= rangeStart;
+  }
+
+  private parisWeekendRange(today: string): { start: string; end: string } {
+    const date = new Date(`${today}T12:00:00`);
+    const weekday = date.getDay();
+    if (weekday === 0) {
+      return { start: this.addDays(today, -1), end: today };
+    }
+    if (weekday === 6) {
+      return { start: today, end: this.addDays(today, 1) };
+    }
+    const daysUntilSaturday = 6 - weekday;
+    return {
+      start: this.addDays(today, daysUntilSaturday),
+      end: this.addDays(today, daysUntilSaturday + 1),
+    };
   }
 
   private parisToday(): string {

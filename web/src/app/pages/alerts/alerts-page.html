@@ -40,4 +40,12 @@
       </ul>
     }
   }
+
+  <p class="trust-strip">
+    <span>Sources · Tisséo GTFS-RT</span>
+    @if (catalog()?.fetchedAt; as fetchedAt) {
+      <span>Mise à jour {{ fetchedAt | date: 'HH:mm' }}</span>
+    }
+    <span>Sans compte · lecture seule</span>
+  </p>
 </section>

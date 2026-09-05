@@ -137,6 +137,25 @@ export class HomePage implements OnInit, OnDestroy {
     return pool.slice(0, 8);
   });
 
+  protected readonly spotlightEvents = computed(() => {
+    return this.nextEvents().slice(0, 3);
+  });
+
+  protected readonly trustUpdatedAt = computed(() => {
+    const stamps = [
+      this.veloCatalog()?.fetchedAt,
+      this.tisseoCatalog()?.fetchedAt,
+      this.weatherCatalog()?.fetchedAt,
+      this.airCatalog()?.fetchedAt,
+      this.eventsCatalog()?.fetchedAt,
+      this.placesCatalog()?.fetchedAt,
+    ].filter((value): value is string => Boolean(value));
+    if (stamps.length === 0) {
+      return null;
+    }
+    return [...stamps].sort().at(-1) ?? null;
+  });
+
   protected readonly severeAlertCount = computed(
     () =>
       (this.tisseoCatalog()?.data ?? []).filter(
